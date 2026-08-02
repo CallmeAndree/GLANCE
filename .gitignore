@@ -1,0 +1,26 @@
+# Manim output
+media/
+build/
+*.mp4
+*.mov
+*.png
+*.gif
+!docs/**/*.png
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# LaTeX / manim temp
+*.aux
+*.log
+*.dvi
+*.xdv
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
