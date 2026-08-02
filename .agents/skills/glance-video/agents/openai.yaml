@@ -1,0 +1,4 @@
+interface:
+  display_name: "GLANCE Video"
+  short_description: "Làm việc đúng chuẩn trong video GLANCE"
+  default_prompt: "Use $glance-video to update and verify a scene in the GLANCE Manim repository."
