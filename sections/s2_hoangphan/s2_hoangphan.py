@@ -751,15 +751,28 @@ class S2_08_Table1(GlanceScene):
         ])
         star = hm.cell[("GCN", "Uncertainty", 3)]
 
+        # Phóng to ô tại chỗ sẽ che ô bên cạnh. Thay bằng viền nhấn + số đọc lại
+        # ở lề phải, chỗ đang trống vì heatmap đã dịch sang trái.
+        star_ring = SurroundingRectangle(star, color=C_GOOD, stroke_width=3.5,
+                                         buff=0.03, corner_radius=0.03)
+        readout = VGroup(
+            mono("Pubmed · GCN Enh. · k = 10%", size=14, color=MUTED),
+            txt("0.20", size=42, color=C_GOOD, weight=BOLD),
+        ).arrange(DOWN, buff=0.16)
+        readout.move_to([4.3, star.get_center()[1], 0])
+        lead = Line(star_ring.get_right(), readout.get_left(), buff=0.18,
+                    stroke_color=C_GOOD, stroke_width=2)
+
         beat(self, "Hãy nhìn Pubmed và Arxiv23 trước.",
              Create(frames), Indicate(good, color=C_LLM, scale_factor=1.04), run_time=1.4)
         beat(self, "Ở đây uncertainty là heuristic tốt nhất trong mọi thiết lập.")
         beat(self, "Với GCN dùng enhanced features trên Pubmed, NCS đạt không phẩy hai mươi.",
-             star.animate.scale(1.5).set_z_index(5), run_time=0.8)
+             Create(star_ring), Create(lead), FadeIn(readout, shift=LEFT * 0.2), run_time=1.0)
         beat(self, "Nghĩa là cứ một trăm node được route, LLM tạo hai mươi correction có lợi.")
         beat(self, "Sau khi đã trừ đi những node bị làm sai. Đây là kết quả tốt.")
 
-        self.play(star.animate.scale(1 / 1.5), FadeOut(frames), run_time=0.6)
+        self.play(FadeOut(frames), FadeOut(star_ring), FadeOut(lead), FadeOut(readout),
+                  run_time=0.6)
 
         f_cora = SurroundingRectangle(
             VGroup(*[hm.cell[(bb, s, c)] for bb in ["GCN", "GCNII"]
@@ -776,11 +789,17 @@ class S2_08_Table1(GlanceScene):
         callout = VGroup(panel(callout_inner, buff=0.3), callout_inner)
         callout.to_edge(RIGHT, buff=0.4).shift(UP * 0.1)
 
+        # Viền nhấn thay cho phóng to: callout bên phải đã hiện sẵn hai con số cỡ lớn.
+        unc_ring = SurroundingRectangle(c_unc, color=C_BAD, stroke_width=3.5,
+                                        buff=0.03, corner_radius=0.03)
+        rand_ring = SurroundingRectangle(c_rand, color=MUTED, stroke_width=3,
+                                         buff=0.03, corner_radius=0.03)
+
         beat(self, "Nhưng bây giờ nhìn sang Cora.", Create(f_cora), run_time=0.9)
         beat(self, "Cùng heuristic đó, cùng backbone đó, NCS rơi xuống âm không phẩy không chín.",
-             c_unc.animate.scale(1.5).set_z_index(5), run_time=0.9)
+             Create(unc_ring), run_time=0.9)
         beat(self, "Và đây mới là điều đáng chú ý nhất.",
-             c_rand.animate.scale(1.3).set_z_index(5), FadeIn(callout), run_time=0.9)
+             Create(rand_ring), FadeIn(callout), run_time=0.9)
         beat(self, "Random routing trên Cora chỉ là âm không phẩy không hai.")
         beat(self, "Chọn kỹ node mà GNN không chắc chắn còn hại hơn chọn ngẫu nhiên.",
              Circumscribe(callout, color=C_BAD, buff=0.1), run_time=1.5)
@@ -816,10 +835,15 @@ class S2_09_PubmedVsCora(GlanceScene):
             y_range=(-0.15, 0.25, 0.1),
             width=8.6, height=3.9,
         ).shift(DOWN * 0.55)
+        # Cột Cora đều âm, next_to(..., UP) sẽ dán nhãn ngay trên trục 0 nhìn rất lệch.
+        # Ghim cả hai nhãn lên cùng một độ cao, phía trên khung trục.
+        pub_bars = VGroup(*[chart.bars[i] for i in range(3)])
+        cora_bars = VGroup(*[chart.bars[i] for i in range(3, 6)])
+        lab_y = chart.axes.get_top()[1] + 0.34
         lab_pub = txt("Pubmed", size=21, color=C_GOOD, weight=BOLD)
         lab_cora = txt("Cora", size=21, color=C_BAD, weight=BOLD)
-        lab_pub.next_to(VGroup(*[chart.bars[i] for i in range(3)]), UP, buff=0.7)
-        lab_cora.next_to(VGroup(*[chart.bars[i] for i in range(3, 6)]), UP, buff=0.7)
+        lab_pub.move_to([pub_bars.get_center()[0], lab_y, 0])
+        lab_cora.move_to([cora_bars.get_center()[0], lab_y, 0])
         stamp = source(SRC_T1)
 
         beat(self, "Đặt hai dataset cạnh nhau thì kết luận bật ra ngay.",
