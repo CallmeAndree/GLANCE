@@ -1,7 +1,9 @@
 # Task 2 — Đánh giá các routing heuristic hiện có
 
-**Owner:** Hoàng Phan · **File:** `s2_hoangphan.py` · **Thời lượng mục tiêu:** ~2'00"
+**Owner:** Hoàng Phan · **File:** `s2_hoangphan.py` · **Thời lượng:** ~10'20" (đo 10'18" ở 480p15)
 **Nguồn:** paper §4 mở đầu và §4.1 + Bảng 1 (tr.3–4).
+
+> Mục tiêu ban đầu là ~2'00". Nhóm đã thống nhất giữ bản dài, xem ghi chú trong `plan.md`.
 
 ## Cần trình bày
 
@@ -23,7 +25,7 @@
    Có cả **random router** làm mốc so sánh.
 
 4. **Kết quả và kết luận** (Bảng 1, tr.4) — điểm cần làm bật:
-   - Uncertainty có vẻ hứa hẹn trên Pubmed và Arxiv23 (GCN Enh.: **0.20 / 0.18 / 0.15** trên
+   - Uncertainty có vẻ hứa hẹn trên Pubmed và Arxiv23 (GCN Enh.: **0.20 / 0.18 / 0.17** trên
      Pubmed; **0.15 / 0.13 / 0.13** trên Arxiv23 ứng với k = 10/15/20%).
    - Nhưng **cùng chiến lược đó lại âm trên Cora**: **−0.09 / −0.03 / −0.01** — tệ hơn cả
      random router.
@@ -43,9 +45,9 @@
 
 ## Checklist nộp
 
-- [ ] `manim -ql sections/s2_hoangphan/s2_hoangphan.py -a` chạy sạch
-- [ ] Mọi scene có phụ đề
-- [ ] Số liệu có `source("Bảng 1, tr.4")`
-- [ ] Chỉ dùng màu/helper trong `glance_style.py`
-- [ ] Kết đúng câu cầu nối
+- [x] `manim -ql sections/s2_hoangphan/s2_hoangphan.py -a` chạy sạch (13 scene, 10'18")
+- [x] Mọi scene có phụ đề
+- [x] Số liệu có `source("Bảng 1, tr.4")`
+- [x] Chỉ dùng màu/helper trong `glance_style.py`
+- [x] Kết đúng câu cầu nối
 - [ ] PR từ nhánh `section/hoang-phan`

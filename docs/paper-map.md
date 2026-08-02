@@ -38,7 +38,7 @@ Arxiv23 **45.2 ± 0.7**; Pubmed bin 0.25–0.50 đạt **71.5 ± 0.5**.
 **Gain chính (Abstract, §6.2)**: tới **+13.0%** trên node heterophilous (Cora),
 **+0.5%** trên Pubmed; gain tổng thể tới **+0.9%**.
 
-**NCS heuristic (Bảng 1, tr.4)**: uncertainty đạt 0.20 / 0.18 / 0.15 (Pubmed, GCN Enh.,
+**NCS heuristic (Bảng 1, tr.4)**: uncertainty đạt 0.20 / 0.18 / 0.17 (Pubmed, GCN Enh.,
 k = 10/15/20%) nhưng **−0.09 / −0.03 / −0.01** trên Cora. Degree và C-density dao động
 quanh 0. ⇒ không heuristic nào robust xuyên dataset.
 
