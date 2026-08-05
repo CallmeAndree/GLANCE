@@ -21,6 +21,16 @@ thành viên sở hữu và render thành `.mp4` riêng, rồi `ffmpeg` ghép l�
    kèm số bảng, số trang) hoặc từ `../GraphDataMining.pdf`. Số liệu nào lên hình
    cũng phải kèm `source("Bảng 3, tr.8")`.
 4. **Không commit video.** `media/`, `build/`, `*.mp4` đã nằm trong `.gitignore`.
+5. **Chạy bộ test trước khi kết thúc việc hoặc mở PR:**
+
+   ```bash
+   python -m unittest discover -s tests -t .
+   ```
+
+   Không cần cài gì thêm và chạy được từ thư mục nào cũng được. Test gác việc phiên
+   âm lời thoại cho TTS, xem [Thuyết minh](#thuyết-minh-manim-voiceover).
+   Đã từng có một section vào `main` với 28 câu chưa phiên âm vì PR đó không chạy
+   test, dù test có sẵn và bắt đúng lỗi. **Render thành công không thay được test.**
 
 ## Môi trường
 
@@ -198,6 +208,31 @@ Thêm section mới thì phải thêm đường dẫn file vào mảng `SECTIONS
 
 ## Tự kiểm tra kết quả (quan trọng)
 
+Có hai lớp kiểm tra và **không lớp nào thay được lớp kia**: bộ test bắt lỗi nội dung
+lời thoại, còn việc trích frame bắt lỗi bố cục hình.
+
+### Lớp 1: bộ test
+
+```bash
+python -m unittest discover -s tests -t .
+```
+
+Chỉ dùng thư viện chuẩn cho phần quan trọng nhất, chạy được từ thư mục nào cũng được,
+mất dưới một giây. Nó gác:
+
+- **Phiên âm lời thoại** theo bảng trong `plan.md`, quét cả dict `VO` lẫn chuỗi truyền
+  trực tiếp vào `voiceover(text=...)`, `narrated_caption(...)` và `beat()`.
+- **Nợ phiên âm chỉ được giảm.** `s1`, `s2`, `s4` còn nợ, số ghi trong `BASELINE` ở đầu
+  `tests/test_voice_pronunciation.py`. Thêm lời thoại chưa phiên âm vào các file đó sẽ
+  làm test đỏ ngay. Sửa bớt thì hạ con số theo đúng thông báo của test.
+- Hạ tầng giọng đọc: `TimedTTSService` và phần code-switch.
+
+CI ở `.github/workflows/ci.yml` chạy đúng những thứ này cho mỗi push và PR vào `main`,
+cộng thêm một guard chặn việc phiên âm lọt vào tên biến. **Bảng phiên âm chỉ áp cho lời
+thoại**, đừng chạy tìm/thay thế toàn repo: đã có lần làm `C_GNN` thành `C_G N N`.
+
+### Lớp 2: trích frame ra xem
+
 Render thành công **không** có nghĩa là hình đúng. Manim không báo lỗi khi chữ tràn
 khỏi khung hay hai mobject đè nhau. Sau khi render, luôn trích một frame ra xem:
 
@@ -227,6 +262,8 @@ ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 build/final
 | `latex` not found | chưa cài LaTeX | cài MacTeX, hoặc thay `MathTex` bằng `txt()` |
 | Chữ tràn khỏi khung | không giới hạn bề rộng | `mobj.scale_to_fit_width(11)` trước khi đặt vị trí |
 | Scene thiếu trong `final.mp4` | đổi tên class sau khi render | xoá `media/` rồi render lại |
+| Test báo `nhiều hơn mức đã ghi` | thêm lời thoại chưa phiên âm vào file đang nợ | phiên âm câu vừa thêm theo `plan.md` |
+| Test báo `Sửa BASELINE ... xuống N` | đã sửa bớt nợ nhưng chưa hạ con số | sửa `BASELINE` trong `tests/test_voice_pronunciation.py` thành `N` |
 | Phụ đề hiện hai lần | vừa `voiceover` vừa `add_subcaption` | bỏ `add_subcaption` |
 | Hình chạy lố sang câu nói sau | tổng `run_time` > `tracker.duration` | rút bớt animation trong khối |
 | gTTS lỗi mạng khi render | không có internet | render lại khi có mạng, hoặc `GLANCE_TTS=record` |
