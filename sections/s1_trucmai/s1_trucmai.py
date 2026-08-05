@@ -74,11 +74,19 @@ def node(label="", target=False, radius=0.20):
         fill_color=BRIGHT if target else BG,
         fill_opacity=0.22 if target else 1,
     )
-    if not label:
-        return VGroup(circle)
-    label_m = fit(t(str(label), max(11, int(radius * 60)), LIGHT, BOLD), radius * 1.2)
-    label_m.move_to(circle)
-    return VGroup(circle, label_m)
+    
+    parts = VGroup()
+    if target:
+        bg_circle = Circle(radius=radius, fill_color=BG, fill_opacity=1, stroke_width=0)
+        parts.add(bg_circle)
+    parts.add(circle)
+    
+    if label:
+        label_m = fit(t(str(label), max(11, int(radius * 60)), LIGHT, BOLD), radius * 1.2)
+        label_m.move_to(circle)
+        parts.add(label_m)
+        
+    return parts
 
 def doc_icon(title="Document", lines=None, width=3.0, height=2.0, emphasized=False):
     lines = lines or ["Title and abstract", "Methods and evidence", "Topic and context"]
@@ -176,7 +184,8 @@ def create_tag_graph(scale=1.0):
         key: node(key, target=key == "A", radius=(0.26 if key == "A" else 0.18) * scale).move_to(pos)
         for key, pos in positions.items()
     }
-    graph = VGroup(edges, VGroup(*nodes.values()))
+    nodes_vgroup = VGroup(*nodes.values()).set_z_index(5)
+    graph = VGroup(edges, nodes_vgroup)
     graph.edges = edges
     graph.nodes = nodes
     return graph
@@ -197,6 +206,7 @@ def create_target_neighborhood(kind="clean", label="A", scale=1.0):
         )
         for index, neighbor in enumerate(neighbors)
     ])
+    target.set_z_index(5)
     group = VGroup(edges, neighbors, target)
     group.edges = edges
     group.neighbors = neighbors
@@ -205,8 +215,10 @@ def create_target_neighborhood(kind="clean", label="A", scale=1.0):
 
 def create_message_vector(start, end, color=BRIGHT, dashed=False):
     arrow = Arrow(start=start, end=end, color=color, buff=0.35, max_stroke_width_to_length_ratio=0, max_tip_length_to_length_ratio=0.15)
+    arrow.set_z_index(-1)
     if dashed:
         arrow = DashedVMobject(arrow, num_dashes=15)
+        arrow.set_z_index(-1)
     return arrow
 
 def create_text_document(title, lines, width=4.0, height=2.35, emphasized=False):
@@ -692,14 +704,16 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             
             blackout3 = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(99)
             self.play(FadeIn(blackout3), FadeIn(graph_loss, shift=UP * 0.1), run_time=0.5)
-            self.wait(0.5)
-            self.play(FadeOut(pred_group), FadeOut(token_text),
-                      FadeOut(blackout3), FadeOut(graph_loss), FadeOut(title), run_time=0.7)
+            
+            # Note: Do not fade out here, let it remain until audio finishes
+            self.sec5_objects = VGroup(pred_group, token_text, blackout3, graph_loss, title)
 
     # ─────────────────────────────────────────────────────────
     # SECTION 6 — Uniform Static Fusion
     # ─────────────────────────────────────────────────────────
     def section_6_static_fusion(self):
+        self.play(FadeOut(self.sec5_objects), run_time=0.5)
+        
         node_a = node("A", radius=0.38).move_to(LEFT * 5 + UP * 2.0)
         node_b = node("B", radius=0.38).move_to(LEFT * 5 + ORIGIN)
         node_c = node("C", radius=0.38).move_to(LEFT * 5 + DOWN * 2.0)
@@ -900,11 +914,11 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         with self.narrated_caption(["Giả sử chín mươi phần trăm là các nút dễ,", "còn mười phần trăm là các nút khó."]):
             easy_group = VGroup(
                 t("90% Easy Nodes", size=38, color=BRIGHT, weight=BOLD),
-                t("GNN: 95%  →  Fusion: 94%", size=26, color=LIGHT)
+                t("GNN: 95%  ->  Fusion: 94%", size=26, color=LIGHT)
             ).arrange(DOWN, buff=0.2).move_to(LEFT * 3.2 + UP * 1.4)
             hard_group = VGroup(
                 t("10% Hard Nodes", size=38, color=BRIGHT, weight=BOLD),
-                t("GNN: 40%  →  Fusion: 53%", size=26, color=LIGHT)
+                t("GNN: 40%  ->  Fusion: 53%", size=26, color=LIGHT)
             ).arrange(DOWN, buff=0.2).move_to(RIGHT * 3.2 + UP * 1.4)
             self.play(FadeIn(easy_group, shift=UP * 0.2), FadeIn(hard_group, shift=UP * 0.2), run_time=1.0)
 
@@ -950,7 +964,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             # Router pipeline fades in below question
             router = VGroup(
                 module("Node").scale(1.15), module("GNN").scale(1.15), module("Router", emphasized=True).scale(1.15)
-            ).arrange(RIGHT, buff=0.75).move_to(LEFT * 1.5 + DOWN * 1.0)
+            ).arrange(RIGHT, buff=0.75).move_to(LEFT * 2.2 + DOWN * 1.0)
             r_arrows = VGroup(*[small_arrow(router[i].get_right(), router[i+1].get_left()) for i in range(2)])
             keep_gnn = module("Keep GNN", width=2.4).scale(1.1).move_to(router[2].get_center() + RIGHT * 3.0 + UP * 1.3)
             query_llm = module("Query LLM", width=2.4, emphasized=True).scale(1.1).move_to(router[2].get_center() + RIGHT * 3.0 + DOWN * 1.3)
@@ -958,18 +972,27 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             a_dn = small_arrow(router[2].get_right() + DOWN * 0.15, query_llm.get_left())
 
             self.play(q.animate.to_edge(UP).scale(0.75), run_time=0.6)
-            self.play(FadeIn(router[0:2]), FadeIn(r_arrows), run_time=1.2)
-            self.play(FadeIn(router[2]), run_time=0.8)
-            self.play(FadeIn(keep_gnn), GrowArrow(a_up), FadeIn(query_llm), GrowArrow(a_dn), run_time=1.2)
+            self.play(FadeIn(router[0:2]), FadeIn(r_arrows), run_time=1.5)
+            self.play(FadeIn(router[2]), run_time=1.2)
+            self.play(FadeIn(keep_gnn), GrowArrow(a_up), FadeIn(query_llm), GrowArrow(a_dn), run_time=1.5)
 
         with self.narrated_caption([
             "Vậy hiện nay, các phương pháp dùng những heuristic nào",
             "để quyết định gọi LLM?",
             "Đó là nội dung của Task 2."
         ]):
+            circle_hl = Ellipse(width=query_llm.width + 0.4, height=query_llm.height + 0.4, color=gs.C_BAD, stroke_width=4)
+            circle_hl.move_to(query_llm)
+            question_mark = t("?", size=60, color=gs.C_BAD, weight=BOLD).next_to(circle_hl, RIGHT, buff=0.3)
+            
+            self.play(Create(circle_hl), run_time=0.8)
+            self.play(FadeIn(question_mark, shift=LEFT*0.2), run_time=0.6)
+            
+            self.wait(2.5)
             self.play(
                 FadeOut(q), FadeOut(router), FadeOut(r_arrows),
                 FadeOut(keep_gnn), FadeOut(query_llm), FadeOut(a_up), FadeOut(a_dn),
+                FadeOut(circle_hl), FadeOut(question_mark),
                 run_time=0.7
             )
             task2_title = t("TASK 2", size=64, color=BRIGHT, weight=BOLD)
