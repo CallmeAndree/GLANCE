@@ -3,7 +3,13 @@ manim-voiceover[gtts]>=0.3.7
 importlib_metadata
 numpy
 
-# Tuỳ chọn:
+# Backend giọng đọc chính thức là API riêng của nhóm (GLANCE_TTS=timed). Nó chỉ
+# dùng urllib trong thư viện chuẩn nên không thêm dependency nào ở đây. Extra
+# [gtts] phía trên là để backend dự phòng chạy được khi endpoint của nhóm tắt.
+#
+# Chỉ cài khi cần dự phòng:
 #   pip install "manim-voiceover[azure]>=0.3.7"
-#       — Azure multilingual code-switch Việt-Anh cho bản nộp
-#   brew install sox        — chỉ cần khi thu giọng thật (GLANCE_TTS=record)
+#       Azure multilingual code-switch Việt-Anh. KHÔNG dùng cho bản nộp vì giọng
+#       khác API của nhóm, ghép vào sẽ nghe rõ chỗ đổi giọng giữa các section.
+#   brew install sox
+#       chỉ cần khi tự thu giọng thật (GLANCE_TTS=record)

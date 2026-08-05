@@ -40,7 +40,6 @@ Dự án dùng conda env **`graphdm`** (không dùng venv).
 ```bash
 conda activate graphdm
 pip install -r requirements.txt
-pip install "manim-voiceover[azure]>=0.3.7"  # khi dùng code-switch Azure
 ffmpeg -version      # cần có ffmpeg để ghép video (brew install ffmpeg)
 manim checkhealth
 ```
@@ -95,16 +94,27 @@ File `.mp4` từng scene nằm trong `media/videos/<tên_file>/<chất_lượng>
    animation trong khối `with self.voiceover(text=VO["..."]) as tracker:`.
    Plugin `manim-voiceover` sinh audio, tự chờ hết câu nói,
    và tự sinh `.srt` — **không** gọi `add_subcaption` nữa (sẽ trùng phụ đề).
-   Mặc định dự án dùng `GLANCE_TTS=timed`: cấu hình
-   `GLANCE_TIMED_TTS_URL` và `GLANCE_TIMED_TTS_TOKEN` trong `.env`. API trả MP3
-   base64 cùng timing từng segment; token không được commit. Có thể đổi sang
-   `GLANCE_TTS=azure`, `GLANCE_TTS=gtts` hoặc `GLANCE_TTS=record` khi render.
-   Backend Azure mặc định dùng `en-US-AvaMultilingualNeural`; các thuật ngữ
-   tiếng Anh đã biết được tự bọc locale `en-US`, còn phần tiếng Việt dùng
-   `vi-VN`, nên giữ cùng một chất giọng khi code-switch. Có thể chọn giọng nam
-   bằng `GLANCE_VOICE=en-US-AndrewMultilingualNeural`. Không dùng Jenny/Ryan
-   Multilingual vì hai voice đó không hỗ trợ `vi-VN`.
+   **Giọng đọc chính thức của nhóm là API riêng, tức `GLANCE_TTS=timed`.** Cấu hình
+   `GLANCE_TIMED_TTS_URL` và `GLANCE_TIMED_TTS_TOKEN` trong `.env`; API trả MP3
+   base64 cùng timing từng segment. Token không được commit. Bản nộp phải render
+   bằng backend này để giọng đồng nhất giữa các section.
    Viết lời thoại theo cách đọc lên: `h_v` → "h của v", `3/4` → "ba phần tư".
+   Phiên âm thuật ngữ theo bảng trong `plan.md`, có test gác việc này.
+
+   <details>
+   <summary>Backend dự phòng, chỉ dùng khi endpoint của nhóm không chạy</summary>
+
+   Endpoint `timed` được self-host nên có lúc tắt. Khi đó vẫn render thử được bằng
+   `GLANCE_TTS=gtts` (miễn phí, cần mạng) hoặc `GLANCE_TTS=record` (tự thu giọng).
+   Còn `GLANCE_TTS=azure` cần `pip install "manim-voiceover[azure]>=0.3.7"` và khoá
+   `AZURE_*` trong `.env`; nó dùng `en-US-AvaMultilingualNeural`, tự bọc thuật ngữ
+   tiếng Anh trong locale `en-US` và phần tiếng Việt trong `vi-VN` để giữ cùng một
+   chất giọng khi code-switch. Giọng nam là `GLANCE_VOICE=en-US-AndrewMultilingualNeural`.
+   Không dùng Jenny/Ryan Multilingual vì hai voice đó không hỗ trợ `vi-VN`.
+
+   **Đừng dùng các backend này cho bản nộp**: giọng khác hẳn API của nhóm, ghép vào
+   sẽ nghe rõ chỗ đổi giọng giữa các section.
+   </details>
 4. Dùng màu và font từ `glance_style.py` (`C_GNN`, `C_LLM`, `C_ROUTER`, `txt()`,
    `heading()`, `bullets()`...). Không hard-code màu mới.
 5. Chữ tiếng Việt: dùng `txt()` / `Text`, **không** dùng `Tex`/`MathTex`

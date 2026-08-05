@@ -24,7 +24,11 @@ from manim import *
 from manim_voiceover import VoiceoverScene
 from manim_voiceover.helper import remove_bookmarks
 from manim_voiceover.services.base import SpeechService
-from manim_voiceover.services.gtts import GTTSService
+
+# GTTSService cố tình KHÔNG import ở đây. Import nó khi chưa cài extra `gtts`
+# sẽ in một dòng ERROR mỗi lần chạy manim, kể cả khi cả nhóm dùng backend
+# `timed`. Nó được import bên trong speech_service() khi thật sự cần, giống
+# cách làm sẵn có với AzureService và RecorderService.
 
 import manimpango
 
@@ -326,6 +330,15 @@ def txt(s, size=BODY_SIZE, color=INK, weight=NORMAL, **kw):
 
 def mono(s, size=SMALL_SIZE, color=MUTED, **kw):
     return Text(s, font=FONT_MONO, font_size=size, color=color, **kw)
+
+
+def mt(tex, size=32, color=INK, **kw):
+    """MathTex viết ngắn, dùng cho các công thức chèn trong câu.
+
+    Chỉ dùng cho công thức toán. Tiếng Việt phải đi qua txt() vì LaTeX mặc định
+    không dựng được dấu.
+    """
+    return MathTex(tex, font_size=size, color=color, **kw)
 
 
 def heading(s, color=INK):
@@ -919,15 +932,6 @@ def small_arrow(start, end, color=MUTED, stroke_width=2.0, buff=0.10):
     return Arrow(start, end, buff=buff, color=color, stroke_width=stroke_width, tip_length=0.10)
 
 
-def elbow_arrow(start, end, via_x, color=MUTED, stroke_width=2.0):
-    """Orthogonal connector used to avoid diagonal and crossing arrows."""
-    path = VMobject(color=color, stroke_width=stroke_width)
-    path.set_points_as_corners([start, [via_x, start[1], 0], [via_x, end[1], 0], end])
-    tip = Triangle(fill_color=color, fill_opacity=1, stroke_width=0)
-    tip.scale(0.055).rotate(-PI / 2).move_to(end)
-    return VGroup(path, tip)
-
-
 def probability_chart(values, title_tex, class_names, width=5.15):
     """A small titled bar list, one row per class probability."""
     title = MathTex(title_tex, font_size=31, color=INK)
@@ -1059,6 +1063,7 @@ class GlanceScene(VoiceoverScene):
         if backend in ("record", "recorder"):
             from manim_voiceover.services.recorder import RecorderService
             return RecorderService()
+        from manim_voiceover.services.gtts import GTTSService
         return GTTSService(lang=self.voice_lang)
 
     def banner(self):
