@@ -111,6 +111,25 @@ File `.mp4` từng scene nằm trong `media/videos/<tên_file>/<chất_lượng>
    (LaTeX mặc định không có dấu tiếng Việt). `MathTex` chỉ dùng cho công thức.
 6. Mọi số liệu trích từ paper phải kèm `source("Bảng 3, tr.8")` ở góc dưới phải.
 
+## Kiểm tra
+
+```bash
+python -m unittest discover -s tests -t .    # cả 8 test
+python tests/test_voice_pronunciation.py     # chỉ test phiên âm, không cần manim
+```
+
+`test_voice_pronunciation.py` chỉ dùng thư viện chuẩn nên chạy được ở bất cứ đâu. Nó đọc
+các dict `VO` và báo lỗi nếu lời thoại còn thuật ngữ tiếng Anh chưa chuyển theo bảng phiên
+âm trong `plan.md`. **Chạy test này trước khi mở PR.**
+
+> **Giới hạn cần biết:** test chỉ quét dict `VO`. Section nào truyền chuỗi trực tiếp vào
+> `voiceover(text=...)` sẽ không được kiểm, nên test xanh **không** có nghĩa là cả video đã
+> phiên âm xong. Hiện `s1`, `s2`, `s4` nằm ngoài tầm quét.
+
+CI ở `.github/workflows/ci.yml` chạy hai job cho mỗi push và pull request vào `main`: job
+*Nội dung và cú pháp* không cài manim nên xong trong vài chục giây, job *Hạ tầng giọng đọc*
+cài cả manim để chạy trọn bộ test.
+
 ## Quy ước git
 
 ```bash

@@ -1,11 +1,17 @@
 import base64
 import json
 import pathlib
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
-from glance_style import (
+# Cho phép import glance_style.py ở thư mục gốc repo, giống các file section.
+# Nhờ vậy chạy được cả `python tests/test_voice_code_switch.py` lẫn
+# `python -m unittest discover -s tests -t .` mà không cần đặt PYTHONPATH.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+
+from glance_style import (  # noqa: E402
     TimedTTSService,
     azure_voice_supports_code_switch,
     ssml_mix,
