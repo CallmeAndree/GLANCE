@@ -58,7 +58,10 @@ ffmpeg -y -loglevel error -f concat -safe 0 -i build/concat.txt -c copy build/fi
 echo "==> ghép phụ đề"
 python tools/merge_srt.py build/concat.txt build/final.srt || echo "(bỏ qua phụ đề)"
 
+echo "==> đóng gói softsub (MKV)"
+ffmpeg -y -loglevel error -i build/final.mp4 -i build/final.srt -c copy -c:s srt build/final.mkv || echo "(lỗi tạo mkv)"
+
 echo
-echo "Xong: build/final.mp4"
+echo "Xong: build/final.mkv (kèm softsub) và build/final.mp4"
 ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 build/final.mp4 \
   | awk '{printf "Thời lượng: %d:%02d\n", $1/60, $1%60}'

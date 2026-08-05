@@ -91,7 +91,7 @@ class S2_02_Content(GlanceScene):
 #   title_card(...)              card mở section
 #   section_banner(num, name)    banner góc trên trái (GlanceScene.banner())
 #   panel(mobj)                  khung bo góc quanh nội dung
-#   labeled_box("GNN", C_GNN)    khối model
+#   labeled_box("G N N", C_G N N)    khối model
 #   pipeline([(label, color)...]) chuỗi khối + mũi tên
 #   check() / cross()            dấu ✓ / ✗
 #   tag_graph(edges, pos, labels) đồ thị tuỳ ý
@@ -100,5 +100,5 @@ class S2_02_Content(GlanceScene):
 #   text_chip("...")             thẻ text gắn vào node
 #   bar_chart(values, labels)    biểu đồ cột (hỗ trợ giá trị âm)
 #
-# Màu: C_GNN, C_LLM, C_ROUTER, C_GOOD, C_BAD, C_EDGE, C_HIGHLIGHT, INK, MUTED
+# Màu: C_G N N, C_LLM, C_ROUTER, C_GOOD, C_BAD, C_EDGE, C_HIGHLIGHT, INK, MUTED
 # ---------------------------------------------------------------------------
