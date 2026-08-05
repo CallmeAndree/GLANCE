@@ -1,3 +1,9 @@
 manim>=0.19.0
+manim-voiceover[gtts]>=0.3.7
 importlib_metadata
 numpy
+
+# Tuỳ chọn:
+#   pip install "manim-voiceover[azure]>=0.3.7"
+#       — Azure multilingual code-switch Việt-Anh cho bản nộp
+#   brew install sox        — chỉ cần khi thu giọng thật (GLANCE_TTS=record)

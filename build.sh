@@ -32,8 +32,28 @@ SECTIONS=(
 command -v manim >/dev/null || { echo "Không tìm thấy manim. Chạy: conda activate graphdm"; exit 1; }
 command -v ffmpeg >/dev/null || { echo "Không tìm thấy ffmpeg (brew install ffmpeg)"; exit 1; }
 
-mkdir -p build
+mkdir -p build build/norm
 : > build/concat.txt
+
+# Chuẩn hoá mọi clip trước khi ghép, vì hai lý do:
+#  1. Scene chưa viết lời thuyết minh thì không có audio stream; ghép bằng
+#     -c copy đòi mọi clip cùng bố cục stream.
+#  2. Manim xuất audio ngắn hơn video vài chục ms mỗi scene. Ghép nối tiếp thì
+#     sai số cộng dồn và tiếng lệch dần khỏi hình. Đệm im lặng cho audio dài
+#     đúng bằng video (apad + -shortest) để mỗi clip tự khớp.
+normalize() {
+  local src="$1" dst="build/norm/$(basename "$1")"
+  if ffprobe -v error -select_streams a -show_entries stream=codec_type \
+       -of csv=p=0 "$src" | grep -q audio; then
+    ffmpeg -y -loglevel error -i "$src" \
+      -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -af apad -shortest "$dst"
+  else
+    ffmpeg -y -loglevel error -i "$src" \
+      -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 \
+      -shortest -c:v copy -c:a aac -b:a 128k "$dst"
+  fi
+  printf '%s' "$dst"
+}
 
 for f in "${SECTIONS[@]}"; do
   [ -f "$f" ] || { echo "!! Thiếu file $f — bỏ qua"; continue; }
@@ -42,10 +62,10 @@ for f in "${SECTIONS[@]}"; do
 
   stem="$(basename "$f" .py)"
   # Lấy tên scene theo đúng thứ tự khai báo trong file
-  grep -oE '^class ([A-Za-z0-9_]+)\(' "$f" | sed -E 's/^class //; s/\($//' | while read -r scene; do
+  for scene in $(grep -oE '^class ([A-Za-z0-9_]+)\(' "$f" | sed -E 's/^class //; s/\($//'); do
     mp4="media/videos/${stem}/${RES}/${scene}.mp4"
     if [ -f "$mp4" ]; then
-      echo "file '../${mp4}'" >> build/concat.txt
+      echo "file '../$(normalize "$mp4")'" >> build/concat.txt
     else
       echo "!! Thiếu output $mp4"
     fi
@@ -53,12 +73,40 @@ for f in "${SECTIONS[@]}"; do
 done
 
 echo "==> ghép video"
-ffmpeg -y -loglevel error -f concat -safe 0 -i build/concat.txt -c copy build/final.mp4
+# Video copy (không mã hoá lại, giữ nguyên chất lượng), nhưng audio phải mã hoá
+# lại thành MỘT stream liền mạch: nối AAC bằng -c copy để lại điểm nối có
+# priming samples, khiến QuickTime câm tiếng dù ffprobe vẫn thấy track.
+ffmpeg -y -loglevel error -f concat -safe 0 -i build/concat.txt \
+  -c:v copy -c:a aac -b:a 192k -ar 48000 -ac 2 \
+  -movflags +faststart build/final.mp4
 
 echo "==> ghép phụ đề"
 python tools/merge_srt.py build/concat.txt build/final.srt || echo "(bỏ qua phụ đề)"
 
+# Mỗi lần build tạo một snapshot riêng trong media/videos/<thời điểm>/ để so
+# được các bản dựng với nhau. build/final.mp4 luôn là bản mới nhất.
+STAMP="$(date +%Y-%m-%d_%H-%M-%S)"
+SNAP="media/videos/${STAMP}"
+mkdir -p "$SNAP"
+cp build/final.mp4 "$SNAP/final.mp4"
+[ -f build/final.srt ] && cp build/final.srt "$SNAP/final.srt"
+cp build/concat.txt "$SNAP/concat.txt"
+
+DUR="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 build/final.mp4)"
+# awk chứ không phải bc: ffprobe trả số thực, bc không làm modulo số thực.
+DUR_FMT="$(awk -v d="$DUR" 'BEGIN{printf "%d:%02d", d/60, int(d)%60}')"
+{
+  echo "Thời điểm : $(date '+%Y-%m-%d %H:%M:%S')"
+  echo "Chất lượng: $QUALITY ($RES)"
+  echo "Thời lượng: $DUR_FMT"
+  echo "Git       : $(git rev-parse --short HEAD 2>/dev/null || echo 'không phải git repo')$(git diff --quiet 2>/dev/null || echo ' (có thay đổi chưa commit)')"
+  echo "Nhánh     : $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '-')"
+  echo
+  echo "Scene theo thứ tự:"
+  sed -E "s|file '\.\./||; s|'$||" build/concat.txt | sed 's|^|  |'
+} > "$SNAP/INFO.txt"
+
 echo
 echo "Xong: build/final.mp4"
-ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 build/final.mp4 \
-  | awk '{printf "Thời lượng: %d:%02d\n", $1/60, $1%60}'
+echo "Snapshot: $SNAP/"
+echo "Thời lượng: $DUR_FMT"

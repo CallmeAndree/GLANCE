@@ -40,6 +40,7 @@ Dự án dùng conda env **`graphdm`** (không dùng venv).
 ```bash
 conda activate graphdm
 pip install -r requirements.txt
+pip install "manim-voiceover[azure]>=0.3.7"  # khi dùng code-switch Azure
 ffmpeg -version      # cần có ffmpeg để ghép video (brew install ffmpeg)
 manim checkhealth
 ```
@@ -62,7 +63,10 @@ manim -ql sections/s3_nhutanh/s3_nhutanh.py
 ./build.sh -qh      # 1080p60 bản cuối
 ```
 
-Kết quả: `build/final.mp4` (+ `build/final.srt` nếu tất cả scene đều có subtitle).
+Lần render đầu cần **mạng** để gTTS sinh audio; sau đó audio được cache trong
+`media/voiceovers/` theo hash của lời thoại nên render lại rất nhanh.
+
+Kết quả: `build/final.mp4` (đã có giọng đọc) + `build/final.srt`.
 File `.mp4` từng scene nằm trong `media/videos/<tên_file>/<chất_lượng>/`.
 
 `media/` và `build/` đã được `.gitignore` — **không commit video**.
@@ -87,9 +91,17 @@ File `.mp4` từng scene nằm trong `media/videos/<tên_file>/<chất_lượng>
            self.banner()
            ...
    ```
-3. **Bắt buộc có phụ đề**: mỗi nhịp nói dùng `self.add_subcaption(...)` hoặc
-   `self.play(..., subcaption="...", subcaption_duration=...)`. Manim tự sinh
-   `.srt`; đây cũng là kịch bản thuyết minh khi thu tiếng.
+3. **Thuyết minh tự đồng bộ**: gom lời thoại vào dict `VO` ở đầu file, rồi bọc
+   animation trong khối `with self.voiceover(text=VO["..."]) as tracker:`.
+   Plugin `manim-voiceover` sinh audio bằng gTTS tiếng Việt, tự chờ hết câu nói,
+   và tự sinh `.srt` — **không** gọi `add_subcaption` nữa (sẽ trùng phụ đề).
+   Đổi giọng: `GLANCE_TTS=azure` hoặc `GLANCE_TTS=record` khi render.
+   Backend Azure mặc định dùng `en-US-AvaMultilingualNeural`; các thuật ngữ
+   tiếng Anh đã biết được tự bọc locale `en-US`, còn phần tiếng Việt dùng
+   `vi-VN`, nên giữ cùng một chất giọng khi code-switch. Có thể chọn giọng nam
+   bằng `GLANCE_VOICE=en-US-AndrewMultilingualNeural`. Không dùng Jenny/Ryan
+   Multilingual vì hai voice đó không hỗ trợ `vi-VN`.
+   Viết lời thoại theo cách đọc lên: `h_v` → "h của v", `3/4` → "ba phần tư".
 4. Dùng màu và font từ `glance_style.py` (`C_GNN`, `C_LLM`, `C_ROUTER`, `txt()`,
    `heading()`, `bullets()`...). Không hard-code màu mới.
 5. Chữ tiếng Việt: dùng `txt()` / `Text`, **không** dùng `Tex`/`MathTex`

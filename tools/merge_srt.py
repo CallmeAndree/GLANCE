@@ -46,11 +46,21 @@ def main(concat_file, out_file):
         if line.startswith("file "):
             clips.append((root / line[5:].strip().strip("'\"")).resolve())
 
+    repo = concat.parent.parent
+
+    def find_srt(mp4):
+        """Phụ đề nằm cạnh file manim gốc. Clip đã chuẩn hoá (build/norm/) thì
+        phải lần ngược về media/videos/ để lấy .srt."""
+        sibling = mp4.with_suffix(".srt")
+        if sibling.exists():
+            return sibling
+        return next(repo.glob(f"media/videos/*/*/{mp4.stem}.srt"), None)
+
     blocks, offset, index = [], 0.0, 0
     for mp4 in clips:
         clip_len = duration(mp4)
-        srt = mp4.with_suffix(".srt")
-        if srt.exists():
+        srt = find_srt(mp4)
+        if srt is not None:
             raw = srt.read_text(encoding="utf-8").strip()
             for chunk in re.split(r"\n\s*\n", raw):
                 lines = [l for l in chunk.splitlines() if l.strip()]
