@@ -114,17 +114,28 @@ File `.mp4` từng scene nằm trong `media/videos/<tên_file>/<chất_lượng>
 ## Kiểm tra
 
 ```bash
-python -m unittest discover -s tests -t .    # cả 8 test
+python -m unittest discover -s tests -t .    # cả 9 test
 python tests/test_voice_pronunciation.py     # chỉ test phiên âm, không cần manim
 ```
 
-`test_voice_pronunciation.py` chỉ dùng thư viện chuẩn nên chạy được ở bất cứ đâu. Nó đọc
-các dict `VO` và báo lỗi nếu lời thoại còn thuật ngữ tiếng Anh chưa chuyển theo bảng phiên
-âm trong `plan.md`. **Chạy test này trước khi mở PR.**
+`test_voice_pronunciation.py` chỉ dùng thư viện chuẩn nên chạy được ở bất cứ đâu. Nó báo lỗi
+khi lời thoại còn thuật ngữ tiếng Anh chưa chuyển theo bảng phiên âm trong `plan.md`, và quét
+**mọi** cách viết lời thoại: dict `VO`, `voiceover(text=...)`, `narrated_caption(...)` và
+helper `beat()`. **Chạy test này trước khi mở PR.**
 
-> **Giới hạn cần biết:** test chỉ quét dict `VO`. Section nào truyền chuỗi trực tiếp vào
-> `voiceover(text=...)` sẽ không được kiểm, nên test xanh **không** có nghĩa là cả video đã
-> phiên âm xong. Hiện `s1`, `s2`, `s4` nằm ngoài tầm quét.
+### Nợ phiên âm và cách siết dần
+
+`s1`, `s2`, `s4` còn tổng cộng 238 chuỗi chưa phiên âm. Để CI không đỏ mà chặn được lỗi mới,
+số nợ ghi trong `BASELINE` ở đầu file test và chỉ được giảm:
+
+| Tình huống | Kết quả |
+|---|---|
+| File chưa có trong `BASELINE` mà xuất hiện vi phạm | fail |
+| File trong `BASELINE` mà số vi phạm tăng | fail |
+| File trong `BASELINE` mà số vi phạm giảm | fail, kèm số mới để cập nhật |
+
+Nghĩa là **lời thoại mới bắt buộc phải phiên âm đúng**, còn nợ cũ thì sửa dần. Mỗi lần sửa
+bớt, hạ con số trong `BASELINE` xuống theo thông báo của test; về 0 thì xoá hẳn dòng đó.
 
 CI ở `.github/workflows/ci.yml` chạy hai job cho mỗi push và pull request vào `main`: job
 *Nội dung và cú pháp* không cài manim nên xong trong vài chục giây, job *Hạ tầng giọng đọc*
