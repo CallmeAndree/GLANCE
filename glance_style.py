@@ -196,6 +196,12 @@ SECTION_COLORS = {
     "5": C_GNN,
 }
 
+# Light/deep variants of the LLM accent, for sections that need to distinguish
+# several LLM-derived signals (e.g. ego / 1-hop / 2-hop context embeddings)
+# while keeping them recognisably in the same "LLM = amber" family.
+C_LLM_LIGHT = ManimColor("#F7CE85")
+C_LLM_DEEP = ManimColor("#C98A1E")
+
 TITLE_SIZE = 44
 HEAD_SIZE = 34
 BODY_SIZE = 26
@@ -586,6 +592,289 @@ def line_chart(series, x_labels, y_range=(0.0, 1.0, 0.2), width=7.0, height=3.6,
 
 
 # --------------------------------------------------------------------------
+# Diagram building blocks. Small labelled shapes for architecture walk-throughs
+# (model boxes, equation cards, embedding strips, MLP diagrams, prompt cards).
+# Added for the GLANCE-architecture section; reusable by any section that
+# needs to draw a pipeline of labelled boxes and vectors.
+# --------------------------------------------------------------------------
+
+def fit_width(mobject, width):
+    """Shrink `mobject` in place if it is wider than `width`."""
+    if mobject.width > width:
+        mobject.scale_to_fit_width(width)
+    return mobject
+
+
+def avatar_node(label, target=False, radius=0.30):
+    """A labelled circle standing in for one example node, e.g. avatar_node("A")."""
+    circle = Circle(
+        radius=radius,
+        fill_color=C_HIGHLIGHT if target else MUTED,
+        fill_opacity=1,
+        stroke_color=C_HIGHLIGHT if target else MUTED,
+        stroke_width=2,
+    )
+    label_mob = txt(label, size=20, color=BG if target else INK, weight=BOLD).move_to(circle)
+    return VGroup(circle, label_mob)
+
+
+def step_header(number, title):
+    """Numbered step banner for a scene sequence, e.g. step_header(2, "Aggregate").
+
+    Starts clear of the top-left corner (offset right by ~4.3 units) so it
+    never overlaps a `section_banner()` placed there in the same scene.
+    """
+    number_mob = txt(f"{number:02d}", size=SMALL_SIZE, color=BG, weight=BOLD)
+    pill = RoundedRectangle(
+        width=0.62, height=0.38, corner_radius=0.10,
+        fill_color=INK, fill_opacity=1, stroke_width=0,
+    )
+    number_mob.move_to(pill)
+    title_mob = fit_width(txt(title, size=HEAD_SIZE, color=INK, weight=BOLD), 8.6)
+    head = VGroup(VGroup(pill, number_mob), title_mob).arrange(RIGHT, buff=0.22)
+    head.to_corner(UL, buff=0.32).shift(RIGHT * 4.3)
+    rule = Line(LEFT * 6.7, RIGHT * 6.7, color=C_EDGE, stroke_width=1.5)
+    rule.to_edge(UP, buff=0.98)
+    return VGroup(head, rule)
+
+
+def takeaway_chip(text_value):
+    """Small pill-shaped takeaway line pinned to the bottom of the frame."""
+    body = fit_width(txt(text_value, size=21, color=MUTED, weight=BOLD), 11.8)
+    bg = RoundedRectangle(
+        width=max(body.width + 0.45, 4.8), height=body.height + 0.25,
+        corner_radius=0.10, fill_color=BG, fill_opacity=0.94,
+        stroke_color=C_EDGE, stroke_width=1,
+    )
+    body.move_to(bg)
+    return VGroup(bg, body).to_edge(DOWN, buff=0.18)
+
+
+def doc_icon(scale=1.0):
+    """Tiny document glyph, a stand-in for 'raw node text'."""
+    page = RoundedRectangle(
+        width=0.36, height=0.46, corner_radius=0.04,
+        fill_color=BG, fill_opacity=1, stroke_color=MUTED, stroke_width=1.2,
+    )
+    lines = VGroup(*[
+        Line(LEFT * 0.11, RIGHT * 0.11, color=MUTED, stroke_width=1) for _ in range(3)
+    ]).arrange(DOWN, buff=0.06).move_to(page)
+    return VGroup(page, lines).scale(scale)
+
+
+def _box(width, height, stroke=MUTED, fill=BG, radius=0.18):
+    return RoundedRectangle(
+        width=width, height=height, corner_radius=radius,
+        stroke_color=stroke, stroke_width=1.6, fill_color=fill, fill_opacity=1,
+    )
+
+
+def module_box(title, subtitle, width=4.5, height=1.05, emphasized=False):
+    """A labelled model block with a subtitle, e.g. module_box("GNN", "backbone")."""
+    outer = _box(width, height, stroke=INK if emphasized else MUTED, fill=BG)
+    title_mob = fit_width(txt(title, size=24, color=INK if emphasized else MUTED, weight=BOLD), width - 0.35)
+    subtitle_mob = fit_width(txt(subtitle, size=17, color=MUTED), width - 0.35)
+    content = VGroup(title_mob, subtitle_mob).arrange(DOWN, buff=0.08).move_to(outer)
+    return VGroup(outer, content)
+
+
+def math_module_box(tex, subtitle, width=4.0, height=0.95, emphasized=False):
+    """Like module_box, but the title is a LaTeX formula."""
+    outer = _box(width, height, stroke=INK if emphasized else MUTED, fill=BG)
+    title_mob = fit_width(MathTex(tex, font_size=30, color=INK if emphasized else MUTED), width - 0.35)
+    subtitle_mob = fit_width(txt(subtitle, size=17, color=MUTED), width - 0.35)
+    content = VGroup(title_mob, subtitle_mob).arrange(DOWN, buff=0.08).move_to(outer)
+    return VGroup(outer, content)
+
+
+def equation_card(formula, subtitle, width=4.2, height=1.25, emphasized=False):
+    """A boxed formula with a caption underneath."""
+    box = _box(width, height, stroke=INK if emphasized else MUTED, fill=BG)
+    equation = fit_width(MathTex(formula, font_size=40, color=INK if emphasized else MUTED), width - 0.34)
+    label = txt(subtitle, size=19, color=MUTED)
+    content = VGroup(equation, label).arrange(DOWN, buff=0.12).move_to(box)
+    return VGroup(box, content)
+
+
+def feature_strip(label, n=7, cell_size=0.34, math_label=False):
+    """A row of small squares standing in for an opaque feature vector."""
+    cells = VGroup(*[
+        Square(
+            side_length=cell_size, stroke_color=MUTED, stroke_width=1.2,
+            fill_color=INK if i % 3 == 0 else (MUTED if i % 3 == 1 else C_EDGE),
+            fill_opacity=0.92,
+        )
+        for i in range(n)
+    ]).arrange(RIGHT, buff=0.035)
+    label_mob = MathTex(label, font_size=28, color=INK) if math_label else txt(label, size=22, color=INK, weight=BOLD)
+    return VGroup(label_mob, cells).arrange(RIGHT, buff=0.18)
+
+
+def probability_bars(label, values, width=2.25, math_label=False):
+    """A small stack of horizontal bars, one per class probability."""
+    label_mob = MathTex(label, font_size=25, color=INK) if math_label else txt(label, size=19, color=INK, weight=BOLD)
+    bars = VGroup()
+    for value in values:
+        track = RoundedRectangle(
+            width=width, height=0.17, corner_radius=0.04,
+            fill_color=C_EDGE, fill_opacity=1, stroke_width=0,
+        )
+        fill_bar = RoundedRectangle(
+            width=max(width * value, 0.05), height=0.17, corner_radius=0.04,
+            fill_color=MUTED, fill_opacity=1, stroke_width=0,
+        ).align_to(track, LEFT)
+        bars.add(VGroup(track, fill_bar))
+    bars.arrange(DOWN, buff=0.07)
+    return VGroup(label_mob, bars).arrange(RIGHT, buff=0.15)
+
+
+def embedding_strip(label, color, n=9, cell_size=0.29, emphasized=False):
+    """A row of coloured cells representing a learned embedding, labelled by its name."""
+    cells = VGroup(*[
+        Square(
+            side_length=cell_size, stroke_color=INK if emphasized else MUTED, stroke_width=1.1,
+            fill_color=color, fill_opacity=0.95 if index % 2 == 0 else 0.65,
+        )
+        for index in range(n)
+    ]).arrange(RIGHT, buff=0.03)
+    label_mob = MathTex(label, font_size=29, color=color if emphasized else INK)
+    return VGroup(label_mob, cells).arrange(RIGHT, buff=0.18)
+
+
+def named_embedding_strip(label, color, n=7, cell_size=0.25):
+    """Embedding strip whose mathematical name is centered above the cells."""
+    cells = VGroup(*[
+        Square(
+            side_length=cell_size, stroke_color=MUTED, stroke_width=1.0,
+            fill_color=color, fill_opacity=0.95 if index % 2 == 0 else 0.65,
+        )
+        for index in range(n)
+    ]).arrange(RIGHT, buff=0.03)
+    return VGroup(MathTex(label, font_size=29, color=color), cells).arrange(DOWN, buff=0.14)
+
+
+def segmented_embedding(label, segments, cells_per_segment=4, cell_size=0.28):
+    """An embedding strip made of several coloured segments, e.g. one per source."""
+    cells = VGroup()
+    for color in segments:
+        for index in range(cells_per_segment):
+            cells.add(
+                Square(
+                    side_length=cell_size, stroke_color=MUTED, stroke_width=1.0,
+                    fill_color=color, fill_opacity=0.95 if index % 2 == 0 else 0.65,
+                )
+            )
+    cells.arrange(RIGHT, buff=0.028)
+    return VGroup(MathTex(label, font_size=29, color=INK), cells).arrange(RIGHT, buff=0.18)
+
+
+def router_glyph(radius=0.66):
+    """A divided circle with aggregation and sigmoid, standing in for the router."""
+    ring = Circle(
+        radius=radius, stroke_color=C_ROUTER, stroke_width=4.0,
+        fill_color=BG, fill_opacity=1.0,
+    )
+    divider = Line(
+        ring.get_top() + DOWN * 0.06, ring.get_bottom() + UP * 0.06,
+        color=C_ROUTER, stroke_width=3.0,
+    )
+    sigma_sum = MathTex(r"\Sigma", font_size=43, color=INK).move_to(LEFT * radius * 0.48)
+    sigma_gate = MathTex(r"\sigma", font_size=43, color=INK).move_to(RIGHT * radius * 0.48)
+    return VGroup(ring, divider, sigma_sum, sigma_gate)
+
+
+def score_row(label, value, active=True, width=3.35):
+    """One row of a routing-score ranking: an avatar plus its score."""
+    icon = avatar_node(label, target=active, radius=0.22)
+    expression = MathTex(rf"a_{{{label}}}={value:.2f}", font_size=29, color=INK if active else MUTED)
+    content = VGroup(icon, expression).arrange(RIGHT, buff=0.28)
+    box = _box(width, 0.62, stroke=INK if active else MUTED, fill=BG, radius=0.10)
+    content.move_to(box)
+    return VGroup(box, content)
+
+
+def prompt_panel(title_text, lines, width=8.8, height=3.65):
+    """A card showing a serialized LLM prompt: a title plus a few example lines."""
+    box = _box(width, height, stroke=MUTED, fill=BG)
+    title_mob = txt(title_text, size=24, color=INK, weight=BOLD)
+    body = VGroup(*[
+        fit_width(
+            txt(line, size=20, color=INK if index == 0 else MUTED, weight=BOLD if index == 0 else NORMAL),
+            width - 0.75,
+        )
+        for index, line in enumerate(lines)
+    ]).arrange(DOWN, aligned_edge=LEFT, buff=0.17)
+    content = VGroup(title_mob, body).arrange(DOWN, aligned_edge=LEFT, buff=0.30).move_to(box)
+    return VGroup(box, content)
+
+
+def small_arrow(start, end, color=MUTED, stroke_width=2.0, buff=0.10):
+    return Arrow(start, end, buff=buff, color=color, stroke_width=stroke_width, tip_length=0.10)
+
+
+def elbow_arrow(start, end, via_x, color=MUTED, stroke_width=2.0):
+    """Orthogonal connector used to avoid diagonal and crossing arrows."""
+    path = VMobject(color=color, stroke_width=stroke_width)
+    path.set_points_as_corners([start, [via_x, start[1], 0], [via_x, end[1], 0], end])
+    tip = Triangle(fill_color=color, fill_opacity=1, stroke_width=0)
+    tip.scale(0.055).rotate(-PI / 2).move_to(end)
+    return VGroup(path, tip)
+
+
+def probability_chart(values, title_tex, class_names, width=5.15):
+    """A small titled bar list, one row per class probability."""
+    title = MathTex(title_tex, font_size=31, color=INK)
+    rows = VGroup()
+    for class_name, value in zip(class_names, values):
+        name = txt(class_name, size=19, color=MUTED, weight=BOLD)
+        name_slot = Rectangle(width=1.82, height=0.26, stroke_opacity=0, fill_opacity=0)
+        name.move_to(name_slot).align_to(name_slot, LEFT)
+        name_column = VGroup(name_slot, name)
+        track = RoundedRectangle(
+            width=2.25, height=0.22, corner_radius=0.05,
+            fill_color=C_EDGE, fill_opacity=1, stroke_width=0,
+        )
+        fill = RoundedRectangle(
+            width=max(2.25 * value, 0.06), height=0.22, corner_radius=0.05,
+            fill_color=INK, fill_opacity=1, stroke_width=0,
+        ).align_to(track, LEFT)
+        number = txt(f"{value:.2f}", size=18, color=INK, weight=BOLD)
+        bar = VGroup(track, fill)
+        value_group = VGroup(bar, number).arrange(RIGHT, buff=0.12)
+        rows.add(VGroup(name_column, value_group).arrange(RIGHT, buff=0.20))
+    rows.arrange(DOWN, aligned_edge=LEFT, buff=0.23)
+    content = VGroup(title, rows).arrange(DOWN, aligned_edge=LEFT, buff=0.32)
+    box = _box(width, content.height + 0.58, stroke=MUTED, fill=BG)
+    content.move_to(box)
+    return VGroup(box, content)
+
+
+def mlp_diagram(layer_sizes=(5, 6, 4, 3), radius=0.105, layer_gap=0.56, node_gap=0.34):
+    """Vertical MLP: neuron rows flow from top to bottom. Returns (network, edges, layers)."""
+    layers = VGroup()
+    for size in layer_sizes:
+        layer = VGroup(*[
+            Circle(radius=radius, stroke_color=MUTED, stroke_width=1.3, fill_color=BG, fill_opacity=1.0)
+            for _ in range(size)
+        ]).arrange(RIGHT, buff=node_gap)
+        layers.add(layer)
+    layers.arrange(DOWN, buff=layer_gap)
+
+    edges = VGroup()
+    for upper_layer, lower_layer in zip(layers[:-1], layers[1:]):
+        for upper_node in upper_layer:
+            for lower_node in lower_layer:
+                edges.add(Line(
+                    upper_node.get_center(), lower_node.get_center(),
+                    stroke_color=C_EDGE, stroke_width=0.85, stroke_opacity=0.72,
+                    buff=radius * 1.18,
+                ))
+
+    network = VGroup(edges, layers)
+    return network, edges, layers
+
+
+# --------------------------------------------------------------------------
 # Scene base class. Inherit from this so background, banner and the subtitle
 # habit are identical across sections.
 # --------------------------------------------------------------------------
@@ -678,3 +967,8 @@ class GlanceScene(VoiceoverScene):
         leaving = [m for m in self.mobjects if m not in keep]
         if leaving:
             self.play(*[FadeOut(m) for m in leaving], run_time=0.6)
+
+
+class GlanceMovingScene(GlanceScene, MovingCameraScene):
+    """GlanceScene variant for beats that pan or zoom the camera (self.camera.frame)."""
+    pass
