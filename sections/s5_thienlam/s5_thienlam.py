@@ -131,7 +131,8 @@ VO = {
     ),
     "obj_hparam": (
         "Cấu hình mặc định: bát ba mươi hai, route tốp mười hai mỗi bát, bê ta thử ở "
-        "không phẩy một, không phẩy hai, không phẩy ba."
+        "không phẩy một, không phẩy hai, không phẩy ba. Ngân sách K giảm dần theo lịch, "
+        "từ ba mươi hai xuống còn tám."
     ),
     "obj_question": "Nhưng liệu cách huấn luyện này có thật sự tạo ra một router học đúng không?",
     # --- S5_06 Setup ---
@@ -205,7 +206,7 @@ VO = {
     # --- S5_10 Scale ---
     "scale_setup": (
         "Trên ô gi bi Products — hai phẩy bốn lăm triệu nốt, gần sáu mươi hai triệu cạnh — GLANCE "
-        "chỉ gọi eo eo em cho khoảng sáu phẩy hai lăm phần trăm nốt."
+        "chỉ gọi eo eo em cho khoảng một phẩy sáu phần trăm nốt, tức một nốt trong mỗi sáu mươi tư."
     ),
     "scale_result": (
         "Vậy mà vẫn dẫn đầu: tám mươi hai phẩy ba, cao hơn gờ xê en hai tám mươi mốt phẩy tám, "
@@ -456,11 +457,11 @@ class S5_05_JointObjective(GlanceScene):
             self.play(FadeIn(total, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
 
         modules = VGroup(
-            labeled_box("GNN  F", C_GNN, width=1.9, height=0.85),
-            labeled_box("LLM  L", C_LLM, width=1.9, height=0.85),
-            labeled_box("REFINER  ξ", C_GOOD, width=1.9, height=0.85),
-            labeled_box("ROUTER  π", C_ROUTER, width=1.9, height=0.85),
-        ).arrange(RIGHT, buff=0.35).move_to([0, -2.35, 0])
+            labeled_box("GNN  F", C_GNN, width=2.4, height=0.85),
+            labeled_box("LLM  L", C_LLM, width=2.4, height=0.85),
+            labeled_box("REFINER  ξ", C_GOOD, width=2.4, height=0.85),
+            labeled_box("ROUTER  π", C_ROUTER, width=2.4, height=0.85),
+        ).arrange(RIGHT, buff=0.35).move_to([0, -2.05, 0])
         with self.voiceover(text=VO["obj_freeze"]) as tracker:
             self.play(
                 FadeOut(VGroup(chain, formula, pred_card, pred_text, route_card, route_text, total)),
@@ -471,10 +472,12 @@ class S5_05_JointObjective(GlanceScene):
                       Indicate(modules[2], color=C_GOOD), Indicate(modules[3], color=C_ROUTER),
                       run_time=min(1.6, tracker.duration))
 
-        hparam = txt(
-            "batch 32  ·  top-12/batch  ·  β = {0.1, 0.2, 0.3}  ·  λ_router 1.0  ·  λ_ent 0.01",
-            size=SMALL_SIZE - 4, color=MUTED,
-        ).move_to([0, -3.15, 0])
+        hparam = VGroup(
+            txt("batch 32  ·  route top-12 mỗi batch  ·  β = {0.1, 0.2, 0.3}",
+                size=SMALL_SIZE - 4, color=MUTED),
+            txt("lịch giảm ngân sách: K từ 32 xuống 8, hệ số r = 0.5",
+                size=SMALL_SIZE - 5, color=MUTED),
+        ).arrange(DOWN, buff=0.12).move_to([0, -3.1, 0])
         with self.voiceover(text=VO["obj_hparam"]) as tracker:
             self.play(FadeIn(hparam, shift=UP * 0.06), run_time=min(1.6, tracker.duration))
         self.add(source("Appendix C.4, tr.17"))
@@ -739,11 +742,11 @@ class S5_10_Scale(GlanceScene):
 
         dots = VGroup(*[Dot(radius=0.07, color=MUTED, fill_opacity=0.4) for _ in range(64)])
         dots.arrange_in_grid(rows=8, cols=8, buff=0.13).move_to([-4.3, 0.4, 0])
-        for i in (5, 14, 23, 40):
-            dots[i].set_color(C_LLM).set_fill(opacity=1).scale(1.3)
+        # ~1.6% = K=1 trên batch 64 → đúng một chấm sáng trong lưới 8×8.
+        dots[27].set_color(C_LLM).set_fill(opacity=1).scale(1.5)
         cloud_label = txt("2.45M NỐT · ~62M CẠNH", size=SMALL_SIZE - 4, color=INK, weight=BOLD)
         cloud_label.next_to(dots, UP, buff=0.25)
-        rate = metric_card("TỶ LỆ ROUTE", "~6.25%", C_LLM, note="K=2, batch 32", width=3.0)
+        rate = metric_card("TỶ LỆ ROUTE", "~1.6%", C_LLM, note="K=1, batch 64", width=3.0)
         rate.move_to([-0.3, 0.4, 0])
 
         with self.voiceover(text=VO["scale_setup"]) as tracker:
