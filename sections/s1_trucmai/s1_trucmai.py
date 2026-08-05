@@ -440,7 +440,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         node_B = graph.nodes["B"]
         node_C = graph.nodes["C"]
 
-        with self.narrated_caption(["Mỗi tài liệu trở thành một nút,"]):
+        with self.narrated_caption(["Mỗi tài liệu trở thành một nót,"]):
             self.play(
                 ReplacementTransform(doc1, node_A),
                 ReplacementTransform(doc2, node_B),
@@ -454,7 +454,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             other_nodes = VGroup(*[n for k, n in graph.nodes.items() if k not in ["A", "B", "C"]])
             self.play(FadeIn(other_nodes, lag_ratio=0.1), run_time=0.7)
 
-        with self.narrated_caption(["Khi mỗi nút có cả nội dung văn bản", "lẫn kết nối với nút khác,"]):
+        with self.narrated_caption(["Khi mỗi nót có cả nội dung văn bản", "lẫn kết nối với nót khác,"]):
             # Briefly highlight node A to show text+connections
             self.play(node_A.animate.set_stroke(BRIGHT, width=3.5), run_time=0.8)
 
@@ -475,7 +475,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         graph = self.tag_graph
         node_A = graph.nodes["A"]
 
-        with self.narrated_caption(["Để phân loại một nút, ta có hai nguồn bằng chứng."]):
+        with self.narrated_caption(["Để phân loại một nót, ta có hai nguồn bằng chứng."]):
             self.play(FadeOut(self.tag_title), run_time=0.4)
             # Zoom into node A
             self.play(
@@ -532,7 +532,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(FadeIn(sem_vec[0][0]), FadeIn(sem_vec[0][2]), FadeIn(sem_vec[1]), run_time=0.3)
             self.play(AnimationGroup(*[FadeIn(c) for c in sem_vec.cells], lag_ratio=0.08), run_time=0.9)
 
-        with self.narrated_caption(["GNN hiểu nút qua kết nối.", "LLM hiểu nút qua nội dung.", "Hai mô hình bổ sung cho nhau."]):
+        with self.narrated_caption(["GNN hiểu nót qua kết nối.", "LLM hiểu nót qua nội dung.", "Hai mô hình bổ sung cho nhau."]):
             blackout = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(99)
             comp = t("STRUCTURE + SEMANTICS", size=48, color=BRIGHT, weight=BOLD).set_z_index(100)
             self.play(FadeIn(blackout), FadeIn(comp, shift=UP * 0.2), run_time=0.8)
@@ -561,7 +561,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
 
         llm_box = module("LLM", width=2.2, height=0.9, emphasized=True).move_to(RIGHT * 4.5 + UP * 0.5)
 
-        with self.narrated_caption(["Nhưng ở đây xuất hiện một nghịch lý.", "Giả sử ta gọi LLM cho mọi nút trong đồ thị."]):
+        with self.narrated_caption(["Nhưng ở đây xuất hiện một nghịch lý.", "Giả sử ta gọi LLM cho mọi nót trong đồ thị."]):
             self.play(FadeIn(mini_nodes, lag_ratio=0.05), run_time=1.0)
             self.play(FadeIn(llm_box), run_time=0.5)
 
@@ -570,7 +570,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         self.play(FadeIn(cost_label), run_time=0.3)
 
         llm_arrows = VGroup()
-        with self.narrated_caption(["Mỗi nút gửi một yêu cầu.", "Chi phí tăng lên nhanh chóng."]):
+        with self.narrated_caption(["Mỗi nót gửi một yêu cầu.", "Chi phí tăng lên nhanh chóng."]):
             for i, n in enumerate(mini_nodes[:6]):
                 arr = Arrow(n.get_right(), llm_box.get_left(), buff=0.1, color=MID, stroke_width=1.5, tip_length=0.10)
                 llm_arrows.add(arr)
@@ -595,7 +595,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(FadeIn(gain_row, shift=UP * 0.1), run_time=0.5)
             self.play(gain_row_val.animate.set_opacity(0.5), run_time=0.4)
 
-        with self.narrated_caption(["Có thể LLM không vô ích.", "Có thể nó đang được dùng trên sai nút."]):
+        with self.narrated_caption(["Có thể LLM không vô ích.", "Có thể nó đang được dùng trên sai nót."]):
             q1 = t("IS THE LLM USELESS?", size=40, color=LIGHT, weight=BOLD).move_to(UP * 0.5)
             q2 = t("OR ARE WE USING IT ON THE WRONG NODES?", size=36, color=BRIGHT, weight=BOLD).move_to(DOWN * 0.5)
             self.play(FadeOut(llm_box), ReplacementTransform(VGroup(cost_row, gain_row), q1), run_time=0.8)
@@ -719,7 +719,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         arr_b = small_arrow(node_b.get_right(), strategy_box.get_left())
         arr_c = small_arrow(node_c.get_right(), strategy_box.get_left() + DOWN * 0.55)
 
-        with self.narrated_caption(["Dù dùng Enhancer hay Predictor,", "nhiều phương pháp áp cùng một chiến lược kết hợp cho mọi nút."]):
+        with self.narrated_caption(["Dù dùng Enhancer hay Predictor,", "nhiều phương pháp áp cùng một chiến lược kết hợp cho mọi nót."]):
             self.play(FadeIn(node_a), FadeIn(node_b), FadeIn(node_c), run_time=0.7)
             self.play(FadeIn(strategy_box), run_time=0.6)
             self.play(GrowArrow(arr_a), GrowArrow(arr_b), GrowArrow(arr_c), run_time=0.8)
@@ -747,7 +747,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         doc_A = create_text_document("Node A", ["Topic 1", "Topic 2", "Topic 3"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
         gnn_bar_A = probability_vector("GNN Prediction", [0.85, 0.10, 0.05], emphasized_index=0).move_to(RIGHT * 3.5 + DOWN * 0.2).scale(1.2)
 
-        with self.narrated_caption(["Ba nút có thể rất khác nhau.", "Nút A được GNN xử lý tốt."]):
+        with self.narrated_caption(["Ba nót có thể rất khác nhau.", "Nót A được GNN xử lý tốt."]):
             self.play(FadeOut(node_b), FadeOut(node_c), run_time=0.5)
             self.play(ReplacementTransform(node_a, group_A.target), run_time=0.8)
             self.play(Write(title_A), FadeIn(group_A.neighbors), FadeIn(group_A.edges), FadeIn(doc_A), run_time=1.0)
@@ -769,7 +769,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         doc_B = create_text_document("Node B", ["Graph Learning", "Heterophily", "Node Classification"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
         gnn_bar_B = probability_vector("GNN Prediction", [0.20, 0.65, 0.15], emphasized_index=1).move_to(RIGHT * 1.8 + DOWN * 0.8).scale(1.1)
 
-        with self.narrated_caption(["Nút B có vùng lân cận chứa nhiều loại khác nhau."]):
+        with self.narrated_caption(["Nót B có vùng lân cận chứa nhiều loại khác nhau."]):
             self.play(
                 FadeOut(title_A),
                 FadeIn(title_B),
@@ -791,7 +791,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             wrong_B = t("GNN: WRONG", color=gs.C_BAD, weight=BOLD, size=24).next_to(gnn_bar_B, DOWN, buff=0.15)
             self.play(FadeIn(wrong_B), run_time=0.4)
 
-        with self.narrated_caption(["Nhưng văn bản nút B rất rõ ràng.", "LLM sửa lại dự đoán thành công."]):
+        with self.narrated_caption(["Nhưng văn bản nót B rất rõ ràng.", "LLM sửa lại dự đoán thành công."]):
             self.play(highlight_keywords(doc_B, [0, 1, 2]), run_time=0.8)
             llm_bar_B = probability_vector("LLM Corrected", [0.90, 0.05, 0.05], emphasized_index=0).move_to(RIGHT * 5.2 + DOWN * 0.8).scale(1.1)
             self.play(FadeIn(llm_bar_B), run_time=0.7)
@@ -810,7 +810,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         group_C = create_target_neighborhood(kind="noisy", label="C", scale=0.95).move_to(LEFT * 4 + UP * 0.4)
         doc_C = create_text_document("Node C", ["Some words...", "General text...", "Vague description"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
 
-        with self.narrated_caption(["Nút C cũng khó với GNN.", "Nhưng văn bản lại rất mơ hồ."]):
+        with self.narrated_caption(["Nót C cũng khó với GNN.", "Nhưng văn bản lại rất mơ hồ."]):
             llm_bar_C = probability_vector("LLM Output", [0.33, 0.34, 0.33], emphasized_index=None).move_to(RIGHT * 5.2 + DOWN * 0.8).scale(1.1)
             wrong_C = t("LLM: UNCERTAIN", color=gs.C_BAD, weight=BOLD, size=24).next_to(llm_bar_C, DOWN, buff=0.15)
             self.play(
@@ -859,7 +859,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         
         vs = t("VS", size=48, color=MID, weight=BOLD).move_to(UP * 0.5)
 
-        with self.narrated_caption(["Nút B và Nút C đều khó với GNN.", "Nhưng chỉ Nút B nhận được lợi ích từ LLM."]):
+        with self.narrated_caption(["Nót B và Nót C đều khó với GNN.", "Nhưng chỉ Nót B nhận được lợi ích từ LLM."]):
             self.play(
                 FadeOut(c["title"]), FadeOut(c["group"]), FadeOut(c["doc"]),
                 FadeOut(c["gnn_bar"]), FadeOut(c["llm_bar"]),
@@ -908,7 +908,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 run_time=0.8
             )
 
-        with self.narrated_caption(["Giả sử chín mươi phần trăm là các nút dễ,", "còn mười phần trăm là các nút khó."]):
+        with self.narrated_caption(["Giả sử chín mươi phần trăm là các nót dễ,", "còn mười phần trăm là các nót khó."]):
             easy_group = VGroup(
                 t("90% Easy Nodes", size=38, color=BRIGHT, weight=BOLD),
                 t("GNN: 95%  ->  Fusion: 94%", size=26, color=LIGHT)
@@ -953,7 +953,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(FadeIn(beat1, shift=UP * 0.2), run_time=0.8)
             self.wait(0.5)
 
-        with self.narrated_caption(["Vậy nút nào thực sự đáng để gọi LLM?"]):
+        with self.narrated_caption(["Vậy nót nào thực sự đáng để gọi LLM?"]):
             self.play(FadeOut(beat1), run_time=0.6)
             q = t("WHICH NODES SHOULD QUERY THE LLM?", size=44, color=gs.C_GOOD, weight=BOLD)
             self.play(Write(q), run_time=0.9)
