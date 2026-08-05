@@ -71,7 +71,9 @@ label-free), uncertainty 3.28, C-density 4.14, degree 4.33, random 4.50, $\bar d
 theo cả degree và homophily lên tới **30.1%** (Hình 5, §E.5).
 
 **Scale (Bảng 5, tr.9)**: Arxiv-Year overall **49.8 ± 0.1**, OGB-Products **82.3 ± 0.1**,
-với query rate chỉ **~6.25%** (K = 2, batch 32).
+với query rate chỉ **~1.6%** (K = 1, batch 64). Nguyên văn tr.9: "we utilize a query
+rate of ~1.6% (K = 1 with batch size 64)". Số học khớp: 1/64 = 1.5625%.
+Kích thước dataset (tr.19): OGB-Products **2,449,029** nốt · **61,859,140** cạnh.
 
 **Sensitivity K (§6.3, tr.8)**: K = 8→12 cho +3.4% ở $h_v$ < 0.25 (Pubmed, Arxiv23),
 K = 12→16 cho thêm +3.0%; Cora tụt nhẹ ở K = 8→12 rồi **+12.3%** ở K = 16.
