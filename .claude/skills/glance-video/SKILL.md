@@ -114,6 +114,12 @@ Quy tắc:
 - **Viết theo cách đọc lên, không theo cách viết công thức**: `h_v` → "h của v",
   `3/4` → "ba phần tư", `0.75` → "không phẩy bảy lăm", `N(v)` → "tập hàng xóm của v".
   TTS đọc ký hiệu toán rất tệ.
+- **Lời `VO` không để tiếng Anh cho model tự đoán cách đọc.** Chữ trên hình vẫn giữ
+  thuật ngữ gốc, nhưng lời đọc dùng phiên âm đã chốt (`node` → "nót") và ưu tiên
+  tiếng Việt tự nhiên cho từ còn lại (`routing` → "định tuyến", `embedding` →
+  "véc-tơ biểu diễn"). Acronym dùng đúng
+  bảng phiên âm chung: `LLM` → "eo eo em", `MLP Q` → "em eo pi khiu",
+  `GNN` → "gi en en", `GLANCE` → "gờ lans".
 - Đừng để tổng `run_time` trong khối vượt quá độ dài lời đọc, nếu không hình sẽ
   chạy lố sang câu sau. Kiểm tra bằng cách so `tracker.duration` với tổng run_time.
 - Audio **cache theo hash của text** trong `media/voiceovers/`. Sửa animation thì
@@ -126,11 +132,13 @@ Quy tắc:
 
 | Lệnh | Service | Khi nào dùng |
 |---|---|---|
-| (mặc định) | gTTS `vi` | làm nháp — free, cần mạng, giọng hơi máy |
+| `GLANCE_TTS=timed manim ...` | Timed API | mặc định — cần `GLANCE_TIMED_TTS_URL` + `GLANCE_TIMED_TTS_TOKEN` trong `.env`, trả MP3 và timing từng segment |
+| `GLANCE_TTS=gtts manim ...` | gTTS `vi` | dự phòng — free, cần mạng, giọng hơi máy |
 | `GLANCE_TTS=azure manim ...` | Azure `en-US-AvaMultilingualNeural` | bản nộp — tự code-switch Việt-Anh, cần `AZURE_SUBSCRIPTION_KEY` + `AZURE_SERVICE_REGION` trong `.env` |
 | `GLANCE_TTS=record manim ...` | RecorderService | thu giọng thật qua CLI lúc render (`brew install sox`) |
 
-gTTS gọi ra dịch vụ của Google mỗi lần có text mới, nên cần mạng khi render lần đầu.
+Timed API và gTTS cần mạng khi render lời thoại mới; audio đã sinh được cache theo
+text + backend trong `media/voiceovers/`. Không commit token timed API.
 Với Azure, `GlanceScene` tự bọc các thuật ngữ trong `EN_TERMS` và acronym trong
 `EN_ACRONYMS` bằng locale `en-US`; phần còn lại dùng `vi-VN`. Đổi sang giọng nam
 bằng `GLANCE_VOICE=en-US-AndrewMultilingualNeural`. Có thể dùng bản HD Ava/Andrew

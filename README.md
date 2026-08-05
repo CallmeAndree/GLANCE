@@ -63,7 +63,7 @@ manim -ql sections/s3_nhutanh/s3_nhutanh.py
 ./build.sh -qh      # 1080p60 bản cuối
 ```
 
-Lần render đầu cần **mạng** để gTTS sinh audio; sau đó audio được cache trong
+Lần render đầu cần **mạng** để backend TTS sinh audio; sau đó audio được cache trong
 `media/voiceovers/` theo hash của lời thoại nên render lại rất nhanh.
 
 Kết quả: `build/final.mp4` (đã có giọng đọc) + `build/final.srt`.
@@ -93,9 +93,12 @@ File `.mp4` từng scene nằm trong `media/videos/<tên_file>/<chất_lượng>
    ```
 3. **Thuyết minh tự đồng bộ**: gom lời thoại vào dict `VO` ở đầu file, rồi bọc
    animation trong khối `with self.voiceover(text=VO["..."]) as tracker:`.
-   Plugin `manim-voiceover` sinh audio bằng gTTS tiếng Việt, tự chờ hết câu nói,
+   Plugin `manim-voiceover` sinh audio, tự chờ hết câu nói,
    và tự sinh `.srt` — **không** gọi `add_subcaption` nữa (sẽ trùng phụ đề).
-   Đổi giọng: `GLANCE_TTS=azure` hoặc `GLANCE_TTS=record` khi render.
+   Mặc định dự án dùng `GLANCE_TTS=timed`: cấu hình
+   `GLANCE_TIMED_TTS_URL` và `GLANCE_TIMED_TTS_TOKEN` trong `.env`. API trả MP3
+   base64 cùng timing từng segment; token không được commit. Có thể đổi sang
+   `GLANCE_TTS=azure`, `GLANCE_TTS=gtts` hoặc `GLANCE_TTS=record` khi render.
    Backend Azure mặc định dùng `en-US-AvaMultilingualNeural`; các thuật ngữ
    tiếng Anh đã biết được tự bọc locale `en-US`, còn phần tiếng Việt dùng
    `vi-VN`, nên giữ cùng một chất giọng khi code-switch. Có thể chọn giọng nam

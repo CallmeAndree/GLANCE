@@ -78,6 +78,10 @@ Mỗi section kết bằng đúng một câu dẫn, đã viết sẵn dưới đ
 
 ## Quy tắc thuyết minh
 - Mỗi câu phụ đề ≤ 2 dòng, ≤ ~14 từ. Nói chậm, một ý một nhịp.
-- Thuật ngữ giữ nguyên tiếng Anh: *homophily, heterophily, routing, node, embedding,
-  message passing, text-attributed graph*. Không dịch nửa vời.
+- Chữ trên hình giữ nguyên thuật ngữ tiếng Anh; lời trong `VO` phải viết theo cách
+  model TTS đọc tiếng Việt. Dùng phiên âm đã chốt: `node` → "nót"; các thuật ngữ
+  còn lại ưu tiên tiếng Việt tự nhiên, như `routing` →
+  "định tuyến", `embedding` → "véc-tơ biểu diễn". Phiên âm acronym thống nhất:
+  `LLM` → "eo eo em", `MLP Q` → "em eo pi khiu", `GNN` → "gi en en",
+  `GLANCE` → "gờ lans".
 - Lần đầu xuất hiện thuật ngữ: hiện chữ tiếng Anh + một dòng giải thích tiếng Việt.

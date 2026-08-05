@@ -36,20 +36,20 @@ INK = "#08090B"
 # font tiếng Việt của repo thay vì để Pango tự chọn bừa.
 FONT = "Segoe UI" if "Segoe UI" in set(manimpango.list_fonts()) else FONT_MAIN
 
-# Lời thuyết minh gom một chỗ theo quy ước repo. Nội dung lấy nguyên văn từ
-# các add_subcaption trong bản gốc, không sửa chữ.
+# Lời thuyết minh gom một chỗ theo quy ước repo. Viết đúng theo cách TTS đọc;
+# chữ tiếng Anh trên hình vẫn giữ nguyên để khớp thuật ngữ trong paper.
 VO = {
-    "k1": "GLANCE dự đoán nhãn cho mỗi node trong một Text-Attributed Graph.",
-    "k2": "Từ đây, ta chỉ theo dõi Node A xuyên suốt pipeline.",
-    "k3": "GNN, MLP Q và thông tin trực tiếp cung cấp ba góc nhìn bổ sung về A.",
-    "k4": "Mỗi layer gom representation hàng xóm rồi cập nhật representation của A.",
-    "k5": "GLANCE có thể dùng nhiều backbone khác nhau, "
-          "miễn tạo được representation cho A.",
-    "k6": "GNN cho embedding, prediction ban đầu và uncertainty; "
-          "chưa có routing score.",
-    "k7": "Cùng một MLP Q tạo phân phối mềm cho A và từng hàng xóm.",
-    "k8": "Giá trị cao cho thấy A giống neighborhood; giá trị thấp gợi ý heterophily.",
-    "k9": "x A vẫn được giữ trực tiếp; video dừng trước bước ghép routing feature.",
+    "k1": "Gờ lans dự đoán nhãn cho mỗi nót trong một đồ thị có thuộc tính văn bản.",
+    "k2": "Từ đây, ta chỉ theo dõi nót A xuyên suốt quy trình.",
+    "k3": "Gi en en, em eo pi khiu và thông tin trực tiếp cung cấp ba góc nhìn bổ sung về A.",
+    "k4": "Mỗi tầng gom biểu diễn của hàng xóm rồi cập nhật biểu diễn của A.",
+    "k5": "Gờ lans có thể dùng nhiều kiến trúc nền khác nhau, "
+          "miễn tạo được biểu diễn cho A.",
+    "k6": "Gi en en cho véc-tơ biểu diễn, dự đoán ban đầu và độ bất định; "
+          "chưa có điểm định tuyến.",
+    "k7": "Cùng một em eo pi khiu tạo phân phối mềm cho A và từng hàng xóm.",
+    "k8": "Giá trị cao cho thấy A giống vùng lân cận; giá trị thấp gợi ý tính khác lớp.",
+    "k9": "Đặc trưng x của A vẫn được giữ trực tiếp; đoạn phim dừng trước bước ghép đặc trưng định tuyến.",
 }
 
 

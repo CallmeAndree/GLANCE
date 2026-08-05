@@ -52,224 +52,224 @@ SAME_LABEL = [True, True, True, False]
 # audio tự sinh lại; giữ nguyên text thì dùng bản đã cache, render nhanh.
 VO = {
     "intro": (
-        "Tín hiệu đầu tiên là local homophily. "
-        "Nó đo mức độ tương đồng về nhãn giữa một node và các hàng xóm trực tiếp của nó."
+        "Tín hiệu đầu tiên là độ đồng nhất cục bộ. "
+        "Nó đo mức độ tương đồng về nhãn giữa một nót và các hàng xóm trực tiếp của nó."
     ),
     "check": (
         "Cụ thể, với mỗi hàng xóm u, ta kiểm tra liệu nhãn của u "
         "có giống nhãn của v hay không. "
-        "Sau đó lấy tỷ lệ trên toàn bộ neighborhood."
+        "Sau đó lấy tỷ lệ trên toàn bộ tập hàng xóm."
     ),
     "value": (
         "Trong ví dụ này, ba trong bốn hàng xóm cùng nhãn với v, "
         "vì vậy h của v bằng ba phần tư, tức không phẩy bảy lăm."
     ),
     "high": (
-        "Khi local homophily cao, thông tin từ hàng xóm thường nhất quán với node trung tâm. "
-        "Vì GNN học bằng cách tổng hợp thông tin lân cận, "
-        "message passing thường có lợi trong trường hợp này."
+        "Khi độ đồng nhất cục bộ cao, thông tin từ hàng xóm thường nhất quán với nót trung tâm. "
+        "Vì gi en en học bằng cách tổng hợp thông tin lân cận, "
+        "quá trình truyền thông điệp thường có lợi trong trường hợp này."
     ),
     "low": (
-        "Ngược lại, khi local homophily thấp, phần lớn hàng xóm thuộc lớp khác. "
+        "Ngược lại, khi độ đồng nhất cục bộ thấp, phần lớn hàng xóm thuộc lớp khác. "
         "Việc tổng hợp các biểu diễn này có thể đưa tín hiệu không phù hợp "
-        "vào node trung tâm, và khiến GNN dự đoán sai."
+        "vào nót trung tâm, và khiến gi en en dự đoán sai."
     ),
     # --- Cảnh 2: relative degree ---
     "rd_intro": (
-        "Tín hiệu thứ hai là relative degree. "
-        "Degree thông thường chỉ cho biết node có bao nhiêu cạnh. "
-        "Relative degree đặt degree đó trong bối cảnh của chính neighborhood."
+        "Tín hiệu thứ hai là bậc tương đối. "
+        "Bậc thông thường chỉ cho biết nót có bao nhiêu cạnh. "
+        "Bậc tương đối đặt giá trị đó trong bối cảnh của chính tập hàng xóm."
     ),
     "rd_formula": (
-        "Với mỗi hàng xóm u, tác giả so sánh degree của v với degree của u, "
+        "Với mỗi hàng xóm u, tác giả so sánh bậc của v với bậc của u, "
         "rồi lấy trung bình trên tất cả hàng xóm."
     ),
     "rd_scale": (
-        "Nếu relative degree lớn hơn một, node v có xu hướng kết nối nhiều hơn các hàng xóm. "
-        "Nếu nhỏ hơn một, nó kết nối ít hơn các node xung quanh."
+        "Nếu bậc tương đối lớn hơn một, nót v có xu hướng kết nối nhiều hơn các hàng xóm. "
+        "Nếu nhỏ hơn một, nó kết nối ít hơn các nót xung quanh."
     ),
     "rd_value": (
-        "Trong ví dụ này, degree của v thấp hơn cả hai hàng xóm, "
-        "nên relative degree xấp xỉ không phẩy bảy chín, nhỏ hơn một."
+        "Trong ví dụ này, bậc của v thấp hơn cả hai hàng xóm, "
+        "nên bậc tương đối xấp xỉ không phẩy bảy chín, nhỏ hơn một."
     ),
     # --- Cảnh 3: GNN và LLM bổ sung nhau ---
     "cp_setup": (
-        "Sau đó, tác giả chia các node thành từng nhóm theo local homophily "
-        "và relative degree, rồi so sánh độ chính xác của GNN với LLM trong mỗi nhóm."
+        "Sau đó, tác giả chia các nót thành từng nhóm theo độ đồng nhất cục bộ "
+        "và bậc tương đối, rồi so sánh độ chính xác của gi en en với eo eo em trong mỗi nhóm."
     ),
     "cp_trend": (
         "Kết quả cho thấy một xu hướng bổ sung rõ rệt. "
-        "GNN hoạt động tốt ở những vùng có homophily cao và được kết nối tốt. "
-        "Nhưng khi homophily hoặc relative degree giảm, lợi thế của LLM tăng lên."
+        "Gi en en hoạt động tốt ở những vùng có độ đồng nhất cao và được kết nối tốt. "
+        "Nhưng khi độ đồng nhất hoặc bậc tương đối giảm, lợi thế của eo eo em tăng lên."
     ),
     "cp_gain": (
-        "Trên Cora, ở nhóm node khó, LLM đạt mức cải thiện tới hai mươi phẩy bốn phần trăm "
-        "so với mô hình tốt tiếp theo là GCNII sử dụng đặc trưng được LLM tăng cường."
+        "Trên Cô-ra, ở nhóm nót khó, eo eo em đạt mức cải thiện tới hai mươi phẩy bốn phần trăm "
+        "so với mô hình tốt tiếp theo là gi xi en hai sử dụng đặc trưng được eo eo em tăng cường."
     ),
     "cp_interact": (
         "Hai tín hiệu này còn tương tác với nhau. "
-        "Khi đồng thời phân nhóm theo cả homophily và degree, "
+        "Khi đồng thời phân nhóm theo cả độ đồng nhất và bậc, "
         "chênh lệch hiệu năng giữa các nhóm cấu trúc có thể lên tới ba mươi phẩy một phần trăm."
     ),
     # --- Cảnh 4: true -> estimated homophily ---
     "eh_problem": (
-        "Local homophily có vẻ là một tín hiệu routing rất tốt. "
-        "Tuy nhiên, công thức này cần nhãn thật của node và hàng xóm, "
-        "đúng vào những thông tin không có sẵn đối với các node cần dự đoán."
+        "Độ đồng nhất cục bộ có vẻ là một tín hiệu định tuyến rất tốt. "
+        "Tuy nhiên, công thức này cần nhãn thật của nót và hàng xóm, "
+        "đúng vào những thông tin không có sẵn đối với các nót cần dự đoán."
     ),
     "eh_mlp": (
-        "Để giải quyết vấn đề này, tác giả huấn luyện một MLP Q "
-        "trên đặc trưng node để dự đoán nhãn tạm thời."
+        "Để giải quyết vấn đề này, tác giả huấn luyện một em eo pi khiu "
+        "trên đặc trưng nót để dự đoán nhãn tạm thời."
     ),
     "eh_estimate": (
         "Sau đó, các nhãn dự đoán được dùng thay cho nhãn thật "
-        "để tính estimated local homophily."
+        "để tính độ đồng nhất cục bộ ước lượng."
     ),
     "eh_rank": (
-        "Trong đánh giá routing bằng NCS, true homophily có thứ hạng trung bình tốt nhất. "
+        "Trong đánh giá định tuyến bằng en xi ét, độ đồng nhất thực có thứ hạng trung bình tốt nhất. "
         "Quan trọng hơn, khi loại bỏ những tín hiệu cần nhãn thật, "
-        "estimated homophily đạt thứ hạng trung bình tốt nhất "
-        "trong các heuristic không cần nhãn."
+        "độ đồng nhất ước lượng đạt thứ hạng trung bình tốt nhất "
+        "trong các phương pháp kinh nghiệm không cần nhãn."
     ),
     # --- Cảnh kết ---
     "end_summary": (
-        "Như vậy, local homophily và relative degree không trực tiếp dự đoán nhãn. "
-        "Chúng giúp nhận diện những node có cấu trúc bất lợi đối với GNN, "
-        "và nơi LLM có khả năng tạo thêm giá trị."
+        "Như vậy, độ đồng nhất cục bộ và bậc tương đối không trực tiếp dự đoán nhãn. "
+        "Chúng giúp nhận diện những nót có cấu trúc bất lợi đối với gi en en, "
+        "và nơi eo eo em có khả năng tạo thêm giá trị."
     ),
     "end_router": (
         "Tuy nhiên, kết quả cũng cho thấy không có một tín hiệu đơn lẻ nào "
-        "đủ ổn định để quyết định routing trong mọi trường hợp. "
-        "Vì vậy, GLANCE không sử dụng một ngưỡng cố định. "
-        "Thay vào đó, nó kết hợp các tín hiệu này trong một router "
-        "được học thích nghi cho từng node."
+        "đủ ổn định để quyết định định tuyến trong mọi trường hợp. "
+        "Vì vậy, gờ lans không sử dụng một ngưỡng cố định. "
+        "Thay vào đó, nó kết hợp các tín hiệu này trong một bộ định tuyến "
+        "được học thích nghi cho từng nót."
     ),
     "end_next": (
-        "Cụ thể router này hoạt động như thế nào sẽ được trình bày trong phần tiếp theo."
+        "Cụ thể bộ định tuyến này hoạt động như thế nào sẽ được trình bày trong phần tiếp theo."
     ),
     # ------------------------------------------------------------------
     # Phần bổ sung — năm routing signals của Step 1 (§5.1.1, tr.5–6).
     # ------------------------------------------------------------------
     "fs_open": (
-        "Phân tích trước đó cho thấy không một heuristic đơn lẻ nào đủ ổn định "
-        "để quyết định node nào cần LLM. Vì vậy, GLANCE không chỉ sử dụng homophily, "
-        "mà mô tả mỗi node bằng năm routing signals bổ sung cho nhau."
+        "Phân tích trước đó cho thấy không một quy tắc kinh nghiệm đơn lẻ nào đủ ổn định "
+        "để quyết định nót nào cần eo eo em. Vì vậy, gờ lans không chỉ sử dụng độ đồng nhất, "
+        "mà mô tả mỗi nót bằng năm tín hiệu định tuyến bổ sung cho nhau."
     ),
     "fs_roles": (
-        "Mỗi signal phản ánh một khía cạnh khác nhau: thông tin GNN đã học được, "
-        "mức độ tin cậy của GNN, sự nhất quán với hàng xóm, "
-        "nội dung riêng của node, và lượng thông tin cấu trúc sẵn có."
+        "Mỗi tín hiệu phản ánh một khía cạnh khác nhau: thông tin gi en en đã học được, "
+        "mức độ tin cậy của gi en en, sự nhất quán với hàng xóm, "
+        "nội dung riêng của nót, và lượng thông tin cấu trúc sẵn có."
     ),
     # --- Signal 1: node embedding ---
     "ne_intro": (
-        "Signal đầu tiên là node embedding, "
-        "do một GNN đã được huấn luyện trước tạo ra."
+        "Tín hiệu đầu tiên là véc-tơ biểu diễn của nót, "
+        "do một gi en en đã được huấn luyện trước tạo ra."
     ),
     "ne_build": (
-        "GNN tổng hợp đặc trưng của node v với thông tin từ neighborhood k hop, "
-        "tạo thành vector biểu diễn z của v. "
-        "Vector này mã hoá những gì GNN đã hiểu về cả nội dung "
-        "và vị trí cấu trúc của node."
+        "Gi en en tổng hợp đặc trưng của nót v với thông tin từ vùng lân cận trong phạm vi ca bước, "
+        "tạo thành véc-tơ biểu diễn z của v. "
+        "Véc-tơ này mã hoá những gì gi en en đã hiểu về cả nội dung "
+        "và vị trí cấu trúc của nót."
     ),
     "ne_not_pred": (
         "Đây không phải là nhãn dự đoán cuối cùng. "
-        "Nó là biểu diễn trung gian giàu thông tin, giúp router nhận biết "
-        "những kiểu neighborhood mà GNN thường xử lý tốt hoặc gặp khó khăn."
+        "Nó là biểu diễn trung gian giàu thông tin, giúp bộ định tuyến nhận biết "
+        "những kiểu vùng lân cận mà gi en en thường xử lý tốt hoặc gặp khó khăn."
     ),
     # --- Signal 2: node uncertainty ---
     "un_intro": (
-        "Signal thứ hai là node uncertainty: "
-        "mức độ không chắc chắn của GNN đối với node đang xét."
+        "Tín hiệu thứ hai là độ bất định của nót: "
+        "mức độ không chắc chắn của gi en en đối với nót đang xét."
     ),
     "un_dropout": (
-        "GLANCE sử dụng dropout khi suy luận để tạo nhiều dự đoán ngẫu nhiên. "
-        "Nếu các lần chạy đều đưa ra phân phối gần giống nhau, GNN tương đối chắc chắn. "
-        "Nếu kết quả thay đổi mạnh, uncertainty sẽ cao."
+        "Gờ lans sử dụng kỹ thuật loại bỏ ngẫu nhiên khi suy luận để tạo nhiều dự đoán. "
+        "Nếu các lần chạy đều đưa ra phân phối gần giống nhau, gi en en tương đối chắc chắn. "
+        "Nếu kết quả thay đổi mạnh, độ bất định sẽ cao."
     ),
     "un_caveat": (
-        "Uncertainty cao là một dấu hiệu node có thể khó đối với GNN, "
-        "nhưng không tự động có nghĩa LLM sẽ tốt hơn. "
-        "Vì vậy, GLANCE chỉ dùng nó như một signal trong tổ hợp."
+        "Độ bất định cao là một dấu hiệu nót có thể khó đối với gi en en, "
+        "nhưng không tự động có nghĩa eo eo em sẽ tốt hơn. "
+        "Vì vậy, gờ lans chỉ dùng nó như một tín hiệu trong tổ hợp."
     ),
     # --- Signal 3: soft homophily estimation ---
     "sh_intro": (
-        "Signal thứ ba xuất phát trực tiếp từ phân tích structural signals: "
-        "estimated local homophily. "
-        "Tuy nhiên, GLANCE sử dụng một phiên bản mềm giàu thông tin hơn."
+        "Tín hiệu thứ ba xuất phát trực tiếp từ phân tích các tín hiệu cấu trúc: "
+        "độ đồng nhất cục bộ ước lượng. "
+        "Tuy nhiên, gờ lans sử dụng một phiên bản mềm giàu thông tin hơn."
     ),
     "sh_dist": (
-        "MLP Q không chỉ trả về lớp dự đoán, "
+        "Em eo pi khiu không chỉ trả về lớp dự đoán, "
         "mà trả về toàn bộ phân phối xác suất trên các lớp, "
-        "cho node v và cho từng hàng xóm."
+        "cho nót v và cho từng hàng xóm."
     ),
     "sh_dot": (
-        "GLANCE lấy tích vô hướng giữa phân phối của node trung tâm "
+        "Gờ lans lấy tích vô hướng giữa phân phối của nót trung tâm "
         "và phân phối trung bình của các hàng xóm. "
-        "Hai phân phối càng tương đồng, estimated homophily càng cao."
+        "Hai phân phối càng tương đồng, độ đồng nhất ước lượng càng cao."
     ),
     "sh_example": (
         "Trong ví dụ này, tích vô hướng cho giá trị không phẩy ba tám. "
-        "Giá trị tương đối thấp cho thấy lớp tiềm năng của node v "
-        "không phù hợp với xu hướng chung của neighborhood."
+        "Giá trị tương đối thấp cho thấy lớp tiềm năng của nót v "
+        "không phù hợp với xu hướng chung của vùng lân cận."
     ),
     "sh_soft": (
         "So với việc chỉ kiểm tra hai nhãn dự đoán có giống nhau hay không, "
-        "phiên bản mềm còn giữ lại mức độ chắc chắn của MLP."
+        "phiên bản mềm còn giữ lại mức độ chắc chắn của em eo pi."
     ),
     # --- Signal 4: original node features ---
     "nf_intro": (
-        "Signal thứ tư là original node features, ký hiệu x của v. "
-        "Đây là biểu diễn nội dung vốn có của node, "
-        "trước khi GNN tổng hợp thông tin từ hàng xóm."
+        "Tín hiệu thứ tư là đặc trưng ban đầu của nót, ký hiệu x của v. "
+        "Đây là biểu diễn nội dung vốn có của nót, "
+        "trước khi gi en en tổng hợp thông tin từ hàng xóm."
     ),
     "nf_compare": (
-        "Node embedding cho biết GNN đã biến đổi thông tin như thế nào, "
-        "còn original features giúp router vẫn truy cập trực tiếp "
-        "vào tín hiệu nội tại của node."
+        "Véc-tơ biểu diễn của nót cho biết gi en en đã biến đổi thông tin như thế nào, "
+        "còn đặc trưng ban đầu giúp bộ định tuyến vẫn truy cập trực tiếp "
+        "vào tín hiệu nội tại của nót."
     ),
     "nf_conflict": (
-        "Điều này đặc biệt hữu ích khi đặc trưng node nhiễu, mơ hồ, "
-        "hoặc xung đột với thông tin được tổng hợp từ neighborhood."
+        "Điều này đặc biệt hữu ích khi đặc trưng nót nhiễu, mơ hồ, "
+        "hoặc xung đột với thông tin được tổng hợp từ vùng lân cận."
     ),
     # --- Signal 5: degree ---
     "dg_intro": (
-        "Signal cuối cùng là degree, ký hiệu d của v: "
-        "số hàng xóm trực tiếp của node v."
+        "Tín hiệu cuối cùng là bậc, ký hiệu d của v: "
+        "số hàng xóm trực tiếp của nót v."
     ),
     "dg_context": (
-        "Degree cho biết GNN có bao nhiêu nguồn thông tin lân cận để tổng hợp. "
-        "Node có degree thấp thường nhận được ít context cấu trúc hơn."
+        "Bậc cho biết gi en en có bao nhiêu nguồn thông tin lân cận để tổng hợp. "
+        "Nót có bậc thấp thường nhận được ít ngữ cảnh cấu trúc hơn."
     ),
     "dg_caveat": (
         "Tuy nhiên, nhiều hàng xóm chưa chắc đã tốt nếu các hàng xóm không liên quan. "
-        "Vì vậy, degree phải được xét cùng homophily, uncertainty "
-        "và các signal còn lại."
+        "Vì vậy, bậc phải được xét cùng độ đồng nhất, độ bất định "
+        "và các tín hiệu còn lại."
     ),
     "dg_vs_rd": (
-        "Cần phân biệt rõ với phần phân tích lúc nãy: ở đó ta dùng relative degree "
-        "để so sánh node với hàng xóm, còn router của GLANCE dùng degree thô, "
+        "Cần phân biệt rõ với phần phân tích lúc nãy: ở đó ta dùng bậc tương đối "
+        "để so sánh nót với hàng xóm, còn bộ định tuyến của gờ lans dùng bậc thô, "
         "tức trực tiếp số lượng hàng xóm."
     ),
     # --- Cảnh kết: kết hợp năm signals ---
     "cb_concat": (
-        "Năm signal sau đó được kết hợp thành routing feature vector f của v. "
-        "Không signal nào tự mình quyết định node có được gửi tới LLM hay không."
+        "Năm tín hiệu sau đó được kết hợp thành véc-tơ đặc trưng định tuyến f của v. "
+        "Không tín hiệu nào tự mình quyết định nót có được gửi tới eo eo em hay không."
     ),
     "cb_score": (
-        "Router học trọng số cho các signal, tính routing score a của v, "
-        "và đưa giá trị này qua hàm sigmoid. "
-        "Score càng cao, node càng có khả năng hưởng lợi từ LLM."
+        "Bộ định tuyến học trọng số cho các tín hiệu, tính điểm định tuyến a của v, "
+        "và đưa giá trị này qua một hàm kích hoạt dạng chữ ét. "
+        "Điểm càng cao, nót càng có khả năng hưởng lợi từ eo eo em."
     ),
     "cb_topk": (
-        "Cuối cùng, GLANCE chọn top k node có score cao nhất trong mỗi mini batch. "
-        "Các node còn lại tiếp tục sử dụng dự đoán GNN, "
-        "nhờ đó duy trì một ngân sách LLM cố định."
+        "Cuối cùng, gờ lans chọn ca nót có điểm cao nhất trong mỗi lô nhỏ. "
+        "Các nót còn lại tiếp tục sử dụng dự đoán gi en en, "
+        "nhờ đó duy trì một ngân sách eo eo em cố định."
     ),
     "cb_close": (
-        "Năm signals lần lượt cho router biết GNN đã học được gì, tin tưởng đến đâu, "
-        "node có phù hợp với neighborhood không, bản thân node chứa gì, "
-        "và có bao nhiêu context cấu trúc. "
-        "Router học cách kết hợp chúng, thay vì phụ thuộc vào một heuristic cố định."
+        "Năm tín hiệu lần lượt cho bộ định tuyến biết gi en en đã học được gì, tin tưởng đến đâu, "
+        "nót có phù hợp với vùng lân cận không, bản thân nót chứa gì, "
+        "và có bao nhiêu ngữ cảnh cấu trúc. "
+        "Bộ định tuyến học cách kết hợp chúng, thay vì phụ thuộc vào một quy tắc kinh nghiệm cố định."
     ),
 }
 
