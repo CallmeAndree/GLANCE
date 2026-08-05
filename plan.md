@@ -6,7 +6,8 @@
 - **Hook**: "Gọi LLM cho **mọi** node là lãng phí. Vậy gọi cho node nào?"
 - **Target Audience**: Sinh viên đã học GNN cơ bản (message passing, node classification),
   biết LLM ở mức khái niệm. Không yêu cầu biết RL.
-- **Estimated Length**: ~13–15 phút (6 section, xem bảng dưới).
+- **Estimated Length**: ~22–23 phút (6 section, xem bảng dưới). Section 2 dài hơn hẳn
+  các section khác theo thống nhất của nhóm, xem ghi chú dưới bảng.
 - **Key Insight**: **Local homophily** là tín hiệu dự báo mạnh nhất cho việc "node này
   LLM giúp được hay không" — và nó có thể ước lượng **không cần label**.
 - **Resolution**: 480p15 khi làm nháp → 1080p60 cho bản nộp.
@@ -30,13 +31,19 @@ chỗ GNN thất bại — thắng tới +13% trên node heterophilous mà vẫn
 | 0.1 | Related Work | Hoàng Phan | ~1'30" | §2, Appendix A (tr.2, 14) |
 | 0.2 | Preliminaries | Trúc Mai | ~1'30" | §3 (tr.3), §4.2.1 (tr.4) |
 | 1 | Vấn đề cốt lõi của GNN–LLM fusion | Trúc Mai | ~2'00" | §1 (tr.1–2) |
-| 2 | Đánh giá routing heuristic hiện có | Hoàng Phan | ~2'00" | §4.1, Bảng 1 (tr.3–4) |
+| 2 | Đánh giá routing heuristic hiện có | Hoàng Phan | ~10'20" | §4.1, Bảng 1 (tr.3–4) |
 | 3 | Structural signal: $h_v$ & $\bar d_v$ | Nhựt Anh | ~2'15" | §4.2, Hình 1, Bảng 2 (tr.4–5) |
 | 4 | Kiến trúc GLANCE | Trần Nguyên | ~2'30" | §5.1, Hình 2 (tr.5–6) |
 | 5 | Training objective & thực nghiệm | Thiên Lâm | ~2'45" | §5.2, §6, Bảng 3–5 (tr.7–9) |
 
-Tổng ≈ 14'30" kể cả title card. Mỗi section **tự chứa**: mở bằng title card,
+Tổng ≈ 22'45" kể cả title card. Mỗi section **tự chứa**: mở bằng title card,
 kết bằng một câu "cầu nối" sang section sau (xem phần Transitions).
+
+> **Ghi chú về section 2.** Ban đầu section này được giao ~2'00". Nhóm đã thống nhất giữ
+> bản dài (đo thực tế 10'18" ở 480p15) vì phần phủ định cần đi qua đủ ba heuristic, cách
+> đo NCS, rồi mới tới Bảng 1. Hệ quả: section 2 chiếm gần một nửa thời lượng video. Nếu
+> sau này thấy mất cân đối thì chỗ cắt được nhiều nhất là `S2_06_Setup` (đang nhắc lại
+> tiêu chí chọn node đã nói ở `S2_03`–`S2_05`) và đoạn cảnh báo rewiring cuối `S2_05`.
 
 ---
 
@@ -77,7 +84,14 @@ Mỗi section kết bằng đúng một câu dẫn, đã viết sẵn dưới đ
 | Nhấn mạnh chung | `C_HIGHLIGHT` | `#6EA8FE` |
 
 ## Quy tắc thuyết minh
+
+**Chữ trên hình: tiếng Anh. Phụ đề và giọng đọc: tiếng Việt.** Nhóm đã thống nhất như vậy.
+Mọi `txt()`, `heading()`, nhãn biểu đồ, nhãn node đều viết tiếng Anh; riêng `source()` giữ
+tiếng Việt vì nó trỏ tới bảng trong bản dịch paper mà nhóm đang dùng.
+
 - Mỗi câu phụ đề ≤ 2 dòng, ≤ ~14 từ. Nói chậm, một ý một nhịp.
+- Lời trong `VO` chính là kịch bản đọc, nên viết sao cho đọc lên nghe tự nhiên.
+  Độ dài nhịp hình bám theo audio thật (`tracker.duration`), không ước bằng tay nữa.
 - Chữ trên hình giữ nguyên thuật ngữ tiếng Anh; lời trong `VO` phải viết theo cách
   model TTS đọc tiếng Việt. Dùng phiên âm đã chốt: `node` → "nót"; các thuật ngữ
   còn lại ưu tiên tiếng Việt tự nhiên, như `routing` →
@@ -85,3 +99,4 @@ Mỗi section kết bằng đúng một câu dẫn, đã viết sẵn dưới đ
   `LLM` → "eo eo em", `MLP Q` → "em eo pi khiu", `GNN` → "gi en en",
   `GLANCE` → "gờ lans".
 - Lần đầu xuất hiện thuật ngữ: hiện chữ tiếng Anh + một dòng giải thích tiếng Việt.
+- Không dùng ký tự gạch dài `—` / `–` trên hình. Dùng `:` `,` hoặc `·`.
