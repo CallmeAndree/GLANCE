@@ -1,2 +1,0 @@
-manim>=0.20,<0.21
-manim-voiceover[azure,gtts]>=0.4,<0.5

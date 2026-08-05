@@ -13,8 +13,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 import glance_style as gs
 
 USE_VOICEOVER = os.environ.get("S1_USE_VOICEOVER", "1").strip().lower() not in {"0", "false", "no"}
-# Backend giọng đọc chọn bằng GLANCE_TTS trong .env ở gốc repo, xem plan.md.
-# S1_USE_AZURE cũ đã bỏ: section 1 không tự chọn service riêng nữa.
+# Giọng đọc dùng API của nhóm, cấu hình trong .env ở gốc repo. Xem README.md và
+# plan.md ở gốc: đó là tài liệu chuẩn. Section 1 không tự chọn service riêng nữa.
 SHOW_VISUAL_SUBTITLES = os.environ.get("S1_VISUAL_SUBTITLES", "0").strip().lower() in {"1", "true", "yes"}
 
 BG = gs.BG
