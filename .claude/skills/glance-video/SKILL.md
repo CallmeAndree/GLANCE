@@ -34,6 +34,7 @@ ffmpeg -version                                       # cần cho việc ghép v
 
 Nếu thiếu: `pip install -r requirements.txt`. `MathTex`/`Tex` cần LaTeX (macOS:
 MacTeX, kiểm tra bằng `which latex`).
+Code-switch Azure cần thêm `pip install "manim-voiceover[azure]>=0.3.7"`.
 
 Trong môi trường không interactive, gọi thẳng binary để chắc chắn đúng env:
 `~/miniconda3/envs/graphdm/bin/manim ...`
@@ -83,13 +84,68 @@ Bắt buộc:
   thứ tự thì đổi vị trí class, không đổi tên.
 - **Kế thừa `GlanceScene`**, không dùng `Scene` trần. `GlanceScene` lo màu nền,
   banner section, và các tiện ích `self.banner()`, `self.say()`, `self.clear_scene()`.
-- **Phụ đề cho mọi nhịp nói**: `self.play(..., subcaption="...", subcaption_duration=N)`
-  hoặc `self.add_subcaption("...", duration=N)`. Manim tự sinh `.srt`; đây cũng là
-  kịch bản thu tiếng nên câu chữ phải đọc lên được.
+- **Mọi animation nằm trong khối thuyết minh** (xem mục "Thuyết minh" bên dưới).
+  Không gọi `add_subcaption` / tham số `subcaption` nữa — plugin tự sinh phụ đề
+  từ chính text thuyết minh, gọi thêm sẽ bị trùng dòng.
 - **Tiếng Việt dùng `txt()` / `Text`**, tuyệt đối không dùng `Tex`/`MathTex` cho
   tiếng Việt (LaTeX mặc định không có dấu). `MathTex` chỉ dùng cho công thức toán.
 - **Chỉ dùng màu và helper trong `glance_style.py`.** Không hard-code mã màu mới,
   không tự vẽ lại dấu ✓/✗ hay khối model.
+
+## Thuyết minh (manim-voiceover)
+
+Video có giọng đọc tự sinh. `GlanceScene` kế thừa `VoiceoverScene` và tự gắn TTS
+trong `setup()`, nên trong scene chỉ cần bọc animation:
+
+```python
+VO = {"intro": "Tín hiệu đầu tiên là local homophily."}
+
+with self.voiceover(text=VO["intro"]) as tracker:
+    self.play(Write(head), run_time=1.6)
+    self.play(GrowFromCenter(v_dot), run_time=1.2)
+    # animation ngắn hơn lời đọc -> khối tự chờ nốt phần audio còn thừa
+    # cần một animation dài đúng bằng câu nói -> run_time=tracker.duration
+```
+
+Quy tắc:
+
+- **Gom lời thuyết minh vào dict `VO` ở đầu file**, không rải chuỗi trong code —
+  dễ duyệt kịch bản và dễ sửa.
+- **Viết theo cách đọc lên, không theo cách viết công thức**: `h_v` → "h của v",
+  `3/4` → "ba phần tư", `0.75` → "không phẩy bảy lăm", `N(v)` → "tập hàng xóm của v".
+  TTS đọc ký hiệu toán rất tệ.
+- **Lời `VO` không để tiếng Anh cho model tự đoán cách đọc.** Chữ trên hình vẫn giữ
+  thuật ngữ gốc, nhưng lời đọc dùng phiên âm đã chốt (`node` → "nót") và ưu tiên
+  tiếng Việt tự nhiên cho từ còn lại (`routing` → "định tuyến", `embedding` →
+  "véc-tơ biểu diễn"). Acronym dùng đúng
+  bảng phiên âm chung: `LLM` → "eo eo em", `MLP Q` → "em eo pi khiu",
+  `GNN` → "gi en en", `GLANCE` → "gờ lans".
+- Đừng để tổng `run_time` trong khối vượt quá độ dài lời đọc, nếu không hình sẽ
+  chạy lố sang câu sau. Kiểm tra bằng cách so `tracker.duration` với tổng run_time.
+- Audio **cache theo hash của text** trong `media/voiceovers/`. Sửa animation thì
+  không gọi lại TTS; sửa text thì mới sinh lại. Đừng commit thư mục này.
+- `self.say("...")` cho nhịp chỉ có lời đọc, không animation.
+- `self.pad_to(t)` chỉ dùng khi kịch bản ép mốc giây tuyệt đối; bình thường để
+  audio quyết định nhịp.
+
+**Đổi giọng đọc bằng biến môi trường, không sửa code section:**
+
+| Lệnh | Service | Khi nào dùng |
+|---|---|---|
+| `GLANCE_TTS=timed manim ...` | Timed API | mặc định — cần `GLANCE_TIMED_TTS_URL` + `GLANCE_TIMED_TTS_TOKEN` trong `.env`, trả MP3 và timing từng segment |
+| `GLANCE_TTS=gtts manim ...` | gTTS `vi` | dự phòng — free, cần mạng, giọng hơi máy |
+| `GLANCE_TTS=azure manim ...` | Azure `en-US-AvaMultilingualNeural` | bản nộp — tự code-switch Việt-Anh, cần `AZURE_SUBSCRIPTION_KEY` + `AZURE_SERVICE_REGION` trong `.env` |
+| `GLANCE_TTS=record manim ...` | RecorderService | thu giọng thật qua CLI lúc render (`brew install sox`) |
+
+Timed API và gTTS cần mạng khi render lời thoại mới; audio đã sinh được cache theo
+text + backend trong `media/voiceovers/`. Không commit token timed API.
+Với Azure, `GlanceScene` tự bọc các thuật ngữ trong `EN_TERMS` và acronym trong
+`EN_ACRONYMS` bằng locale `en-US`; phần còn lại dùng `vi-VN`. Đổi sang giọng nam
+bằng `GLANCE_VOICE=en-US-AndrewMultilingualNeural`. Có thể dùng bản HD Ava/Andrew
+`DragonHDLatestNeural`. Không dùng `JennyMultilingualNeural` hoặc
+`RyanMultilingualNeural` vì hai voice này không hỗ trợ `vi-VN` và có thể sinh
+audio rỗng. Thêm thuật ngữ đọc sai vào danh sách dùng chung trong
+`glance_style.py`, không chèn SSML thủ công vào từng section.
 
 ## API của `glance_style.py`
 
@@ -171,6 +227,13 @@ ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 build/final
 | `latex` not found | chưa cài LaTeX | cài MacTeX, hoặc thay `MathTex` bằng `txt()` |
 | Chữ tràn khỏi khung | không giới hạn bề rộng | `mobj.scale_to_fit_width(11)` trước khi đặt vị trí |
 | Scene thiếu trong `final.mp4` | đổi tên class sau khi render | xoá `media/` rồi render lại |
+| Phụ đề hiện hai lần | vừa `voiceover` vừa `add_subcaption` | bỏ `add_subcaption` |
+| Hình chạy lố sang câu nói sau | tổng `run_time` > `tracker.duration` | rút bớt animation trong khối |
+| gTTS lỗi mạng khi render | không có internet | render lại khi có mạng, hoặc `GLANCE_TTS=record` |
+| `SoX could not be found` | chỉ RecorderService mới cần | bỏ qua với gTTS/Azure, hoặc `brew install sox` |
+| Video cuối không có tiếng | mở nhầm file scene chưa viết lời | kiểm tra: `ffprobe -select_streams a build/final.mp4` |
+| Tiếng lệch dần khỏi hình | audio mỗi scene ngắn hơn video vài chục ms, cộng dồn khi ghép | `build.sh` đã đệm `apad` cho từng clip — đừng ghép tay bằng `-c copy` |
+| gTTS lỗi liên tục dù có mạng | bị rate-limit khi sinh nhiều câu mới một lúc | dùng Azure (`.env`), hoặc chạy lại vài lần vì cache tích luỹ dần |
 | Các card cao thấp so le | `arrange(RIGHT)` căn theo tâm | thêm `aligned_edge=UP` |
 
 ## Khi được yêu cầu viết nội dung một section

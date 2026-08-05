@@ -24,32 +24,23 @@ ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 SRC_T1 = "Bảng 1, tr.4"
 
 # --------------------------------------------------------------------------
-# Nhịp phụ đề
+# Nhịp thuyết minh
 #
-# 3.05 từ/giây đo từ bản dựng thử đã duyệt (735 giây cho 2239 từ, giọng đọc
-# tiếng Việt tốc độ bình thường). Dùng chung một hằng số cho cả section để nhịp
-# hình đều tay và người thu tiếng đọc theo kịp.
+# Mỗi nhịp là một khối `self.voiceover()`: audio do backend TTS sinh, nhịp hình
+# bám theo `tracker.duration` chứ không ước bằng tay nữa. Khối `with` tự chờ nốt
+# phần audio còn thừa khi animation ngắn hơn câu đọc, nên không cần canh run_time.
+# Phụ đề .srt cũng do plugin sinh thẳng từ `text`, không add_subcaption thủ công.
+#
+# Lời thoại viết theo cách ĐỌC LÊN, dùng phiên âm đã chốt trong plan.md:
+#   "LLM" -> "eo eo em"   "GNN" -> "gi en en"   "node" -> "nót"
 # --------------------------------------------------------------------------
-
-WORDS_PER_SEC = 3.05
-
-
-def secs(text, pad=0.45, floor=1.3):
-    """Thời lượng đọc ước lượng cho một nhịp phụ đề."""
-    return max(floor, len(text.split()) / WORDS_PER_SEC + pad)
 
 
 def beat(scene, text, *anims, run_time=1.0):
-    """Một nhịp nói: chạy animation rồi giữ hình cho hết câu phụ đề."""
-    d = secs(text)
-    if anims:
-        rt = min(run_time, d)
-        scene.play(*anims, run_time=rt, subcaption=text, subcaption_duration=d)
-        rest = d - rt
-        if rest > 1 / scene.camera.frame_rate:
-            scene.wait(rest)
-    else:
-        scene.say(text, duration=d)
+    """Một nhịp nói: chạy animation trong lúc đọc, rồi giữ hình cho hết câu."""
+    with scene.voiceover(text=text) as tracker:
+        if anims:
+            scene.play(*anims, run_time=min(run_time, tracker.duration))
 
 
 # --------------------------------------------------------------------------

@@ -19,6 +19,15 @@ SECTION_NAME = "Vấn đề cốt lõi"
 OWNER = "Trúc Mai"
 ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 
+# Lời thuyết minh gom một chỗ cho dễ sửa và dễ duyệt.
+# Viết theo cách ĐỌC LÊN, không theo cách viết công thức:
+#   "h_v"  ->  "h của v"        "3/4"  ->  "ba phần tư"
+#   "0.75" ->  "không phẩy bảy lăm"    "N(v)" -> "tập hàng xóm của v"
+VO = {
+    "intro": "Câu thuyết minh mở đầu.",
+    "point": "Câu thuyết minh cho nhịp thứ hai.",
+}
+
 
 class S1_01_Title(GlanceScene):
     """Title card mở section. Giữ nguyên cấu trúc này cho đồng bộ cả video."""
@@ -32,9 +41,8 @@ class S1_01_Title(GlanceScene):
             OWNER,
             accent=ACCENT,
         )
-        self.play(FadeIn(card, shift=UP * 0.3), run_time=1.2,
-                  subcaption="Câu thuyết minh mở đầu.", subcaption_duration=3)
-        self.wait(1.5)
+        with self.voiceover(text=VO["intro"]):
+            self.play(FadeIn(card, shift=UP * 0.3), run_time=1.2)
         self.play(FadeOut(card), run_time=0.6)
 
 
@@ -51,34 +59,26 @@ class S1_02_Content(GlanceScene):
         self.banner()  # banner section góc trên trái
 
         head = heading("Tiêu đề scene", color=ACCENT).to_edge(UP, buff=0.85)
-        self.play(Write(head),
-                  subcaption="Phụ đề đi kèm — đây cũng là kịch bản thu tiếng.",
-                  subcaption_duration=3)
-
-        # --- Ví dụ các helper dùng chung (xoá khi viết nội dung thật) ---
         graph = demo_tag().scale(0.85).shift(LEFT * 3.2 + DOWN * 0.4)
-        self.play(Create(graph.edges),
-                  LaggedStart(*[GrowFromCenter(d) for d in graph.nodes.values()],
-                              lag_ratio=0.06),
-                  run_time=1.4)
+        points = bullets(["Ý thứ nhất", "Ý thứ hai"],
+                         size=21, dot_color=ACCENT, width=5.5).to_edge(RIGHT, buff=0.9)
 
-        points = bullets([
-            "Ý thứ nhất",
-            "Ý thứ hai",
-        ], size=21, dot_color=ACCENT, width=5.5)
-        points.to_edge(RIGHT, buff=0.9)
-        self.play(FadeIn(points, shift=LEFT * 0.2), run_time=0.9)
+        # Mọi animation nằm trong khối thuyết minh. Khối tự chờ nốt phần audio
+        # còn thừa, nên không cần canh run_time cho khớp giọng đọc.
+        with self.voiceover(text=VO["intro"]):
+            self.play(Write(head), run_time=1.2)
+            self.play(Create(graph.edges),
+                      LaggedStart(*[GrowFromCenter(d) for d in graph.nodes.values()],
+                                  lag_ratio=0.06),
+                      run_time=1.4)
+
+        with self.voiceover(text=VO["point"]) as tracker:
+            # Cần một animation kéo dài đúng bằng câu nói thì dùng tracker:
+            self.play(FadeIn(points, shift=LEFT * 0.2), run_time=min(1.0, tracker.duration))
 
         # Mọi số liệu trích từ paper phải có stamp nguồn.
         self.add(source("§X, tr.Y"))
-        self.wait(2)
-
-        # Câu cầu nối sang section sau — lấy đúng câu trong plan.md.
-        self.clear_scene()
-        bridge = txt("Câu dẫn sang section tiếp theo.", size=24, color=MUTED)
-        self.play(FadeIn(bridge), subcaption="Câu dẫn sang section tiếp theo.",
-                  subcaption_duration=3)
-        self.wait(1.5)
+        self.wait(1.0)
 
 
 # ---------------------------------------------------------------------------
@@ -99,6 +99,14 @@ class S1_02_Content(GlanceScene):
 #   ego_ring(graph, id, hops)    vòng nét đứt quanh ego + hàng xóm
 #   text_chip("...")             thẻ text gắn vào node
 #   bar_chart(values, labels)    biểu đồ cột (hỗ trợ giá trị âm)
+#   line_chart(series, x_labels) biểu đồ đường nhiều series
+#
+# Trên GlanceScene:
+#   self.banner()                banner section
+#   self.voiceover(text=...)     khối thuyết minh (tracker.duration = độ dài audio)
+#   self.say("...")              nhịp chỉ có lời đọc, không animation
+#   self.pad_to(t)               chờ tới mốc giây t tính từ đầu scene
+#   self.clear_scene(keep=(...)) xoá sạch trừ vài mobject
 #
 # Màu: C_GNN, C_LLM, C_ROUTER, C_GOOD, C_BAD, C_EDGE, C_HIGHLIGHT, INK, MUTED
 # ---------------------------------------------------------------------------

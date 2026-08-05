@@ -90,9 +90,13 @@ Mọi `txt()`, `heading()`, nhãn biểu đồ, nhãn node đều viết tiếng
 tiếng Việt vì nó trỏ tới bảng trong bản dịch paper mà nhóm đang dùng.
 
 - Mỗi câu phụ đề ≤ 2 dòng, ≤ ~14 từ. Nói chậm, một ý một nhịp.
-- Phụ đề chính là kịch bản thu tiếng, nên viết sao cho đọc lên nghe tự nhiên.
-- Nhịp tham chiếu: **3.05 từ/giây** (đo từ bản dựng thử section 2). Dùng con số này để ước
-  `subcaption_duration` thì các section sẽ đều tay và người thu tiếng đọc kịp.
-- Thuật ngữ giữ nguyên tiếng Anh trong phụ đề: *homophily, heterophily, routing, node,
-  embedding, message passing, text-attributed graph*. Không dịch nửa vời.
+- Lời trong `VO` chính là kịch bản đọc, nên viết sao cho đọc lên nghe tự nhiên.
+  Độ dài nhịp hình bám theo audio thật (`tracker.duration`), không ước bằng tay nữa.
+- Chữ trên hình giữ nguyên thuật ngữ tiếng Anh; lời trong `VO` phải viết theo cách
+  model TTS đọc tiếng Việt. Dùng phiên âm đã chốt: `node` → "nót"; các thuật ngữ
+  còn lại ưu tiên tiếng Việt tự nhiên, như `routing` →
+  "định tuyến", `embedding` → "véc-tơ biểu diễn". Phiên âm acronym thống nhất:
+  `LLM` → "eo eo em", `MLP Q` → "em eo pi khiu", `GNN` → "gi en en",
+  `GLANCE` → "gờ lans".
+- Lần đầu xuất hiện thuật ngữ: hiện chữ tiếng Anh + một dòng giải thích tiếng Việt.
 - Không dùng ký tự gạch dài `—` / `–` trên hình. Dùng `:` `,` hoặc `·`.
