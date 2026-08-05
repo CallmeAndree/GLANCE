@@ -8,14 +8,13 @@ from contextlib import contextmanager
 
 from manim import *
 from manim_voiceover import VoiceoverScene
-from manim_voiceover.services.azure import AzureService
-from manim_voiceover.services.gtts import GTTSService
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 import glance_style as gs
 
 USE_VOICEOVER = os.environ.get("S1_USE_VOICEOVER", "1").strip().lower() not in {"0", "false", "no"}
-USE_AZURE = os.environ.get("S1_USE_AZURE", "1").strip().lower() not in {"0", "false", "no"}
+# Backend giọng đọc chọn bằng GLANCE_TTS trong .env ở gốc repo, xem plan.md.
+# S1_USE_AZURE cũ đã bỏ: section 1 không tự chọn service riêng nữa.
 SHOW_VISUAL_SUBTITLES = os.environ.get("S1_VISUAL_SUBTITLES", "0").strip().lower() in {"1", "true", "yes"}
 
 BG = gs.BG
@@ -232,6 +231,12 @@ def highlight_keywords(document, indices):
 
 
 class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
+    # Bộ chọn giọng dùng chung đọc ba thuộc tính này, giữ đúng mặc định của
+    # GlanceScene để section 1 ra cùng giọng với phần còn lại của video.
+    voice_lang = "vi"
+    azure_voice = "en-US-AvaMultilingualNeural"
+    _multilingual = False
+
     def setup(self):
         MovingCameraScene.setup(self)
         VoiceoverScene.setup(self)
@@ -241,25 +246,17 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         # self.debug_safe_zones()  # uncomment during preview debugging
 
     def _init_tts(self):
-        import os
+        """Dùng chung bộ chọn giọng của cả video (glance_style.GlanceScene).
+
+        Nhóm đã thống nhất backend là timed TTS API, cấu hình trong .env ở gốc
+        repo. Chọn backend bằng GLANCE_TTS, không hard-code service ở đây nữa,
+        để giọng section 1 khớp với các section còn lại.
+        """
         if not USE_VOICEOVER:
             return
-        if USE_AZURE and "AZURE_SUBSCRIPTION_KEY" in os.environ and "AZURE_SERVICE_REGION" in os.environ:
-            try:
-                self.set_speech_service(
-                    AzureService(
-                        voice="vi-VN-HoaiMyNeural",
-                        style="neutral",
-                        rate="+30%",
-                        pitch="0%"
-                    )
-                )
-            except Exception as e:
-                print(f"Azure TTS failed: {e}. Falling back to GTTS.")
-                self.set_speech_service(GTTSService(lang="vi", tld="com.vn", global_speed=1.12))
-        else:
-            print("Azure credentials not found. Falling back to GTTS.")
-            self.set_speech_service(GTTSService(lang="vi", tld="com.vn", global_speed=1.12))
+        self.set_speech_service(
+            gs.GlanceScene.speech_service(self), create_subcaption=True
+        )
 
     def create_subtitle_box(self, text, max_width=12.4): 
         label = Text(text, font=gs.FONT_MAIN, font_size=20, color=WHITE, weight="SEMIBOLD", stroke_width=1, stroke_color=BLACK)
