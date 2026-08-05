@@ -71,23 +71,23 @@ def freeze(mobj):
 
 VO = {
     "title_intro": (
-        "Phần năm: cách GLANCE được huấn luyện, và kết quả thực nghiệm chứng minh "
+        "Phần năm: cách gờ lans được huấn luyện, và kết quả thực nghiệm chứng minh "
         "cách huấn luyện đó đúng."
     ),
     # --- S5_02 TopK ---
-    "topk_setup": "Router chỉ có K tấm vé gọi eo eo em. Top-K giữ số lần gọi cố định trong mỗi bát.",
+    "topk_setup": "Bộ định tuyến chỉ có K tấm vé gọi eo eo em. Top-K giữ số lần gọi cố định trong mỗi bát.",
     "topk_jump": (
         "Nhưng điểm đổi nhẹ thì tập top-K vẫn giữ nguyên; đến đúng lúc đổi hạng, "
         "quyết định lại nhảy đột ngột từ có sang không."
     ),
     "topk_block": (
         "Vì phép chọn top-K không liên tục, gờ ra điên không truyền được xuyên qua nó — "
-        "loss cuối không thể dạy trực tiếp cho router."
+        "loss cuối không thể dạy trực tiếp cho bộ định tuyến."
     ),
     # --- S5_03 Counterfactual ---
-    "cf_intro": "Thay vì đạo hàm qua top-K, GLANCE chấm kết quả của từng quyết định bằng reward.",
+    "cf_intro": "Thay vì đạo hàm qua top-K, gờ lans chấm kết quả của từng quyết định bằng reward.",
     "cf_branch": (
-        "Với một nốt được route, GLANCE dựng hai thế giới đối chứng: thế giới không gọi eo eo em, "
+        "Với một nốt được route, gờ lans dựng hai thế giới đối chứng: thế giới không gọi eo eo em, "
         "dùng đầu dự đoán H có sẵn của gi en en; và thế giới đã gọi eo eo em, đi qua refiner xi."
     ),
     "cf_same_label": (
@@ -101,43 +101,43 @@ VO = {
         "chi phí quy đổi của một lần gọi eo eo em."
     ),
     "reward_beta": (
-        "Bê ta lớn thì router dè dặt hơn, chỉ route khi lợi ích thật rõ ràng; bê ta nhỏ thì router "
+        "Bê ta lớn thì bộ định tuyến dè dặt hơn, chỉ route khi lợi ích thật rõ ràng; bê ta nhỏ thì bộ định tuyến "
         "sẵn sàng gọi eo eo em nhiều hơn. Nếu mức cải thiện nhỏ hơn bê ta, reward vẫn âm."
     ),
     "reward_skip": (
-        "Nếu skip: không có loss của eo eo em để so sánh, nên GLANCE dùng âm loss của gi en en "
+        "Nếu skip: không có loss của eo eo em để so sánh, nên gờ lans dùng âm loss của gi en en "
         "để chấm quyết định bỏ qua."
     ),
     # --- S5_05 Joint objective ---
     "obj_policy": (
-        "Reward tốt thì router lặp lại hành động vừa chọn; reward xấu thì hành động đó bị giảm "
+        "Reward tốt thì bộ định tuyến lặp lại hành động vừa chọn; reward xấu thì hành động đó bị giảm "
         "ưu tiên — đây chính là policy gradient."
     ),
     "obj_entropy": (
-        "Router loss gồm policy gradient cộng một số hạng entropy, giữ cho router chưa chốt "
+        "Loss của bộ định tuyến gồm policy gradient cộng một số hạng entropy, giữ cho bộ định tuyến chưa chốt "
         "quá sớm, còn khám phá các lựa chọn khác."
     ),
     "obj_pred": (
-        "Prediction loss rẽ nhánh theo việc nốt có nằm trong top-K hay không: nốt được route "
+        "Loss dự đoán rẽ nhánh theo việc nốt có nằm trong top-K hay không: nốt được route "
         "dùng loss của nhánh gi en en cộng eo eo em, nốt còn lại dùng loss của riêng gi en en."
     ),
     "obj_total": (
-        "Loss tổng cộng gộp prediction loss với router loss có trọng số — vừa dạy dự đoán đúng, "
+        "Loss tổng cộng gộp loss dự đoán với loss của bộ định tuyến có trọng số — vừa dạy dự đoán đúng, "
         "vừa dạy phân bổ ngân sách gọi eo eo em."
     ),
     "obj_freeze": (
-        "Chỉ router pi và refiner xi được cập nhật; gi en en và eo eo em bị đóng băng hoàn toàn — "
-        "GLANCE không huấn luyện lại hai mô hình nền."
+        "Chỉ bộ định tuyến pi và refiner xi được cập nhật; gi en en và eo eo em bị đóng băng hoàn toàn — "
+        "Gờ lans không huấn luyện lại hai mô hình nền."
     ),
     "obj_hparam": (
         "Cấu hình mặc định: bát ba mươi hai, route tốp mười hai mỗi bát, bê ta thử ở "
         "không phẩy một, không phẩy hai, không phẩy ba. Ngân sách K giảm dần theo lịch, "
         "từ ba mươi hai xuống còn tám."
     ),
-    "obj_question": "Nhưng liệu cách huấn luyện này có thật sự tạo ra một router học đúng không?",
+    "obj_question": "Nhưng liệu cách huấn luyện này có thật sự tạo ra một bộ định tuyến học đúng không?",
     # --- S5_06 Setup ---
     "setup_question": (
-        "Câu hỏi trung tâm của phần thực nghiệm: GLANCE có gộp được điểm mạnh của gi en en và "
+        "Câu hỏi trung tâm của phần thực nghiệm: gờ lans có gộp được điểm mạnh của gi en en và "
         "eo eo em trong cùng một mô hình không?"
     ),
     "setup_data": (
@@ -150,34 +150,34 @@ VO = {
         "gờ gờ xê en, gờ bê ca gờ en en."
     ),
     "setup_budget": (
-        "Mấu chốt: mặc định GLANCE chỉ gọi eo eo em cho mười hai trên ba mươi hai nốt mỗi bát — "
+        "Mấu chốt: mặc định gờ lans chỉ gọi eo eo em cho mười hai trên ba mươi hai nốt mỗi bát — "
         "nó phải thắng trong khi gọi eo eo em ít hơn hẳn đối thủ."
     ),
     # --- S5_07 Balanced results ---
     "res_overall": (
-        "Về accuracy tổng thể, GLANCE dẫn đầu cả ba bộ: cô ra tám mươi chín phẩy năm, pắp mét "
+        "Về accuracy tổng thể, gờ lans dẫn đầu cả ba bộ: cô ra tám mươi chín phẩy năm, pắp mét "
         "chín mươi hai phẩy sáu, ác xíp hai ba tám mươi hai phẩy một — trung bình hơn model tốt "
         "kế tiếp khoảng không phẩy năm phần trăm."
     ),
     "res_margin": "Nhưng khoảng cách tổng thể chỉ dưới một điểm, nên đó chưa phải điều quan trọng nhất.",
     "res_hardbin": (
-        "Chia nốt theo hô mô phi li cục bộ thành các nhóm, ở nhóm khó nhất của cô ra GLANCE đạt "
+        "Chia nốt theo hô mô phi li cục bộ thành các nhóm, ở nhóm khó nhất của cô ra gờ lans đạt "
         "bốn mươi sáu phẩy bốn — cao hơn model tốt kế tiếp tới mười ba điểm."
     ),
     "res_rank": (
-        "Trung bình trên toàn bộ các nhóm, GLANCE xếp hạng hai phẩy bốn — tốt nhất, bỏ xa á quân "
+        "Trung bình trên toàn bộ các nhóm, gờ lans xếp hạng hai phẩy bốn — tốt nhất, bỏ xa á quân "
         "bốn phẩy bảy, mà nhóm dễ vẫn giữ gần như tuyệt đối."
     ),
     "res_verdict": "Con số tổng thể che chênh lệch ở nốt khó; hô mô phi li làm nó lộ ra.",
     # --- S5_08 Router learned ---
-    "router_question": "Vậy router có thật sự học đúng chỗ không?",
+    "router_question": "Vậy bộ định tuyến có thật sự học đúng chỗ không?",
     "router_hist": (
         "Khi soi các nốt được route, khối lượng dồn hẳn về vùng hô mô phi li thấp — đúng vùng mà "
         "gi en en hay sai còn eo eo em có thể sửa."
     ),
     "router_graph": (
         "Nhìn trên đồ thị mẫu, nốt chín — hô mô phi li thấp, hàng xóm khác lớp — là kiểu nốt "
-        "router ưu tiên gọi eo eo em; nốt bốn thì hầu như không cần."
+        "bộ định tuyến ưu tiên gọi eo eo em; nốt bốn thì hầu như không cần."
     ),
     "router_budget": (
         "Tăng ngân sách K giúp nhiều nhất ở vùng hô mô phi li thấp; vùng hô mô phi li cao gần như "
@@ -187,7 +187,7 @@ VO = {
         "Cắt bỏ lần lượt từng đặc trưng định tuyến đều làm accuracy giảm; bỏ đặc trưng hô mô phi "
         "li ước lượng gây thiệt hại lớn nhất."
     ),
-    "router_verdict": "Chính tín hiệu hô mô phi li dạy router biết khi nào nên gọi eo eo em.",
+    "router_verdict": "Chính tín hiệu hô mô phi li dạy bộ định tuyến biết khi nào nên gọi eo eo em.",
     # --- S5_09 Controls ---
     "ctrl_intro": "Bằng chứng mạnh nhất không phải là thêm eo eo em, mà là chọn đúng nốt để gọi.",
     "ctrl_all": (
@@ -199,30 +199,30 @@ VO = {
         "phẩy bốn, thua cả bây xơ lai gờ xê en hai tám mươi bảy phẩy bảy."
     ),
     "ctrl_same_set": (
-        "Trên đúng tập nốt mà router đã chọn, nhánh gi en en cộng eo eo em qua refiner đạt tám "
+        "Trên đúng tập nốt mà bộ định tuyến đã chọn, nhánh gi en en cộng eo eo em qua refiner đạt tám "
         "mươi bảy phẩy sáu — cao hơn hẳn nếu để gờ xê en hai tự xử lý."
     ),
     "ctrl_verdict": "Route hết thì hại nốt dễ; route bừa thì thua bây xơ lai — giá trị nằm ở sự chọn lọc học được.",
     # --- S5_10 Scale ---
     "scale_setup": (
-        "Trên ô gi bi Products — hai phẩy bốn lăm triệu nốt, gần sáu mươi hai triệu cạnh — GLANCE "
+        "Trên ô gi bi Products — hai phẩy bốn lăm triệu nốt, gần sáu mươi hai triệu cạnh — gờ lans "
         "chỉ gọi eo eo em cho khoảng một phẩy sáu phần trăm nốt, tức một nốt trong mỗi sáu mươi tư."
     ),
     "scale_result": (
         "Vậy mà vẫn dẫn đầu: tám mươi hai phẩy ba, cao hơn gờ xê en hai tám mươi mốt phẩy tám, "
-        "còn gờ gờ xê en thì hết bộ nhớ. Trên ác xíp Year, GLANCE đạt bốn mươi chín phẩy tám."
+        "còn gờ gờ xê en thì hết bộ nhớ. Trên ác xíp Year, gờ lans đạt bốn mươi chín phẩy tám."
     ),
     "scale_verdict": "Chọn lọc học được không chỉ cân bằng và chính xác, mà còn rẻ và mở rộng tới quy mô triệu nốt.",
     # --- S5_11 Callout ---
     "final_reconnect": (
         "Ở đầu video, câu hỏi đặt ra là: có cách nào kết hợp gi en en và eo eo em mà biết tính "
-        "chi phí không? Đây là câu trả lời của GLANCE, gói trong năm ý."
+        "chi phí không? Đây là câu trả lời của gờ lans, gói trong năm ý."
     ),
     "final_1": "Một: gi en en và eo eo em giỏi ở những nốt khác nhau; hô mô phi li cục bộ dự báo ai sẽ thắng.",
-    "final_2": "Hai: vì top-K không khả vi, reward chấm điểm từng quyết định để dạy router.",
-    "final_3": "Ba: chỉ router và refiner được huấn luyện; gi en en và eo eo em đóng băng.",
+    "final_2": "Hai: vì top-K không khả vi, reward chấm điểm từng quyết định để dạy bộ định tuyến.",
+    "final_3": "Ba: chỉ bộ định tuyến và refiner được huấn luyện; gi en en và eo eo em đóng băng.",
     "final_4": "Bốn: kết quả là mô hình cân bằng nhất và dẫn đầu tổng thể, nhờ sự chọn lọc học được.",
-    "final_5": "Năm: chỉ route một phần nhỏ nốt, GLANCE vẫn mở rộng tới đồ thị hàng triệu nốt.",
+    "final_5": "Năm: chỉ route một phần nhỏ nốt, gờ lans vẫn mở rộng tới đồ thị hàng triệu nốt.",
     "final_punch": "Tất cả gói trong một câu — đừng dùng nhiều eo eo em hơn, hãy dùng eo eo em đúng chỗ.",
 }
 

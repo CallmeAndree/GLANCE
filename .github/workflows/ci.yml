@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # Job này không cài manim nên chạy trong khoảng vài chục giây. Nó gác những
+  # lỗi đã thực sự xảy ra với repo: lời thoại chưa phiên âm, và tìm/thay thế
+  # phiên âm chạy lan vào code.
+  noi-dung:
+    name: Nội dung và cú pháp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Cú pháp mọi file Python
+        # compileall chỉ biên dịch, không import, nên không cần manim.
+        run: python -m compileall -q sections tools tests glance_style.py
+
+      - name: Cú pháp build.sh
+        run: bash -n build.sh
+
+      - name: Lời thoại đã phiên âm cho TTS
+        # Chỉ dùng stdlib. Đây là test đã từng fail trên main mà không ai biết.
+        run: python tests/test_voice_pronunciation.py
+
+      - name: Không có phiên âm lọt vào tên biến
+        # Đã xảy ra hai lần: chạy replace GNN -> "gi en en" trên cả repo làm
+        # C_GNN thành "C_G N N". Bảng phiên âm chỉ áp cho lời thoại.
+        run: |
+          if grep -rnE 'C_(G N N|L L M|GOO D)|def [a-z_]+ [a-z_]+\(' \
+               --include='*.py' . ; then
+            echo "::error::Phiên âm đã lọt vào code. Chỉ áp bảng phiên âm cho lời thoại."
+            exit 1
+          fi
+          echo "OK: không thấy dấu vết."
+
+  # Job này phải cài cả manim vì glance_style.py import manim ở top level.
+  # Tách riêng để lỗi hạ tầng ở đây không che mất kết quả của job trên.
+  giong-doc:
+    name: Hạ tầng giọng đọc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Thư viện hệ thống cho manim
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential libcairo2-dev libpango1.0-dev pkg-config ffmpeg
+
+      - name: Cài dependency
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Toàn bộ test
+        # Cần tests/__init__.py để unittest nhận tests/ là package.
+        run: python -m unittest discover -s tests -t . -v
