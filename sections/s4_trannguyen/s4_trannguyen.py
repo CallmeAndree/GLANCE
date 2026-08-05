@@ -20,9 +20,8 @@ ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 CLASS_NAMES = ["Machine Learning", "Graph Mining", "Data Management"]
 
 
-def mt(tex, size=32, color=INK):
-    """MathTex shorthand: mt(formula, size, color) for the many inline formulas below."""
-    return MathTex(tex, font_size=size, color=color)
+# mt() dùng chung từ glance_style, mặc định y như bản cục bộ trước đây
+# (size=32, color=INK) nên 65 chỗ gọi bên dưới không đổi hành vi.
 
 
 # Not a class: build.sh discovers renderable scenes by grepping `^class` in

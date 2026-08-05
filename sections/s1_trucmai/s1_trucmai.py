@@ -30,7 +30,12 @@ def t(text, size=26, color=LIGHT, weight=NORMAL, **kwargs):
     return gs.txt(text, size=size, color=color, weight=weight, **kwargs)
 
 def mt(formula, size=42, color=LIGHT):
-    return MathTex(formula, font_size=size, color=color)
+    """Giữ lại làm lớp mỏng vì mặc định size khác bản dùng chung (42 so với 32).
+
+    Ruột đã chuyển sang gs.mt() để chỉ còn một nơi dựng MathTex. LIGHT ở đây
+    chính là gs.INK nên màu không đổi.
+    """
+    return gs.mt(formula, size=size, color=color)
 
 def fit(mobject, max_width=12.2, max_height=None):
     if mobject.width > max_width:
