@@ -28,3 +28,7 @@ venv/
 # manim-voiceover
 media/voiceovers/
 .env
+*.env
+
+# Paper PDF giữ ngoài repo, không commit
+*.pdf

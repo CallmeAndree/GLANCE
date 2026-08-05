@@ -83,6 +83,10 @@ ffmpeg -y -loglevel error -f concat -safe 0 -i build/concat.txt \
 echo "==> ghép phụ đề"
 python tools/merge_srt.py build/concat.txt build/final.srt || echo "(bỏ qua phụ đề)"
 
+echo "==> đóng gói softsub (MKV)"
+ffmpeg -y -loglevel error -i build/final.mp4 -i build/final.srt \
+  -c copy -c:s srt build/final.mkv || echo "(lỗi tạo mkv)"
+
 # Mỗi lần build tạo một snapshot riêng trong media/videos/<thời điểm>/ để so
 # được các bản dựng với nhau. build/final.mp4 luôn là bản mới nhất.
 STAMP="$(date +%Y-%m-%d_%H-%M-%S)"
@@ -91,6 +95,7 @@ mkdir -p "$SNAP"
 cp build/final.mp4 "$SNAP/final.mp4"
 [ -f build/final.srt ] && cp build/final.srt "$SNAP/final.srt"
 cp build/concat.txt "$SNAP/concat.txt"
+[ -f build/final.mkv ] && cp build/final.mkv "$SNAP/final.mkv"
 
 DUR="$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 build/final.mp4)"
 # awk chứ không phải bc: ffprobe trả số thực, bc không làm modulo số thực.
@@ -107,6 +112,6 @@ DUR_FMT="$(awk -v d="$DUR" 'BEGIN{printf "%d:%02d", d/60, int(d)%60}')"
 } > "$SNAP/INFO.txt"
 
 echo
-echo "Xong: build/final.mp4"
+echo "Xong: build/final.mp4, kèm build/final.mkv (softsub)"
 echo "Snapshot: $SNAP/"
 echo "Thời lượng: $DUR_FMT"
