@@ -588,7 +588,7 @@ class S5_05_JointObjective(GlanceScene):
                       run_time=min(1.6, tracker.duration))
             self.play(
                 FadeOut(VGroup(update_label, to_refiner, to_router)),
-                modules.animate.move_to([0, -1.4, 0]),
+                modules.animate.move_to([0, -0.55, 0]),
                 run_time=0.7,
             )
 
@@ -597,7 +597,7 @@ class S5_05_JointObjective(GlanceScene):
                 size=SMALL_SIZE - 4, color=MUTED),
             txt("lịch giảm ngân sách: K từ 32 xuống 8, hệ số r = 0.5",
                 size=SMALL_SIZE - 5, color=MUTED),
-        ).arrange(DOWN, buff=0.12).move_to([0, -2.6, 0])
+        ).arrange(DOWN, buff=0.12).move_to([0, -2.25, 0])
         with self.voiceover(text=VO["obj_hparam"]) as tracker:
             self.play(FadeIn(hparam, shift=UP * 0.06), run_time=min(1.6, tracker.duration))
         self.add(source("Appendix C.4, tr.17"))
