@@ -526,12 +526,12 @@ class S5_05_JointObjective(GlanceScene):
         formula = txt(
             "lʳᵒᵘᵗᵉ = −rᵥ · log π(fᵥ)  −  λ_ent · H[π(fᵥ)]",
             size=BODY_SIZE - 4, color=INK, weight=BOLD,
-        ).move_to([0, 0.55, 0])
+        ).move_to([0, 0.75, 0])
         with self.voiceover(text=VO["obj_entropy"]) as tracker:
             self.play(Write(formula), run_time=min(1.6, tracker.duration))
 
-        pred_card = panel(Rectangle(width=5.2, height=1.1), color=C_GNN).move_to([-3.0, -0.55, 0])
-        route_card = panel(Rectangle(width=5.2, height=1.1), color=C_ROUTER).move_to([3.0, -0.55, 0])
+        pred_card = panel(Rectangle(width=5.2, height=1.1), color=C_GNN).move_to([-3.0, -0.45, 0])
+        route_card = panel(Rectangle(width=5.2, height=1.1), color=C_ROUTER).move_to([3.0, -0.45, 0])
         pred_text = txt("PREDICTION LOSS  ·  top-K dùng lᴸ, còn lại dùng lᴳ",
                          size=SMALL_SIZE - 4, color=C_GNN).move_to(pred_card).scale_to_fit_width(4.8)
         route_text = txt("λ × ROUTER LOSS  ·  học phân bổ ngân sách",
@@ -539,7 +539,7 @@ class S5_05_JointObjective(GlanceScene):
         with self.voiceover(text=VO["obj_pred"]) as tracker:
             self.play(FadeIn(pred_card), FadeIn(pred_text), run_time=min(1.6, tracker.duration))
 
-        total = pill("LOSS TỔNG", INK, width=2.6).move_to([0, -1.75, 0])
+        total = pill("LOSS TỔNG", INK, width=2.6).move_to([0, -1.9, 0])
         pred_to_total = Arrow(
             pred_card.get_bottom(), total.get_top() + LEFT * 0.45,
             buff=0.12, color=C_GNN, stroke_width=3,
@@ -562,6 +562,14 @@ class S5_05_JointObjective(GlanceScene):
             labeled_box("REFINER  ξ", C_GOOD, width=2.1, height=0.75),
             labeled_box("ROUTER  π", C_ROUTER, width=2.1, height=0.75),
         ).arrange(RIGHT, buff=0.3).move_to([0, -2.35, 0])
+        status_labels = VGroup(
+            pill("FREEZE", MUTED, width=1.45, size=SMALL_SIZE - 5),
+            pill("FREEZE", MUTED, width=1.45, size=SMALL_SIZE - 5),
+            pill("UPDATE", C_GOOD, width=1.45, size=SMALL_SIZE - 5),
+            pill("UPDATE", C_ROUTER, width=1.45, size=SMALL_SIZE - 5),
+        )
+        for status, module in zip(status_labels, modules):
+            status.next_to(module, DOWN, buff=0.18)
         update_label = pill("LOSS TỔNG  →  CẬP NHẬT THAM SỐ", C_GOOD, width=4.8)
         update_label.move_to([0, 0.35, 0])
         to_refiner = Arrow(
@@ -588,7 +596,9 @@ class S5_05_JointObjective(GlanceScene):
                       run_time=min(1.6, tracker.duration))
             self.play(
                 FadeOut(VGroup(update_label, to_refiner, to_router)),
-                modules.animate.move_to([0, -0.55, 0]),
+                modules.animate.move_to([0, -0.25, 0]),
+                status_labels.animate.move_to([0, -1.12, 0]),
+                FadeIn(status_labels, shift=UP * 0.1),
                 run_time=0.7,
             )
 
