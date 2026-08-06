@@ -540,9 +540,21 @@ class S5_05_JointObjective(GlanceScene):
             self.play(FadeIn(pred_card), FadeIn(pred_text), run_time=min(1.6, tracker.duration))
 
         total = pill("LOSS TỔNG", INK, width=2.6).move_to([0, -1.75, 0])
+        pred_to_total = Arrow(
+            pred_card.get_bottom(), total.get_top() + LEFT * 0.45,
+            buff=0.12, color=C_GNN, stroke_width=3,
+        )
+        route_to_total = Arrow(
+            route_card.get_bottom(), total.get_top() + RIGHT * 0.45,
+            buff=0.12, color=C_ROUTER, stroke_width=3,
+        )
         with self.voiceover(text=VO["obj_total"]) as tracker:
             self.play(FadeIn(route_card), FadeIn(route_text), run_time=1.0)
-            self.play(FadeIn(total, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
+            self.play(
+                GrowArrow(pred_to_total), GrowArrow(route_to_total),
+                FadeIn(total, shift=UP * 0.1),
+                run_time=min(1.2, tracker.duration),
+            )
 
         modules = VGroup(
             labeled_box("GNN  F", C_GNN, width=2.1, height=0.75),
@@ -550,20 +562,32 @@ class S5_05_JointObjective(GlanceScene):
             labeled_box("REFINER  ξ", C_GOOD, width=2.1, height=0.75),
             labeled_box("ROUTER  π", C_ROUTER, width=2.1, height=0.75),
         ).arrange(RIGHT, buff=0.3).move_to([0, -2.35, 0])
-        # Hai mũi tên backprop nối THẲNG từ card loss xuống đúng module nó cập
-        # nhật — không thay hẳn cảnh, để khán giả thấy loss tổng và 4 khối là
-        # MỘT bức tranh liên tục, không phải hai slide rời nhau.
-        to_refiner = Arrow(pred_card.get_bottom(), modules[2].get_top(), buff=0.1, color=C_GNN, stroke_width=3)
-        to_router = Arrow(route_card.get_bottom(), modules[3].get_top(), buff=0.1, color=C_ROUTER, stroke_width=3)
+        update_label = pill("LOSS TỔNG  →  CẬP NHẬT THAM SỐ", C_GOOD, width=4.8)
+        update_label.move_to([0, 0.35, 0])
+        to_refiner = Arrow(
+            update_label.get_bottom() + LEFT * 0.8,
+            modules[2].get_top(), buff=0.12, color=C_GOOD, stroke_width=3,
+        )
+        to_router = Arrow(
+            update_label.get_bottom() + RIGHT * 0.8,
+            modules[3].get_top(), buff=0.12, color=C_ROUTER, stroke_width=3,
+        )
 
         with self.voiceover(text=VO["obj_freeze"]) as tracker:
-            self.play(FadeOut(VGroup(chain, formula, total)), FadeIn(modules), run_time=0.8)
-            self.play(GrowArrow(to_refiner), GrowArrow(to_router), run_time=1.0)
+            self.play(
+                FadeOut(VGroup(
+                    chain, formula, pred_card, pred_text, route_card, route_text,
+                    total, pred_to_total, route_to_total,
+                )),
+                FadeIn(update_label), FadeIn(modules),
+                run_time=0.8,
+            )
+            self.play(GrowArrow(to_refiner), GrowArrow(to_router), run_time=0.8)
             self.play(freeze(modules[0]), freeze(modules[1]),
                       Indicate(modules[2], color=C_GOOD), Indicate(modules[3], color=C_ROUTER),
                       run_time=min(1.6, tracker.duration))
             self.play(
-                FadeOut(VGroup(pred_card, pred_text, route_card, route_text, to_refiner, to_router)),
+                FadeOut(VGroup(update_label, to_refiner, to_router)),
                 modules.animate.move_to([0, -1.4, 0]),
                 run_time=0.7,
             )
