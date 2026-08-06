@@ -815,55 +815,69 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     # SECTION 8 — Direct B vs C Comparison
     # ─────────────────────────────────────────────────────────
     def section_8_bc_comparison(self):
-        b = self.node_B_state
         c = self.node_C_state
 
-        b_title = t("Node B (Clear Text)", size=34, color=gs.C_GOOD, weight=BOLD).move_to(LEFT * 3.5 + UP * 2.0)
-        c_title = t("Node C (Ambiguous)", size=34, color=gs.C_BAD, weight=BOLD).move_to(RIGHT * 3.5 + UP * 2.0)
-        
-        b_gnn = t("GNN: WRONG", size=30, color=gs.C_BAD, weight=BOLD).move_to(LEFT * 3.5 + UP * 0.5)
-        b_llm = t("LLM: CORRECT", size=30, color=gs.C_GOOD, weight=BOLD).move_to(LEFT * 3.5 + DOWN * 0.5)
-
-        c_gnn = t("GNN: WRONG", size=30, color=gs.C_BAD, weight=BOLD).move_to(RIGHT * 3.5 + UP * 0.5)
-        c_llm = t("LLM: UNCERTAIN", size=30, color=gs.C_BAD, weight=BOLD).move_to(RIGHT * 3.5 + DOWN * 0.5)
-        
-        vs = t("VS", size=48, color=MID, weight=BOLD).move_to(UP * 0.5)
-
         with self.narrated_caption(["nót b và nót c đều khó với gờ nờ nờ.", "nhưng chỉ nót b nhận được lợi ích từ lờ lờ mờ."]):
+            # Fade out ONLY the elements from Node C (Node B was already removed in section 7)
             self.play(
                 FadeOut(c["title"]), FadeOut(c["group"]), FadeOut(c["doc"]),
                 FadeOut(c["gnn_bar"]), FadeOut(c["llm_bar"]),
                 FadeOut(c["wrong_gnn"]), FadeOut(c["wrong_llm"]),
-                run_time=0.7
-            )
-            
-            l1 = t("SAME GNN DIFFICULTY", size=44, color=BRIGHT, weight=BOLD)
-            l2 = t("DIFFERENT LLM VALUE", size=44, color=BRIGHT, weight=BOLD)
-            compare_heading = VGroup(l1, l2).arrange(DOWN, buff=0.3).set_z_index(100)
-            blackout4 = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(99)
-            
-            self.play(FadeIn(blackout4), FadeIn(compare_heading, shift=UP * 0.2), run_time=0.9)
-            self.wait(0.5)
-            self.play(FadeOut(compare_heading), FadeOut(blackout4), run_time=0.5)
-            
-            self.play(
-                FadeIn(b_title), FadeIn(c_title),
-                FadeIn(b_gnn), FadeIn(c_gnn),
-                FadeIn(b_llm), FadeIn(c_llm),
-                FadeIn(vs),
-                run_time=0.9
+                run_time=0.5
             )
 
-        conclusion = t("GNN DIFFICULTY ≠ LLM BENEFIT", size=44, color=gs.C_GOOD, weight=BOLD).set_z_index(100)
+            # TOP ROW: Node B
+            node_b_label = t("Node B", size=32, color=WHITE, weight=BOLD).move_to(LEFT * 5.0 + UP * 1.5)
+            
+            text_b = t("Clear Text:\n'Graph Learning...'", size=28, color=WHITE).next_to(node_b_label, RIGHT, buff=1.0)
+            
+            arrow_b = Arrow(text_b.get_right(), text_b.get_right() + RIGHT * 1.2, buff=0.15, color=gs.C_EDGE, stroke_width=4, tip_length=0.2)
+            
+            result_b = VGroup(
+                t("GNN: WRONG", size=28, color=gs.C_BAD),
+                VGroup(
+                    t("LLM: CORRECT", size=28, color=gs.C_GOOD, weight=BOLD),
+                    gs.check(color=gs.C_GOOD, size=0.35)
+                ).arrange(RIGHT, buff=0.15)
+            ).arrange(DOWN, aligned_edge=LEFT).next_to(arrow_b, RIGHT, buff=0.15)
+            
+            row_b = VGroup(node_b_label, text_b, arrow_b, result_b)
+
+            # BOTTOM ROW: Node C
+            node_c_label = t("Node C", size=32, color=WHITE, weight=BOLD).move_to(LEFT * 5.0 + DOWN * 1.5)
+            
+            text_c = t("Vague Text:\n'Some words...'", size=28, color=WHITE).next_to(node_c_label, RIGHT, buff=1.0)
+            text_c.align_to(text_b, LEFT)
+            
+            arrow_c = Arrow(text_c.get_right(), text_c.get_right() + RIGHT * 1.2, buff=0.15, color=gs.C_EDGE, stroke_width=4, tip_length=0.2)
+            arrow_c.align_to(arrow_b, LEFT)
+
+            result_c = VGroup(
+                t("GNN: WRONG", size=28, color=gs.C_BAD),
+                t("LLM: UNCERTAIN", size=28, color=YELLOW, weight=BOLD)
+            ).arrange(DOWN, aligned_edge=LEFT).next_to(arrow_c, RIGHT, buff=0.15)
+            
+            row_c = VGroup(node_c_label, text_c, arrow_c, result_c)
+
+            # Align horizontally
+            VGroup(row_b, row_c).set_x(0)
+
+            # Animations
+            self.play(FadeIn(row_b, shift=RIGHT * 0.3), run_time=0.8)
+            self.play(FadeIn(row_c, shift=RIGHT * 0.3), run_time=0.8)
+            self.wait(0.5)
+
+        conclusion = VGroup(
+            t("Text helps only when its", size=48, color=WHITE, weight=BOLD),
+            t("semantic signal is reliable.", size=56, color=gs.C_GOOD, weight=BOLD)
+        ).arrange(DOWN, buff=0.3).set_z_index(100)
         blackout5 = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(99)
         with self.narrated_caption(["đây là điểm mấu chốt của bài báo."]):
             self.play(FadeIn(blackout5), FadeIn(conclusion, shift=UP * 0.2), run_time=0.8)
             self.wait(0.6)
 
         # Store for morph into section 9
-        self.comparison_objects = VGroup(
-            b_title, c_title, b_gnn, b_llm, c_gnn, c_llm, vs, blackout4, blackout5, conclusion
-        )
+        self.comparison_objects = VGroup(conclusion, blackout5, row_b, row_c)
 
     # ─────────────────────────────────────────────────────────
     # SECTION 9 — Aggregate Accuracy
