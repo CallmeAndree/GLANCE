@@ -117,9 +117,11 @@ class TimedTTSServiceTest(unittest.TestCase):
             self.assertEqual(
                 json.loads(request.data.decode("utf-8")),
                 {
+                    "model": "gwen-tts",
                     "input": "Xin chào.",
                     "voice": "longkhongphainong",
                     "response_format": "mp3",
+                    "speed": 1.0,
                 },
             )
             self.assertNotIn("secret-token", json.dumps(result))

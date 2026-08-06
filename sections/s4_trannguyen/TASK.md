@@ -9,6 +9,19 @@
 **E**mbeddings. Ba thành phần: (i) GNN và LLM encoder **đóng băng**, (ii) **router** học được
 dùng feature rẻ tiền, (iii) **refiner** hợp nhất embedding cấu trúc và text.
 
+### Điểm cắt với section 3 (chốt ngày 2026-08-07)
+
+**Section 3 dựng đủ năm signal và kết thúc tại $\mathbf{f}_v$. Section 4 bắt đầu từ
+$\mathbf{f}_v \rightarrow a_v$.** Phần "sinh năm signal" bên dưới vì vậy **không còn
+dựng lại ở đây**: 12 cảnh `S4_03…S4_14` (ba nguồn thông tin, message passing, MLP $Q$,
+soft homophily, feature gốc, degree, ghép $\mathbf{f}_A$) đã chuyển nguyên sang
+`sections/s3_nhutanh/s3_nhutanh.py` thành `S3_07…S3_19`.
+
+Còn lại trong section này: `S4_01`, `S4_02` (trong đó Step 1 chỉ nhắc lại
+$\mathbf{f}_v$ thành một bundle "from section 3"), rồi `S4_15_RouterScore` trở đi.
+Số trên pill header đã dồn liên tục 1…13; **tên class giữ nguyên** để không đổi thứ
+tự ghép và không mất cache media.
+
 ### Step 1 — Sinh và xử lý routing feature (§5.1.1)
 
 Router nhận vector $\mathbf{f}_v$ gồm 5 tín hiệu **rẻ**:

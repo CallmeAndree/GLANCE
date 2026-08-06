@@ -32,9 +32,11 @@ import manimpango
 
 
 DEFAULT_TIMED_TTS_URL = (
-    "https://gig-largest-submissions-pending.trycloudflare.com/v1/audio/speech"
+    "https://thunder-proceeding-paul-acknowledge.trycloudflare.com/v1/audio/speech"
 )
+DEFAULT_TIMED_TTS_MODEL = "gwen-tts"
 DEFAULT_TIMED_TTS_VOICE = "longkhongphainong"
+DEFAULT_TIMED_TTS_SPEED = 1.0
 DEFAULT_TIMED_TTS_KEY_FILE = ".run/api.key"
 
 
@@ -45,8 +47,10 @@ class TimedTTSService(SpeechService):
         self,
         endpoint,
         token,
+        model=DEFAULT_TIMED_TTS_MODEL,
         voice=DEFAULT_TIMED_TTS_VOICE,
         audio_format="mp3",
+        speed=DEFAULT_TIMED_TTS_SPEED,
         timeout=120,
         **kwargs,
     ):
@@ -57,8 +61,10 @@ class TimedTTSService(SpeechService):
         super().__init__(**kwargs)
         self.endpoint = endpoint.rstrip("/")
         self.token = token
+        self.model = model
         self.voice = voice
         self.audio_format = audio_format.lower()
+        self.speed = float(speed)
         self.timeout = timeout
 
     def generate_from_text(self, text, cache_dir=None, path=None, **kwargs):
@@ -68,8 +74,10 @@ class TimedTTSService(SpeechService):
             "input_text": input_text,
             "service": "glance-timed-tts-v1",
             "endpoint": self.endpoint,
+            "model": self.model,
             "voice": self.voice,
             "format": self.audio_format,
+            "speed": self.speed,
         }
 
         cached = self.get_cached_result(input_data, cache_dir)
@@ -83,9 +91,11 @@ class TimedTTSService(SpeechService):
         )
         payload = json.dumps(
             {
+                "model": self.model,
                 "input": input_text,
                 "voice": self.voice,
                 "response_format": self.audio_format,
+                "speed": self.speed,
             },
             ensure_ascii=False,
         ).encode("utf-8")
@@ -292,17 +302,24 @@ FONT_MONO = _first_available(
 # --------------------------------------------------------------------------
 
 # Bọc trong ManimColor để dùng được interpolate_color(), .lighter(), v.v.
-BG = ManimColor("#0E1116")
-INK = ManimColor("#E8ECF1")
-MUTED = ManimColor("#8B97A8")
+# Bảng màu "Deep Graph": nền navy đen, nhấn xanh dương / cam / tím / cyan.
+BG = ManimColor("#08111F")        # nền chính toàn video
+INK = ManimColor("#F1F5F9")       # chữ chính (off-white)
+MUTED = ManimColor("#94A3B8")     # chữ phụ / chú thích (blue gray)
 
-C_GNN = ManimColor("#3ECFB2")
-C_LLM = ManimColor("#F2B441")
-C_ROUTER = ManimColor("#A98BFF")
-C_GOOD = ManimColor("#5BD97E")
-C_BAD = ManimColor("#FF6B6B")
-C_EDGE = ManimColor("#4A5468")
-C_HIGHLIGHT = ManimColor("#6EA8FE")
+C_GNN = ManimColor("#3B82F6")     # GNN / cấu trúc graph (electric blue)
+C_LLM = ManimColor("#F59E0B")     # LLM / semantic content (amber orange)
+C_ROUTER = ManimColor("#8B5CF6")  # Router / GLANCE (violet)
+C_GOOD = ManimColor("#34D399")    # đúng / improvement (mint green)
+C_BAD = ManimColor("#FB7185")     # khó / heterophily / sai (coral red)
+C_EDGE = ManimColor("#334A63")    # đường graph trung tính trên nền navy
+C_HIGHLIGHT = ManimColor("#22D3EE")  # nhấn công nghệ chung (cyan)
+
+# Structural signals (homophily, degree, uncertainty) = cyan. Trùng C_HIGHLIGHT
+# để cả video chỉ có một màu nhấn "tín hiệu".
+C_SIGNAL = C_HIGHLIGHT
+# Nền khối / thẻ / khung công thức: slate navy, nhấc nhẹ khỏi nền BG.
+C_PANEL = ManimColor("#111E32")
 
 # One accent per section, used for the section banner and key terms.
 SECTION_COLORS = {
@@ -317,8 +334,8 @@ SECTION_COLORS = {
 # Light/deep variants of the LLM accent, for sections that need to distinguish
 # several LLM-derived signals (e.g. ego / 1-hop / 2-hop context embeddings)
 # while keeping them recognisably in the same "LLM = amber" family.
-C_LLM_LIGHT = ManimColor("#F7CE85")
-C_LLM_DEEP = ManimColor("#C98A1E")
+C_LLM_LIGHT = ManimColor("#FBBF24")
+C_LLM_DEEP = ManimColor("#B45309")
 
 TITLE_SIZE = 44
 HEAD_SIZE = 34
@@ -373,8 +390,8 @@ def caption(s, size=SMALL_SIZE):
 
 
 def source(ref):
-    """Bottom-right provenance stamp: source('Table 1, tr.4')."""
-    return caption(f"Nguồn: {ref}").to_corner(DR, buff=0.35)
+    """Bottom-right provenance stamp: source('Table 1, p.4')."""
+    return caption(f"Source: {ref}").to_corner(DR, buff=0.35)
 
 
 # --------------------------------------------------------------------------
@@ -789,7 +806,7 @@ def doc_icon(scale=1.0):
     return VGroup(page, lines).scale(scale)
 
 
-def _box(width, height, stroke=MUTED, fill=BG, radius=0.18):
+def _box(width, height, stroke=MUTED, fill=C_PANEL, radius=0.18):
     return RoundedRectangle(
         width=width, height=height, corner_radius=radius,
         stroke_color=stroke, stroke_width=1.6, fill_color=fill, fill_opacity=1,
@@ -798,7 +815,7 @@ def _box(width, height, stroke=MUTED, fill=BG, radius=0.18):
 
 def module_box(title, subtitle, width=4.5, height=1.05, emphasized=False):
     """A labelled model block with a subtitle, e.g. module_box("GNN", "backbone")."""
-    outer = _box(width, height, stroke=INK if emphasized else MUTED, fill=BG)
+    outer = _box(width, height, stroke=INK if emphasized else MUTED, fill=C_PANEL)
     title_mob = fit_width(txt(title, size=24, color=INK if emphasized else MUTED, weight=BOLD), width - 0.35)
     subtitle_mob = fit_width(txt(subtitle, size=17, color=MUTED), width - 0.35)
     content = VGroup(title_mob, subtitle_mob).arrange(DOWN, buff=0.08).move_to(outer)
@@ -807,7 +824,7 @@ def module_box(title, subtitle, width=4.5, height=1.05, emphasized=False):
 
 def math_module_box(tex, subtitle, width=4.0, height=0.95, emphasized=False):
     """Like module_box, but the title is a LaTeX formula."""
-    outer = _box(width, height, stroke=INK if emphasized else MUTED, fill=BG)
+    outer = _box(width, height, stroke=INK if emphasized else MUTED, fill=C_PANEL)
     title_mob = fit_width(MathTex(tex, font_size=30, color=INK if emphasized else MUTED), width - 0.35)
     subtitle_mob = fit_width(txt(subtitle, size=17, color=MUTED), width - 0.35)
     content = VGroup(title_mob, subtitle_mob).arrange(DOWN, buff=0.08).move_to(outer)
@@ -816,7 +833,7 @@ def math_module_box(tex, subtitle, width=4.0, height=0.95, emphasized=False):
 
 def equation_card(formula, subtitle, width=4.2, height=1.25, emphasized=False):
     """A boxed formula with a caption underneath."""
-    box = _box(width, height, stroke=INK if emphasized else MUTED, fill=BG)
+    box = _box(width, height, stroke=INK if emphasized else MUTED, fill=C_PANEL)
     equation = fit_width(MathTex(formula, font_size=40, color=INK if emphasized else MUTED), width - 0.34)
     label = txt(subtitle, size=19, color=MUTED)
     content = VGroup(equation, label).arrange(DOWN, buff=0.12).move_to(box)
@@ -1066,10 +1083,16 @@ class GlanceScene(VoiceoverScene):
                     "GLANCE_TIMED_TTS_URL", DEFAULT_TIMED_TTS_URL
                 ),
                 token=_read_tts_key(key_file),
+                model=os.environ.get(
+                    "GLANCE_TIMED_TTS_MODEL", DEFAULT_TIMED_TTS_MODEL
+                ),
                 voice=os.environ.get(
                     "GLANCE_TIMED_TTS_VOICE", DEFAULT_TIMED_TTS_VOICE
                 ),
                 audio_format=os.environ.get("GLANCE_TIMED_TTS_FORMAT", "mp3"),
+                speed=float(
+                    os.environ.get("GLANCE_TIMED_TTS_SPEED", DEFAULT_TIMED_TTS_SPEED)
+                ),
                 timeout=float(os.environ.get("GLANCE_TIMED_TTS_TIMEOUT", "120")),
             )
 

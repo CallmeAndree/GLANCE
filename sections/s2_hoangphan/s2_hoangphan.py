@@ -21,7 +21,7 @@ SECTION_NAME = "Routing heuristic"
 OWNER = "Hoàng Phan"
 ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 
-SRC_T1 = "Bảng 1, tr.4"
+SRC_T1 = "Table 1, p.4"
 
 ASSET_DIR = pathlib.Path(__file__).resolve().parent / "assets"
 PAPER_ASSETS = [
@@ -417,76 +417,194 @@ class S2_04_Density(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Heuristic 2: Clustering density", color=ACCENT).to_edge(UP, buff=0.85)
-        sub = mono("LLM-GNN  ·  route the lowest-density nodes", size=18,
-                   color=MUTED).next_to(head, DOWN, buff=0.18)
-        g = s2_graph().scale(0.9).move_to(DOWN * 0.4)
-        ring_r = g.nodes["H"].radius * 1.9
+        head = heading("Heuristic 2: C-density in feature space", color=ACCENT)
+        head.to_edge(UP, buff=0.85)
+        sub = mono("Derived from LLM-GNN  ·  GLANCE routes the bottom-k%", size=17,
+                   color=MUTED).next_to(head, DOWN, buff=0.16)
 
-        beat(self, "Tiếp theo là lờ lờ mờ, gờ nờ nờ.",
-             FadeIn(head), FadeIn(sub), run_time=0.8)
-        beat(self, "Công trình này dùng mật độ phân cụm làm tiêu chí định tuyến.",
-             FadeIn(g), run_time=0.8)
-        beat(self, "Nó đo xem các hàng xóm của một nót có nối với nhau không.")
-        beat(self, "Tức nót đó nằm trong một cụm chặt chẽ tới mức nào.")
-        beat(self, "Giả định: nót ở vùng thưa thì gờ nờ nờ khó mô hình hoá.")
-
-        # --- vùng thưa bên trái: bị định tuyến dù dễ -----------------------------
-        sparse_nodes = VGroup(*[g.nodes[n] for n in SPARSE])
-        sparse_box = DashedVMobject(
-            panel(sparse_nodes, color=C_ROUTER, buff=0.42, fill_opacity=0), num_dashes=52)
-        sparse_rings = VGroup(*[
-            Circle(radius=ring_r, color=C_ROUTER, stroke_width=3).move_to(g.nodes[n])
-            for n in SPARSE
+        # Schematic 2D projection of feature vectors. All points share one neutral
+        # colour: the clusters come from K-means, not from ground-truth labels.
+        coords = [
+            [-4.8, 0.25, 0], [-4.35, -0.55, 0], [-3.95, 0.55, 0],
+            [-3.55, -0.35, 0], [-3.15, 0.15, 0],
+            [-1.05, 1.15, 0], [-0.62, 0.45, 0], [-0.12, 1.25, 0],
+            [0.30, 0.38, 0], [0.72, 0.95, 0],
+            [1.70, -0.20, 0], [2.05, -1.02, 0], [2.62, -0.48, 0],
+            [3.05, -1.18, 0], [3.42, -0.28, 0], [4.72, 0.78, 0],
+        ]
+        points = VGroup(*[
+            Dot(p, radius=0.105, color=MUTED).set_z_index(3) for p in coords
         ])
-        sparse_tag = mono("density = 0", size=17, color=C_ROUTER).next_to(
-            sparse_box, UP, buff=0.2).set_z_index(4)
-        msg1 = txt("Sparse, but the whole region shares one class. Easy.",
-                   size=21, color=C_GOOD).to_edge(DOWN, buff=0.45)
+        graph_edges = VGroup(*[
+            Line(points[i].get_center(), points[j].get_center(),
+                 color=C_EDGE, stroke_width=2, stroke_opacity=0.7)
+            for i, j in [
+                (0, 1), (0, 2), (1, 3), (2, 4), (3, 4),
+                (5, 6), (5, 7), (6, 8), (7, 9), (8, 9),
+                (10, 11), (10, 12), (11, 13), (12, 14), (13, 14), (14, 15),
+            ]
+        ]).set_z_index(1)
+        axes = VGroup(
+            Line(LEFT * 5.35 + DOWN * 1.62, RIGHT * 5.35 + DOWN * 1.62,
+                 color=C_EDGE, stroke_width=1.4, stroke_opacity=0.45),
+            Line(LEFT * 5.35 + DOWN * 1.62, LEFT * 5.35 + UP * 1.65,
+                 color=C_EDGE, stroke_width=1.4, stroke_opacity=0.45),
+        )
 
-        beat(self, "Vùng bên trái gần như không có tam giác nào.",
-             Create(sparse_box), FadeIn(sparse_tag), run_time=1.1)
-        beat(self, "mật độ bằng không, nên tiêu chí định tuyến cả vùng này.",
-             LaggedStart(*[Create(r) for r in sparse_rings], lag_ratio=0.12), run_time=1.2)
-        beat(self, "Vậy mà cả vùng chỉ có một lớp duy nhất.", FadeIn(msg1), run_time=0.8)
-        beat(self, "Thưa, nhưng vẫn dễ. Bốn lời gọi lờ lờ mờ bị phí.")
+        topology_icon = VGroup(
+            Triangle(color=MUTED, stroke_width=2).scale(0.32),
+            mono("Topology density", size=14, color=MUTED),
+        ).arrange(DOWN, buff=0.12).move_to(RIGHT * 4.55 + UP * 1.35)
+        topology_cross = cross(size=0.52).move_to(topology_icon[0])
+        topology_group = VGroup(topology_icon, topology_cross)
 
-        self.play(FadeOut(sparse_rings), FadeOut(msg1),
-                  sparse_box.animate.set_stroke(opacity=0.25),
-                  sparse_tag.animate.set_opacity(0.25), run_time=0.7)
+        centroid_pos = [LEFT * 3.95, LEFT * 0.20 + UP * 0.82, RIGHT * 2.55 + DOWN * 0.62]
+        cluster_bounds = VGroup(
+            Ellipse(width=2.35, height=1.65, color=MUTED, stroke_width=1.5,
+                    stroke_opacity=0.28).move_to(centroid_pos[0]),
+            Ellipse(width=2.45, height=1.65, color=MUTED, stroke_width=1.5,
+                    stroke_opacity=0.28).move_to(centroid_pos[1]),
+            Ellipse(width=2.45, height=1.85, color=MUTED, stroke_width=1.5,
+                    stroke_opacity=0.28).move_to(centroid_pos[2]),
+        )
+        centroids = VGroup(*[
+            VGroup(
+                Circle(radius=0.20, color=C_ROUTER, stroke_width=2.5),
+                Dot(radius=0.075, color=C_ROUTER),
+            ).move_to(p).set_z_index(4)
+            for p in centroid_pos
+        ])
+        centroid_labels = VGroup(*[
+            MathTex(rf"CC_{{{i}}}", font_size=24, color=C_ROUTER).next_to(
+                c, direction, buff=0.14)
+            for i, (c, direction) in enumerate(
+                zip(centroids, [LEFT, RIGHT, LEFT]), start=1)
+        ])
+        k_note = mono("K = number of classes", size=17, color=C_ROUTER)
+        k_note.to_edge(RIGHT, buff=0.5).shift(DOWN * 1.75)
+        beat(self, "Tiêu chí thứ hai là mật độ xê, được kế thừa từ lờ lờ mờ, gờ nờ nờ.",
+             FadeIn(head), FadeIn(sub), Create(graph_edges),
+             LaggedStart(*[GrowFromCenter(p) for p in points], lag_ratio=0.04), run_time=1.6)
+        beat(self, "Mật độ xê ở đây không phải mật độ cạnh hay số tam giác xung quanh nót.",
+             FadeOut(graph_edges), Create(axes),
+             FadeIn(topology_group), run_time=1.3)
+        beat(self, "Trước hết, ca min phân cụm các véc-tơ đặc trưng, với số cụm bằng số lớp.",
+             FadeOut(topology_group), FadeIn(cluster_bounds),
+             LaggedStart(*[GrowFromCenter(c) for c in centroids], lag_ratio=0.2),
+             FadeIn(centroid_labels), FadeIn(k_note), run_time=1.5)
 
-        # --- cụm dày bên phải: bị bỏ qua dù khó ----------------------------------
-        tri = VGroup(*[
-            Polygon(*[g.nodes[n].get_center() for n in t],
-                    fill_color=C_HIGHLIGHT, fill_opacity=0.2, stroke_width=0)
-            for t in DENSE_TRIS
-        ]).set_z_index(-2)
-        dense_tag = mono("high density", size=17, color=C_HIGHLIGHT).next_to(
-            VGroup(*[g.nodes[n] for n in DENSE]), UP, buff=0.3).set_z_index(4)
-        hetero = edge_mobjs(
-            g, lambda u, v: u in DENSE and v in DENSE and S2_LABELS[u] != S2_LABELS[v])
-        msg2 = txt("Dense, yet 6 of 10 edges join different classes.",
-                   size=21, color=C_BAD).to_edge(DOWN, buff=0.45)
+        near_node = points[5]
+        near_centroid = centroids[1]
+        near_ring = Circle(radius=0.19, color=C_ROUTER, stroke_width=3).move_to(near_node)
+        near_line = DashedLine(near_node.get_center(), near_centroid.get_center(),
+                               color=C_ROUTER, stroke_width=2.5, dash_length=0.12)
+        distance = MathTex(r"d_i=\lVert x_i-x_{CC_i}\rVert", font_size=30,
+                           color=INK).move_to(LEFT * 0.25 + DOWN * 1.98)
+        beat(self, "Với mỗi nót, ta đo khoảng cách từ véc-tơ của nó đến tâm cụm gần nhất.",
+             Create(near_ring), Create(near_line), Write(distance), run_time=1.3)
 
-        beat(self, "Còn cụm bên phải thì ngược lại hoàn toàn.",
-             FadeIn(tri), FadeIn(dense_tag), run_time=1.2)
-        beat(self, "Rất nhiều tam giác, mật độ cao, nên tiêu chí bỏ qua cụm này.")
-        beat(self, "Nhưng hãy nhìn kỹ vào màu.",
-             tri.animate.set_fill(opacity=0.07), run_time=0.7)
-        beat(self, "Sáu trong mười cạnh của cụm nối hai nót khác lớp.",
-             hetero.animate.set_stroke(color=C_BAD, width=3.6), FadeIn(msg2), run_time=1.2)
-        beat(self, "Cụm dày đặc, mà truyền thông điệp vẫn bị nhiễu.")
-        beat(self, "Đây mới là chỗ cần lờ lờ mờ, nhưng nó không được chọn.")
+        far_node = points[15]
+        far_centroid = centroids[2]
+        far_ring = Circle(radius=0.20, color=C_LLM, stroke_width=3.2).move_to(far_node)
+        far_line = DashedLine(far_node.get_center(), far_centroid.get_center(),
+                              color=C_ROUTER, stroke_width=2.5, dash_length=0.12)
+        near_note = VGroup(
+            mono("Near centroid", size=16, color=MUTED),
+            mono("high C-density", size=17, color=C_ROUTER),
+        ).arrange(DOWN, buff=0.08).next_to(near_node, LEFT, buff=0.3)
+        far_note = VGroup(
+            mono("Far from centroid", size=16, color=MUTED),
+            mono("low C-density", size=17, color=C_LLM),
+        ).arrange(DOWN, buff=0.08).next_to(far_node, UP, buff=0.22)
+        comparison = VGroup(near_note, far_note)
+        density_formula = MathTex(
+            r"\operatorname{C\!\text{-}\!Density}(v_i)="
+            r"\frac{1}{1+\lVert x_{v_i}-x_{CC_{v_i}}\rVert}",
+            font_size=30, color=INK,
+        ).move_to(DOWN * 2.15)
+        density_box = panel(density_formula, color=C_ROUTER, buff=0.18, fill_opacity=0.1)
+        formula_group = VGroup(density_box, density_formula)
+        with self.voiceover(text=(
+            "Trước tiên, nót gần tâm cụm có khoảng cách nhỏ, nên mật độ xê cao. "
+            "Ngược lại, nót ở xa tâm cụm có khoảng cách lớn, nên mật độ xê thấp."
+        )) as tracker:
+            step_time = min(1.1, tracker.duration * 0.2)
+            self.play(FadeOut(distance), FadeIn(near_note), FadeIn(formula_group),
+                      run_time=step_time)
+            # Giữ trạng thái near trong khi câu đầu tiếp tục được đọc. Audio vẫn
+            # chạy liên tục; đây chỉ là khoảng giữ hình, không chèn silence.
+            self.wait(max(0, tracker.duration * 0.5 - step_time))
+            self.play(Create(far_ring), Create(far_line), FadeIn(far_note),
+                      run_time=step_time)
 
-        self.clear_scene()
+        feature_phase = VGroup(
+            axes, points, cluster_bounds, centroids, centroid_labels, k_note,
+            near_ring, near_line, far_ring, far_line, comparison, formula_group,
+        )
+        routed_node = VGroup(
+            VGroup(
+                Circle(radius=0.25, color=C_LLM, stroke_width=3),
+                Dot(radius=0.10, color=MUTED),
+            ),
+            mono("Low C-density", size=17, color=C_LLM),
+        ).arrange(DOWN, buff=0.18)
+        router = labeled_box("Router", C_ROUTER, width=2.0, height=0.9)
+        llm = labeled_box("LLM", C_LLM, width=2.0, height=0.9)
+        route_items = VGroup(routed_node, router, llm).arrange(RIGHT, buff=1.15)
+        route_arrows = VGroup(*[
+            Arrow(route_items[i].get_right(), route_items[i + 1].get_left(),
+                  buff=0.12, color=C_LLM, stroke_width=4)
+            for i in range(2)
+        ])
+        route_note = mono("GLANCE: bottom-k% by C-density", size=19,
+                          color=C_LLM).next_to(route_items, DOWN, buff=0.5)
+        route_phase = VGroup(route_items, route_arrows, route_note).move_to(DOWN * 0.35)
+        beat(self, "Trong thí nghiệm của gờ lans, các nót có mật độ xê thấp nhất được định tuyến sang lờ lờ mờ.",
+             FadeOut(feature_phase), FadeIn(route_items),
+             LaggedStart(*[GrowArrow(a) for a in route_arrows], lag_ratio=0.25),
+             FadeIn(route_note), run_time=1.4)
+
+        outcome_title = heading("Same C-density, different outcomes", color=ACCENT)
+        outcome_title.to_edge(UP, buff=1.0)
+
+        def outcome_card(left_text, left_color, right_text, right_color, border_color):
+            centroid = VGroup(
+                Circle(radius=0.17, color=C_ROUTER, stroke_width=2.2),
+                Dot(radius=0.06, color=C_ROUTER),
+            )
+            candidate = Dot(radius=0.10, color=MUTED).shift(RIGHT * 1.15)
+            measure = DashedLine(centroid.get_center(), candidate.get_center(),
+                                 color=C_ROUTER, stroke_width=2.2, dash_length=0.1)
+            measured = VGroup(centroid, candidate, measure)
+            same_d = MathTex(r"d_i=d_j", font_size=25, color=MUTED).next_to(measured, UP, buff=0.15)
+            result = VGroup(
+                txt(left_text, size=20, color=left_color, weight=BOLD),
+                mono("→", size=24, color=MUTED),
+                txt(right_text, size=20, color=right_color, weight=BOLD),
+            ).arrange(RIGHT, buff=0.18)
+            content = VGroup(VGroup(measured, same_d), result).arrange(DOWN, buff=0.45)
+            frame = panel(content, color=border_color, buff=0.35, fill_opacity=0.08)
+            return VGroup(frame, content)
+
+        helped = outcome_card("GNN wrong", C_BAD, "LLM correct", C_GOOD, C_GOOD)
+        harmed = outcome_card("GNN correct", C_GOOD, "LLM wrong", C_BAD, C_BAD)
+        outcomes = VGroup(helped, harmed).arrange(RIGHT, buff=0.65).move_to(DOWN * 0.25)
+        outcome_phase = VGroup(outcome_title, outcomes)
+        intro_phase = VGroup(head, sub, route_phase)
+        beat(self, "Tuy nhiên, khoảng cách đến tâm cụm không trực tiếp cho biết gờ nờ nờ đang sai, cũng không cho biết lờ lờ mờ có thể sửa dự đoán đó hay không.",
+             FadeOut(intro_phase), FadeIn(outcome_title),
+             LaggedStart(FadeIn(helped), FadeIn(harmed), lag_ratio=0.25), run_time=1.8)
+
         punch = VGroup(
-            txt("Density describes the SHAPE of a neighborhood.", size=24, color=INK),
-            txt("It says nothing about the LABELS of the neighbors.", size=24,
-                color=ACCENT, weight=BOLD),
-        ).arrange(DOWN, buff=0.26)
-        beat(self, "mật độ chỉ mô tả hình dạng của vùng lân cận.", Write(punch), run_time=1.6)
-        beat(self, "Nó không nói gì về nhãn của các hàng xóm.")
-        beat(self, "Cũng chỉ là một tín hiệu thay thế gián tiếp cho độ khó.")
+            txt("Feature-space typicality", size=31, color=INK, weight=BOLD),
+            mono("≠", size=38, color=C_BAD),
+            txt("LLM benefit", size=31, color=C_LLM, weight=BOLD),
+        ).arrange(RIGHT, buff=0.38)
+        punch_sub = mono("C-density remains an indirect proxy", size=19,
+                         color=MUTED).next_to(punch, DOWN, buff=0.42)
+        punch_group = VGroup(punch, punch_sub)
+        beat(self, "Vì vậy, mật độ xê vẫn chỉ là một tín hiệu thay thế gián tiếp cho lợi ích của việc định tuyến.",
+             FadeOut(outcome_phase), FadeIn(punch_group, shift=UP * 0.18), run_time=1.4)
 
 
 # ===========================================================================
@@ -764,7 +882,7 @@ class S2_07_NCS(GlanceScene):
              LaggedStart(*[c.animate.set_fill(C_BAD, 0.9).set_stroke(C_BAD)
                            for c in cells[25:35]], lag_ratio=0.04),
              FadeIn(t_cw), run_time=1.3)
-        beat(self, "en xi ét bằng hai mươi lăm trừ mười, chia một trăm, tức không phẩy mười lăm.",
+        beat(self, "en xi ét bằng hai mươi lăm trừ mười, chia một trăm, tức không chấm một năm.",
              Write(result), run_time=1.2)
 
         # --- thang đo -------------------------------------------------------------
@@ -901,7 +1019,7 @@ class S2_08_Table1(GlanceScene):
         beat(self, "Hãy nhìn pắp mét và ác xíp hai ba trước.",
              Create(frames), Indicate(good, color=C_LLM, scale_factor=1.04), run_time=1.4)
         beat(self, "Ở đây độ bất định là tiêu chí tốt nhất trong mọi thiết lập.")
-        beat(self, "Với gờ xê en dùng đặc trưng tăng cường trên pắp mét, en xi ét đạt không phẩy hai mươi.",
+        beat(self, "Với gờ xê en dùng đặc trưng tăng cường trên pắp mét, en xi ét đạt không chấm hai không.",
              Create(star_ring), Create(lead), FadeIn(readout, shift=LEFT * 0.2), run_time=1.0)
         beat(self, "Nghĩa là cứ một trăm nót được định tuyến, lờ lờ mờ tạo hai mươi lần sửa có lợi.")
         beat(self, "Sau khi đã trừ đi những nót bị làm sai. Đây là kết quả tốt.")
@@ -985,9 +1103,9 @@ class S2_09_PubmedVsCora(GlanceScene):
         beat(self, "Ba đường nét đứt là mốc chọn nót ngẫu nhiên trên cô ra.",
              LaggedStart(*[Create(m) for m in rand_marks], lag_ratio=0.2),
              FadeIn(rand_lab), run_time=1.4)
-        beat(self, "Ở mức mười phần trăm, chọn bừa chỉ âm không phẩy không hai.")
+        beat(self, "Ở mức mười phần trăm, chọn bừa chỉ âm không chấm không hai.")
         beat(self, "Còn chọn kỹ những nót mà gờ nờ nờ không chắc chắn nhất.")
-        beat(self, "Lại tụt xuống âm không phẩy không chín, tệ hơn hẳn chọn bừa.",
+        beat(self, "Lại tụt xuống âm không chấm không chín, tệ hơn hẳn chọn bừa.",
              Indicate(VGroup(chart.bars[3], rand_marks[0]),
                       color=C_BAD, scale_factor=1.08), run_time=1.4)
         beat(self, "Ở hai mức còn lại nó nhúc nhích khá hơn ngẫu nhiên, nhưng vẫn âm cả ba.")
@@ -1082,7 +1200,7 @@ class S2_11_Backbone(GlanceScene):
         beat(self, "Còn một quan sát nữa, và nó khá tinh tế.",
              FadeIn(head), FadeIn(sub), FadeIn(chart.axes), FadeIn(stamp), run_time=1.0)
         beat(self, "Hiệu quả định tuyến thay đổi khi mô hình nền thay đổi.")
-        beat(self, "Trên pắp mét, độ bất định với gờ xê en đạt en xi ét từ không phẩy mười bảy đến không phẩy hai mươi.",
+        beat(self, "Trên pắp mét, độ bất định với gờ xê en đạt en xi ét từ không chấm một bảy đến không chấm hai không.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3)],
                          lag_ratio=0.15), FadeIn(l_gcn), run_time=1.5)
         beat(self, "Nhưng đổi sang mô hình nền mạnh hơn là gờ xê en hai.",

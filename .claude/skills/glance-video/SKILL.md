@@ -19,7 +19,10 @@ thành viên sở hữu và render thành `.mp4` riêng, rồi `ffmpeg` ghép l�
    cầu rõ ràng, vì mọi section phụ thuộc vào chúng.
 3. **Không bịa số liệu.** Mọi con số phải lấy từ `docs/paper-map.md` (đã trích sẵn
    kèm số bảng, số trang) hoặc từ `../GraphDataMining.pdf`. Số liệu nào lên hình
-   cũng phải kèm `source("Bảng 3, tr.8")`.
+   cũng phải kèm `source("Table 3, p.8")`.
+   Scene thuần khái niệm, công thức hoặc kiến trúc không hiển thị citation hay
+   `source(...)`; provenance của các nội dung này được giữ trong code và
+   `docs/paper-map.md`.
 4. **Không commit video.** `media/`, `build/`, `*.mp4` đã nằm trong `.gitignore`.
 5. **Chạy bộ test trước khi kết thúc việc hoặc mở PR:**
 
@@ -121,8 +124,10 @@ Quy tắc:
 
 - **Gom lời thuyết minh vào dict `VO` ở đầu file**, không rải chuỗi trong code —
   dễ duyệt kịch bản và dễ sửa.
-- **Viết theo cách đọc lên, không theo cách viết công thức**: `h_v` → "h của v",
-  `3/4` → "ba phần tư", `0.75` → "không phẩy bảy lăm", `N(v)` → "tập hàng xóm của v".
+- **Viết theo cách đọc lên, không theo cách viết công thức**: `h_v` → "hắc phẩy vê",
+  `3/4` → "ba phần tư", `0.75` → "không chấm bảy năm", `N(v)` → "tập hàng xóm của v".
+  Chữ cái trong ký hiệu phải ghi bằng âm đọc đã chốt trong `plan.md`; ví dụ
+  `p_{H,A}` → "bê hắc phẩy a", `z_G(v)` → "dét gờ vê".
   TTS đọc ký hiệu toán rất tệ.
 - **Lời `VO` không để tiếng Anh cho model tự đoán cách đọc.** Chữ trên hình vẫn giữ
   thuật ngữ gốc, nhưng lời đọc dùng phiên âm đã chốt (`node` → "nót") và ưu tiên
@@ -130,8 +135,18 @@ Quy tắc:
   "véc-tơ biểu diễn"). Acronym dùng đúng
   bảng phiên âm chung: `LLM` → "eo eo em", `MLP Q` → "em eo pi khiu",
   `GNN` → "gi en en", `GLANCE` → "gờ lans".
+  Ngoại lệ tên bài báo: `GLANCE for Context` đọc nguyên cụm là
+  "gờ lans for context".
 - Đừng để tổng `run_time` trong khối vượt quá độ dài lời đọc, nếu không hình sẽ
   chạy lố sang câu sau. Kiểm tra bằng cách so `tracker.duration` với tổng run_time.
+- **Chỉnh nhịp bằng kịch bản, không bóp méo audio.** Khi sửa scene, được phép thêm,
+  bớt hoặc viết lại lời thoại để hình và giọng trôi chảy. Sau đó sinh TTS mới ở
+  tốc độ chuẩn và để audio mới quyết định nhịp animation. Không time-stretch,
+  time-compress, đổi cao độ hoặc chèn im lặng để ép audio cũ khớp hình.
+- **Một ý liền mạch dùng một clip TTS.** Đừng tách một câu giải thích thành nhiều
+  khối `voiceover` chỉ để chia animation: mỗi lần sinh TTS có thể reset nhịp,
+  âm lượng hoặc cao độ. Hãy chạy các animation tuần tự trong cùng một khối
+  `voiceover`, và chỉ tách audio ở chỗ chuyển ý tự nhiên.
 - Audio **cache theo hash của text** trong `media/voiceovers/`. Sửa animation thì
   không gọi lại TTS; sửa text thì mới sinh lại. Đừng commit thư mục này.
 - `self.say("...")` cho nhịp chỉ có lời đọc, không animation.

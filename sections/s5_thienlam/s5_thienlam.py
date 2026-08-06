@@ -16,7 +16,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 from glance_style import *  # noqa: E402,F403
 
 SECTION = "5"
-SECTION_NAME = "Training objective & thực nghiệm"
+SECTION_NAME = "Training objective & experiments"
 OWNER = "Thiên Lâm"
 ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 
@@ -88,7 +88,7 @@ VO = {
     "cf_intro": "Thay vì đạo hàm qua tốp ca, gờ lans chấm kết quả của từng quyết định bằng phần thưởng.",
     "cf_branch": (
         "Với một nốt được định tuyến, gờ lans dựng hai thế giới đối chứng: thế giới không gọi lờ lờ mờ, "
-        "dùng đầu dự đoán H có sẵn của gờ nờ nờ; và thế giới đã gọi lờ lờ mờ, đi qua bộ tinh chỉnh xi."
+        "dùng đầu dự đoán hắc có sẵn của gờ nờ nờ; và thế giới đã gọi lờ lờ mờ, đi qua bộ tinh chỉnh xi."
     ),
     "cf_same_label": (
         "Cả hai hàm mất mát đều là en-trô-pi chéo so với cùng một nhãn thật — hàm mất mát càng thấp thì dự đoán "
@@ -131,7 +131,7 @@ VO = {
     ),
     "obj_hparam": (
         "Cấu hình mặc định: bát ba mươi hai, định tuyến tốp mười hai mỗi bát, bê ta thử ở "
-        "không phẩy một, không phẩy hai, không phẩy ba. Ngân sách ca giảm dần theo lịch, "
+        "không chấm một, không chấm hai, không chấm ba. Ngân sách ca giảm dần theo lịch, "
         "từ ba mươi hai xuống còn tám."
     ),
     "obj_question": "Nhưng liệu cách huấn luyện này có thật sự tạo ra một bộ định tuyến học đúng không?",
@@ -155,18 +155,18 @@ VO = {
     ),
     # --- S5_07 Balanced results ---
     "res_overall": (
-        "Về độ chính xác tổng thể, gờ lans dẫn đầu cả ba bộ: cô ra tám mươi chín phẩy năm, pắp mét "
-        "chín mươi hai phẩy sáu, ác xíp hai ba tám mươi hai phẩy một — trung bình hơn mô hình tốt "
-        "kế tiếp khoảng không phẩy năm phần trăm."
+        "Về độ chính xác tổng thể, gờ lans dẫn đầu cả ba bộ: cô ra tám mươi chín chấm năm, pắp mét "
+        "chín mươi hai chấm sáu, ác xíp hai ba tám mươi hai chấm một — trung bình hơn mô hình tốt "
+        "kế tiếp khoảng không chấm năm phần trăm."
     ),
     "res_margin": "Nhưng khoảng cách tổng thể chỉ dưới một điểm, nên đó chưa phải điều quan trọng nhất.",
     "res_hardbin": (
         "Chia nốt theo hô mô phi li cục bộ thành các nhóm, ở nhóm khó nhất của cô ra gờ lans đạt "
-        "bốn mươi sáu phẩy bốn — cao hơn mô hình tốt kế tiếp tới mười ba điểm."
+        "bốn mươi sáu chấm bốn — cao hơn mô hình tốt kế tiếp tới mười ba điểm."
     ),
     "res_rank": (
-        "Trung bình trên toàn bộ các nhóm, gờ lans xếp hạng hai phẩy bốn — tốt nhất, bỏ xa á quân "
-        "bốn phẩy bảy, mà nhóm dễ vẫn giữ gần như tuyệt đối."
+        "Trung bình trên toàn bộ các nhóm, gờ lans xếp hạng hai chấm bốn — tốt nhất, bỏ xa á quân "
+        "bốn chấm bảy, mà nhóm dễ vẫn giữ gần như tuyệt đối."
     ),
     "res_verdict": "Con số tổng thể che chênh lệch ở nốt khó; hô mô phi li làm nó lộ ra.",
     # --- S5_08 Router learned ---
@@ -192,31 +192,31 @@ VO = {
     "ctrl_intro": "Bằng chứng mạnh nhất không phải là thêm lờ lờ mờ, mà là chọn đúng nốt để gọi.",
     "ctrl_all": (
         "định tuyến hết mọi nốt trên pắp mét: hai nhóm khó tăng, tổng thể thậm chí nhích lên cộng một "
-        "phẩy năm điểm — nhưng đổi lại, hai nhóm dễ sụp gần hai mươi điểm; con số tổng che mất cái giá "
+        "chấm năm điểm — nhưng đổi lại, hai nhóm dễ sụp gần hai mươi điểm; con số tổng che mất cái giá "
         "phải trả đó."
     ),
     "ctrl_random": (
         "Giữ nguyên lờ lờ mờ và bộ tinh chỉnh nhưng định tuyến ngẫu nhiên trên cô ra: chỉ còn tám mươi sáu "
-        "phẩy bốn, thua cả bây xơ lai gờ xê en hai tám mươi bảy phẩy bảy."
+        "chấm bốn, thua cả bây xơ lai gờ xê en hai tám mươi bảy chấm bảy."
     ),
     "ctrl_same_set": (
         "Trên đúng tập nốt mà bộ định tuyến đã chọn, nhánh gờ nờ nờ cộng lờ lờ mờ qua bộ tinh chỉnh đạt tám "
-        "mươi bảy phẩy sáu — cao hơn hẳn nếu để gờ xê en hai tự xử lý."
+        "mươi bảy chấm sáu — cao hơn hẳn nếu để gờ xê en hai tự xử lý."
     ),
     "ctrl_verdict": "định tuyến hết thì hại nốt dễ; định tuyến bừa thì thua bây xơ lai — giá trị nằm ở sự chọn lọc học được.",
     # --- S5_10 Scale ---
     "scale_setup": (
-        "Trên ô gi bi pró đắc — hai phẩy bốn lăm triệu nốt, gần sáu mươi hai triệu cạnh — gờ lans "
-        "chỉ gọi lờ lờ mờ cho khoảng một phẩy sáu phần trăm nốt, tức một nốt trong mỗi sáu mươi tư."
+        "Trên ô gi bi pró đắc — hai chấm bốn năm triệu nốt, gần sáu mươi hai triệu cạnh — gờ lans "
+        "chỉ gọi lờ lờ mờ cho khoảng một chấm sáu phần trăm nốt, tức một nốt trong mỗi sáu mươi tư."
     ),
     "scale_result": (
-        "Vậy mà vẫn dẫn đầu: tám mươi hai phẩy ba, cao hơn gờ xê en hai tám mươi mốt phẩy tám, "
-        "còn gờ gờ xê en thì hết bộ nhớ. Trên ác xíp dia, gờ lans đạt bốn mươi chín phẩy tám."
+        "Vậy mà vẫn dẫn đầu: tám mươi hai chấm ba, cao hơn gờ xê en hai tám mươi mốt chấm tám, "
+        "còn gờ gờ xê en thì hết bộ nhớ. Trên ác xíp dia, gờ lans đạt bốn mươi chín chấm tám."
     ),
     "scale_verdict": "Chọn lọc học được không chỉ cân bằng và chính xác, mà còn rẻ và mở rộng tới quy mô triệu nốt.",
     # --- S5_11 Callout ---
     "final_reconnect": (
-        "Ở đầu đoạn phim, câu hỏi đặt ra là: có cách nào kết hợp gờ nờ nờ và lờ lờ mờ mà biết tính "
+        "Ở đầu vi đi eo, câu hỏi đặt ra là: có cách nào kết hợp gờ nờ nờ và lờ lờ mờ mà biết tính "
         "chi phí không? Đây là câu trả lời của gờ lans, gói trong năm ý."
     ),
     "final_1": "Một: gờ nờ nờ và lờ lờ mờ giỏi ở những nốt khác nhau; hô mô phi li cục bộ dự báo ai sẽ thắng.",
@@ -234,7 +234,7 @@ class S5_01_Title(GlanceScene):
     def construct(self):
         card = title_card(
             f"{SECTION} — {SECTION_NAME}",
-            "Vì sao GLANCE học được, và vì sao kết quả chứng minh điều đó",
+            "Why GLANCE learns, and why the results validate it",
             OWNER,
             accent=ACCENT,
         )
@@ -250,9 +250,9 @@ class S5_02_TopKProblem(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Vấn đề cốt lõi — top-K không khả vi", color=ACCENT).to_edge(UP, buff=0.85)
+        head = heading("Core problem: top-K is non-differentiable", color=ACCENT).to_edge(UP, buff=0.85)
 
-        budget = pill("NGÂN SÁCH CỨNG  ·  K = 2", C_LLM, width=4.4).move_to([0, 1.9, 0])
+        budget = pill("FIXED BUDGET  ·  K = 2", C_LLM, width=4.4).move_to([0, 1.9, 0])
 
         labels = ["A", "B", "C", "D", "E", "F"]
         scores = [0.91, 0.82, 0.79, 0.61, 0.44, 0.20]
@@ -286,7 +286,7 @@ class S5_02_TopKProblem(GlanceScene):
             step_axis.c2p(2.5, 1), step_axis.c2p(6, 1),
         ])
         cut = DashedLine(step_axis.c2p(2.5, -0.15), step_axis.c2p(2.5, 1.15), color=C_BAD, stroke_width=2)
-        jump_label = txt("đổi hạng → quyết định nhảy", size=SMALL_SIZE - 4, color=C_BAD)
+        jump_label = txt("rank swap → decision jumps", size=SMALL_SIZE - 4, color=C_BAD)
         jump_label.next_to(cut, DOWN, buff=0.55)
         marker = Dot(step_axis.c2p(2.35, 0), radius=0.09, color=YELLOW)
 
@@ -323,7 +323,7 @@ class S5_02_TopKProblem(GlanceScene):
         self.wait(0.5)
 
         chain = pipeline(
-            [("ROUTER π", C_ROUTER), ("TOP-K", C_BAD), ("LOSS CUỐI", C_GOOD)],
+            [("ROUTER π", C_ROUTER), ("TOP-K", C_BAD), ("FINAL LOSS", C_GOOD)],
         ).move_to([0, -1.1, 0])
         blocked = cross(color=C_BAD, size=0.5).move_to(chain.boxes[1])
         grad_arrow = Arrow(
@@ -353,7 +353,7 @@ class S5_03_CounterfactualLoss(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Cách giải — thay gradient bằng reward", color=C_GOOD).to_edge(UP, buff=0.85)
+        head = heading("Solution: replace gradients with rewards", color=C_GOOD).to_edge(UP, buff=0.85)
         self.add(head)
 
         node = labeled_box("v", C_ROUTER, width=0.9, height=0.9).move_to([-5.6, 0, 0])
@@ -364,9 +364,9 @@ class S5_03_CounterfactualLoss(GlanceScene):
 
         upper = panel(Rectangle(width=7.0, height=1.5)).move_to([0.1, 1.0, 0])
         lower = panel(Rectangle(width=7.0, height=1.5), color=C_LLM).move_to([0.1, -0.7, 0])
-        up_text = txt("KHÔNG GỌI LLM  ·  GNN → đầu H → p_H  ·  lᴳ = CE(yᵥ, p_H)",
+        up_text = txt("NO LLM CALL  ·  GNN → head H → p_H  ·  lᴳ = CE(yᵥ, p_H)",
                        size=SMALL_SIZE - 3, color=C_GNN).move_to(upper).scale_to_fit_width(6.4)
-        low_text = txt("ĐÃ GỌI LLM  ·  GNN + LLM → refiner ξ → p_ξ  ·  lᴸ = CE(yᵥ, p_ξ)",
+        low_text = txt("LLM CALLED  ·  GNN + LLM → refiner ξ → p_ξ  ·  lᴸ = CE(yᵥ, p_ξ)",
                         size=SMALL_SIZE - 3, color=C_LLM).move_to(lower).scale_to_fit_width(6.4)
         arrow_up = Arrow(node.get_right(), upper.get_left(), buff=0.1, color=C_GNN, stroke_width=3)
         arrow_down = Arrow(node.get_right(), lower.get_left(), buff=0.1, color=C_LLM, stroke_width=3)
@@ -411,14 +411,14 @@ class S5_03_CounterfactualLoss(GlanceScene):
                 run_time=min(1.8, tracker.duration),
             )
 
-        truth = txt("cùng nhãn thật  yᵥ", size=SMALL_SIZE - 3, color=C_GOOD, weight=BOLD)
+        truth = txt("same true label  yᵥ", size=SMALL_SIZE - 3, color=C_GOOD, weight=BOLD)
         truth.move_to([-5.6, -0.9, 0])
         with self.voiceover(text=VO["cf_same_label"]) as tracker:
             self.play(FadeIn(truth, scale=0.95), run_time=0.9)
             self.play(Indicate(up_text, color=C_GNN), Indicate(low_text, color=C_LLM),
                       run_time=min(1.6, tracker.duration))
         banner = txt(
-            "lᴸ LÀ LOSS CỦA CẢ NHÁNH GNN + LLM + REFINER — KHÔNG PHẢI LLM ĐỨNG MỘT MÌNH",
+            "lᴸ IS THE LOSS OF THE FULL GNN + LLM + REFINER BRANCH, NOT THE LLM ALONE",
             size=SMALL_SIZE - 4, color=C_LLM, weight=BOLD,
         ).move_to([0.1, -2.1, 0]).scale_to_fit_width(11.5)
         self.play(FadeIn(banner, shift=UP * 0.1), run_time=0.7)
@@ -432,7 +432,7 @@ class S5_04_Reward(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Reward — một lần gọi LLM có đáng không?", color=C_GOOD).to_edge(UP, buff=0.85)
+        head = heading("Reward: Is an LLM call worth it?", color=C_GOOD).to_edge(UP, buff=0.85)
         self.add(head)
 
         row1 = VGroup(
@@ -442,7 +442,7 @@ class S5_04_Reward(GlanceScene):
             txt("=", size=BODY_SIZE, color=MUTED),
             pill("gain 2.00", C_GOOD, width=2.3),
         ).arrange(RIGHT, buff=0.25).move_to([0, 1.3, 0])
-        route_label = txt("NẾU ROUTE", size=SMALL_SIZE, color=C_LLM, weight=BOLD).next_to(row1, UP, buff=0.3)
+        route_label = txt("IF ROUTED", size=SMALL_SIZE, color=C_LLM, weight=BOLD).next_to(row1, UP, buff=0.3)
 
         with self.voiceover(text=VO["reward_route"]) as tracker:
             self.play(FadeIn(route_label), run_time=0.6)
@@ -456,14 +456,14 @@ class S5_04_Reward(GlanceScene):
             txt("=", size=BODY_SIZE, color=MUTED),
             pill("reward = +1.90", C_GOOD, width=2.9),
         ).arrange(RIGHT, buff=0.25).move_to([0, 0.4, 0])
-        note = txt("SỐ MINH HOẠ", size=SMALL_SIZE - 5, color=MUTED).next_to(row2, RIGHT, buff=0.4)
+        note = txt("ILLUSTRATIVE VALUES", size=SMALL_SIZE - 5, color=MUTED).next_to(row2, RIGHT, buff=0.4)
         beta_note = txt(
-            "β lớn → router dè dặt hơn   ·   β nhỏ → router gọi LLM nhiều hơn",
+            "larger β → more cautious router   ·   smaller β → more LLM calls",
             size=SMALL_SIZE - 3, color=MUTED,
         ).move_to([0, -0.35, 0])
 
         counter_row = txt(
-            "VD: gain 0.05 − β 0.10 = reward −0.05  →  vẫn âm dù có route",
+            "EXAMPLE: gain 0.05 − β 0.10 = reward −0.05  →  remains negative even when routed",
             size=SMALL_SIZE - 5, color=C_BAD,
         ).move_to([0, -0.85, 0])
 
@@ -478,7 +478,7 @@ class S5_04_Reward(GlanceScene):
             self.play(FadeIn(counter_row, shift=UP * 0.06), run_time=min(1.0, tracker.duration))
 
         skip_row = VGroup(
-            txt("NẾU SKIP", size=SMALL_SIZE, color=MUTED, weight=BOLD),
+            txt("IF SKIPPED", size=SMALL_SIZE, color=MUTED, weight=BOLD),
             pill("reward = −lᴳ", C_BAD, width=3.0),
         ).arrange(RIGHT, buff=0.4).move_to([0, -1.4, 0])
 
@@ -498,7 +498,7 @@ class S5_05_JointObjective(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Học từ reward — loss tổng và ai được cập nhật", color=C_ROUTER).to_edge(UP, buff=0.85)
+        head = heading("Learning from rewards: total loss and trainable modules", color=C_ROUTER).to_edge(UP, buff=0.85)
         self.add(head)
 
         chain = pipeline(
@@ -507,12 +507,12 @@ class S5_05_JointObjective(GlanceScene):
         good_rule = VGroup(
             txt("rᵥ > 0", size=SMALL_SIZE - 2, color=C_GOOD, weight=BOLD),
             txt("→", size=SMALL_SIZE - 2, color=MUTED),
-            txt("π(fᵥ) tăng", size=SMALL_SIZE - 2, color=C_GOOD, weight=BOLD),
+            txt("π(fᵥ) increases", size=SMALL_SIZE - 2, color=C_GOOD, weight=BOLD),
         ).arrange(RIGHT, buff=0.16)
         bad_rule = VGroup(
             txt("rᵥ < 0", size=SMALL_SIZE - 2, color=C_BAD, weight=BOLD),
             txt("→", size=SMALL_SIZE - 2, color=MUTED),
-            txt("π(fᵥ) giảm", size=SMALL_SIZE - 2, color=C_BAD, weight=BOLD),
+            txt("π(fᵥ) decreases", size=SMALL_SIZE - 2, color=C_BAD, weight=BOLD),
         ).arrange(RIGHT, buff=0.16)
         rules = VGroup(good_rule, bad_rule).arrange(RIGHT, buff=1.0).move_to([0, 1.0, 0])
 
@@ -532,14 +532,14 @@ class S5_05_JointObjective(GlanceScene):
 
         pred_card = panel(Rectangle(width=5.2, height=1.1), color=C_GNN).move_to([-3.0, -0.55, 0])
         route_card = panel(Rectangle(width=5.2, height=1.1), color=C_ROUTER).move_to([3.0, -0.55, 0])
-        pred_text = txt("PREDICTION LOSS  ·  top-K dùng lᴸ, còn lại dùng lᴳ",
+        pred_text = txt("PREDICTION LOSS  ·  top-K uses lᴸ, all others use lᴳ",
                          size=SMALL_SIZE - 4, color=C_GNN).move_to(pred_card).scale_to_fit_width(4.8)
-        route_text = txt("λ × ROUTER LOSS  ·  học phân bổ ngân sách",
+        route_text = txt("λ × ROUTER LOSS  ·  learns budget allocation",
                           size=SMALL_SIZE - 4, color=C_ROUTER).move_to(route_card).scale_to_fit_width(4.8)
         with self.voiceover(text=VO["obj_pred"]) as tracker:
             self.play(FadeIn(pred_card), FadeIn(pred_text), run_time=min(1.6, tracker.duration))
 
-        total = pill("LOSS TỔNG", INK, width=2.6).move_to([0, -1.4, 0])
+        total = pill("TOTAL LOSS", INK, width=2.6).move_to([0, -1.4, 0])
         with self.voiceover(text=VO["obj_total"]) as tracker:
             self.play(FadeIn(route_card), FadeIn(route_text), run_time=1.0)
             self.play(FadeIn(total, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
@@ -561,14 +561,14 @@ class S5_05_JointObjective(GlanceScene):
                       run_time=min(1.6, tracker.duration))
 
         hparam = VGroup(
-            txt("batch 32  ·  route top-12 mỗi batch  ·  β = {0.1, 0.2, 0.3}",
+            txt("batch 32  ·  route top-12 per batch  ·  β = {0.1, 0.2, 0.3}",
                 size=SMALL_SIZE - 4, color=MUTED),
-            txt("lịch giảm ngân sách: K từ 32 xuống 8, hệ số r = 0.5",
+            txt("budget schedule: K decreases from 32 to 8, factor r = 0.5",
                 size=SMALL_SIZE - 5, color=MUTED),
         ).arrange(DOWN, buff=0.12).move_to([0, -3.1, 0])
         with self.voiceover(text=VO["obj_hparam"]) as tracker:
             self.play(FadeIn(hparam, shift=UP * 0.06), run_time=min(1.6, tracker.duration))
-        self.add(source("Appendix C.4, tr.17"))
+        self.add(source("Appendix C.4, p.17"))
 
         with self.voiceover(text=VO["obj_question"]) as tracker:
             self.wait(tracker.duration)
@@ -582,14 +582,14 @@ class S5_06_Setup(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Bối cảnh thực nghiệm", color=C_GNN).to_edge(UP, buff=0.85)
+        head = heading("Experimental setup", color=C_GNN).to_edge(UP, buff=0.85)
         self.add(head)
 
         row = VGroup(
             labeled_box("GNN", C_GNN, width=2.0), txt("+", size=HEAD_SIZE, color=MUTED),
             labeled_box("LLM", C_LLM, width=2.0),
         ).arrange(RIGHT, buff=0.3).move_to([-2.0, 1.3, 0])
-        goal = pill("MỘT MÔ HÌNH?", C_ROUTER, width=3.0).move_to([2.8, 1.3, 0])
+        goal = pill("ONE MODEL?", C_ROUTER, width=3.0).move_to([2.8, 1.3, 0])
         arrow = Arrow(row.get_right(), goal.get_left(), buff=0.15, color=MUTED, stroke_width=3)
         with self.voiceover(text=VO["setup_question"]) as tracker:
             self.play(FadeIn(row), run_time=0.9)
@@ -609,7 +609,7 @@ class S5_06_Setup(GlanceScene):
             self.play(FadeIn(datasets, shift=UP * 0.1), run_time=min(1.8, tracker.duration))
 
         classic = VGroup(*[pill(n, C_GNN, width=2.3) for n in ["GCN", "GraphSAGE", "GCNII"]]).arrange(DOWN, buff=0.18)
-        strat = VGroup(*[pill(n, MUTED, width=2.7) for n in ["đặc trưng gốc", "tăng cường LLM", "LOGIN"]]).arrange(DOWN, buff=0.18)
+        strat = VGroup(*[pill(n, MUTED, width=2.7) for n in ["original features", "LLM-enhanced", "LOGIN"]]).arrange(DOWN, buff=0.18)
         hetero = VGroup(*[pill(n, C_ROUTER, width=2.3) for n in ["FAGCN", "GGCN", "GBK-GNN"]]).arrange(DOWN, buff=0.18)
         baselines = VGroup(classic, strat, hetero).arrange(RIGHT, buff=0.6).move_to([0, -1.0, 0])
         with self.voiceover(text=VO["setup_baseline"]) as tracker:
@@ -620,7 +620,7 @@ class S5_06_Setup(GlanceScene):
         dots.arrange_in_grid(rows=4, cols=8, buff=0.16).move_to([-3.1, -1.0, 0])
         for i in range(12):
             dots[i].set_color(C_LLM).set_fill(opacity=1)
-        budget = metric_card("NGÂN SÁCH GỌI LLM", "12 / 32", C_LLM, note="mỗi batch", width=3.4)
+        budget = metric_card("LLM QUERY BUDGET", "12 / 32", C_LLM, note="per batch", width=3.4)
         budget.move_to([2.6, -1.0, 0])
         with self.voiceover(text=VO["setup_budget"]) as tracker:
             self.play(FadeOut(baselines, shift=UP * 0.1), run_time=0.5)
@@ -629,7 +629,7 @@ class S5_06_Setup(GlanceScene):
                 run_time=1.2,
             )
             self.play(FadeIn(budget, shift=LEFT * 0.1), run_time=min(1.4, tracker.duration))
-        self.add(source("§6.1, tr.7"))
+        self.add(source("§6.1, p.7"))
         self.wait(0.5)
 
 
@@ -640,7 +640,7 @@ class S5_07_BalancedResults(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Cân bằng & tổng thể", color=C_ROUTER).to_edge(UP, buff=0.85)
+        head = heading("Balance & overall accuracy", color=C_ROUTER).to_edge(UP, buff=0.85)
         self.add(head)
 
         chart = bar_chart(
@@ -655,15 +655,15 @@ class S5_07_BalancedResults(GlanceScene):
                 run_time=min(2.0, tracker.duration),
             )
 
-        margin = pill("KHOẢNG CÁCH TỔNG THỂ CHỈ DƯỚI 1 ĐIỂM", C_LLM, width=7.0).move_to([0, -0.9, 0])
+        margin = pill("OVERALL MARGIN IS BELOW 1 POINT", C_LLM, width=7.0).move_to([0, -0.9, 0])
         with self.voiceover(text=VO["res_margin"]) as tracker:
             self.play(FadeIn(margin, scale=0.96), run_time=min(1.2, tracker.duration))
 
         hard_chart = bar_chart(
-            [33.4, 46.4], ["Á quân", "GLANCE"], colors=[MUTED, C_ROUTER],
+            [33.4, 46.4], ["Runner-up", "GLANCE"], colors=[MUTED, C_ROUTER],
             y_range=(0, 50, 10), width=4.2, height=2.4, value_fmt="{:.1f}",
         ).move_to([-3.3, -2.0, 0])
-        hard_title = txt("CORA · NHÓM KHÓ NHẤT (h_v < 0.25)", size=SMALL_SIZE - 5, color=C_BAD)
+        hard_title = txt("CORA · HARDEST GROUP (h_v < 0.25)", size=SMALL_SIZE - 5, color=C_BAD)
         hard_title.next_to(hard_chart, UP, buff=0.45)
         gain_arrow = DoubleArrow(
             hard_chart.bars[0][0].get_top() + UP * 0.45,
@@ -685,14 +685,14 @@ class S5_07_BalancedResults(GlanceScene):
                 run_time=min(1.2, tracker.duration),
             )
 
-        rank = metric_card("AVERAGE RANK", "2.4", C_ROUTER, note="á quân: 4.7", width=3.4)
+        rank = metric_card("AVERAGE RANK", "2.4", C_ROUTER, note="runner-up: 4.7", width=3.4)
         rank.move_to([2.9, -0.9, 0])
-        easy = pill("NHÓM DỄ VẪN GẦN TUYỆT ĐỐI", C_GNN, width=4.2).move_to([2.9, -2.0, 0])
+        easy = pill("EASY GROUPS REMAIN NEAR-PERFECT", C_GNN, width=4.2).move_to([2.9, -2.0, 0])
         with self.voiceover(text=VO["res_rank"]) as tracker:
             self.play(FadeIn(rank, shift=LEFT * 0.1), run_time=0.9)
             self.play(FadeIn(easy, shift=UP * 0.1), run_time=min(1.3, tracker.duration))
 
-        banner = txt("CÂN BẰNG NHẤT  ≠  THẮNG MỌI NHÓM", size=BODY_SIZE - 2, color=C_ROUTER, weight=BOLD)
+        banner = txt("MOST BALANCED  ≠  BEST IN EVERY GROUP", size=BODY_SIZE - 2, color=C_ROUTER, weight=BOLD)
         banner.move_to([0, -1.0, 0])
         with self.voiceover(text=VO["res_verdict"]) as tracker:
             self.play(
@@ -700,7 +700,7 @@ class S5_07_BalancedResults(GlanceScene):
                 run_time=0.5,
             )
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
-        self.add(source("Bảng 3–4, tr.8"))
+        self.add(source("Tables 3–4, p.8"))
         self.wait(0.4)
 
 
@@ -711,7 +711,7 @@ class S5_08_RouterLearned(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Router có học đúng chỗ không?", color=C_LLM).to_edge(UP, buff=0.85)
+        head = heading("Does the router learn the right nodes?", color=C_LLM).to_edge(UP, buff=0.85)
         with self.voiceover(text=VO["router_question"]):
             self.play(Write(head), run_time=1.2)
 
@@ -726,7 +726,7 @@ class S5_08_RouterLearned(GlanceScene):
             bar.move_to([x, -1.2 + h / 2, 0])
             lab = txt(bl, size=SMALL_SIZE - 6, color=MUTED).next_to(bar, DOWN, buff=0.1)
             hist.add(VGroup(bar, lab))
-        hist_note = txt("SỐ NỐT ĐƯỢC ROUTE, theo h_v cục bộ", size=SMALL_SIZE - 5, color=INK)
+        hist_note = txt("ROUTED NODE COUNT by local h_v", size=SMALL_SIZE - 5, color=INK)
         hist_note.next_to(hist, UP, buff=0.3)
 
         with self.voiceover(text=VO["router_hist"]) as tracker:
@@ -745,9 +745,9 @@ class S5_08_RouterLearned(GlanceScene):
                       run_time=min(1.4, tracker.duration))
 
         sens = VGroup(
-            txt("K: 8→12 +3.4%  ·  12→16 thêm +3.0%  (Pubmed, Arxiv23)  ·  Cora +12.3% ở K=16",
+            txt("K: 8→12 +3.4%  ·  12→16 another +3.0%  (Pubmed, Arxiv23)  ·  Cora +12.3% at K=16",
                 size=SMALL_SIZE - 5, color=MUTED),
-            txt("vùng h_v > 0.75 hầu như không đổi (−0.06%)", size=SMALL_SIZE - 5, color=MUTED),
+            txt("h_v > 0.75 region is nearly unchanged (−0.06%)", size=SMALL_SIZE - 5, color=MUTED),
         ).arrange(DOWN, buff=0.1).move_to([0, -2.5, 0])
         with self.voiceover(text=VO["router_budget"]) as tracker:
             self.play(FadeOut(VGroup(graph, ring)), run_time=0.4)
@@ -761,14 +761,14 @@ class S5_08_RouterLearned(GlanceScene):
             colors=[MUTED, MUTED, MUTED], y_range=(-8, 1, 2),
             width=4.6, height=2.0, value_fmt="{:.2f}",
         ).move_to([-3.9, -1.0, 0])
-        overall_title = txt("TẮT 1 FEATURE (TRUNG BÌNH)", size=SMALL_SIZE - 6, color=MUTED)
+        overall_title = txt("REMOVE 1 FEATURE (AVERAGE)", size=SMALL_SIZE - 6, color=MUTED)
         overall_title.next_to(overall_chart, UP, buff=0.35)
         homophily_chart = bar_chart(
             [-6.5, -6.3, -2.0], ["Cora", "Pubmed", "Arxiv23"],
             colors=[C_BAD, C_BAD, C_BAD], y_range=(-8, 1, 2),
             width=4.6, height=2.0, value_fmt="{:.1f}",
         ).move_to([2.2, -1.0, 0])
-        homophily_title = txt("TẮT HOMOPHILY (BIN h_v < 0.5)", size=SMALL_SIZE - 6, color=C_BAD)
+        homophily_title = txt("REMOVE HOMOPHILY (BIN h_v < 0.5)", size=SMALL_SIZE - 6, color=C_BAD)
         homophily_title.next_to(homophily_chart, UP, buff=0.35)
         divider = DashedLine([-0.85, -0.2, 0], [-0.85, -2.2, 0], color=C_EDGE, stroke_width=1.5)
 
@@ -785,11 +785,11 @@ class S5_08_RouterLearned(GlanceScene):
                 run_time=min(1.8, tracker.duration),
             )
 
-        banner = txt("HOMOPHILY DẠY ROUTER GỌI ĐÚNG LÚC", size=BODY_SIZE - 2, color=C_LLM, weight=BOLD)
+        banner = txt("HOMOPHILY TEACHES THE ROUTER WHEN TO CALL", size=BODY_SIZE - 2, color=C_LLM, weight=BOLD)
         banner.move_to([0, -3.2, 0])
         with self.voiceover(text=VO["router_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
-        self.add(source("§6.3, tr.8–9"))
+        self.add(source("§6.3, pp.8–9"))
         self.wait(0.4)
 
 
@@ -800,19 +800,19 @@ class S5_09_RoutingControls(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Route hết · route bừa — hai đối chứng", color=C_LLM).to_edge(UP, buff=0.85)
+        head = heading("Route all · route randomly: two controls", color=C_LLM).to_edge(UP, buff=0.85)
         with self.voiceover(text=VO["ctrl_intro"]):
             self.play(Write(head), run_time=1.4)
 
         left = panel(Rectangle(width=5.6, height=2.7), color=C_BAD).move_to([-3.2, 0.3, 0])
-        left_title = txt("ROUTE HẾT · PUBMED", size=SMALL_SIZE - 4, color=C_BAD, weight=BOLD)
+        left_title = txt("ROUTE ALL · PUBMED", size=SMALL_SIZE - 4, color=C_BAD, weight=BOLD)
         left_title.next_to(left, UP, buff=0.12)
         hard_row = VGroup(pill("+10.9", C_GOOD, width=1.4), pill("+13.3", C_GOOD, width=1.4)).arrange(RIGHT, buff=0.2)
         easy_row = VGroup(pill("−18.3", C_BAD, width=1.4), pill("−19.7", C_BAD, width=1.4)).arrange(RIGHT, buff=0.2)
-        overall_pill = pill("Δ TỔNG THỂ  +1.5  (bị che bởi nhóm dễ sụp)", C_LLM, width=5.0, size=SMALL_SIZE - 6)
+        overall_pill = pill("OVERALL Δ  +1.5  (masks easy-group collapse)", C_LLM, width=5.0, size=SMALL_SIZE - 6)
         left_body = VGroup(
-            txt("nhóm khó", size=SMALL_SIZE - 5, color=MUTED), hard_row,
-            txt("nhóm dễ", size=SMALL_SIZE - 5, color=MUTED), easy_row,
+            txt("hard groups", size=SMALL_SIZE - 5, color=MUTED), hard_row,
+            txt("easy groups", size=SMALL_SIZE - 5, color=MUTED), easy_row,
             overall_pill,
         ).arrange(DOWN, buff=0.12).move_to(left)
 
@@ -821,7 +821,7 @@ class S5_09_RoutingControls(GlanceScene):
             self.play(FadeIn(left_body, shift=UP * 0.1), run_time=min(1.8, tracker.duration))
 
         right = panel(Rectangle(width=5.6, height=2.7), color=C_ROUTER).move_to([3.2, 0.3, 0])
-        right_title = txt("ROUTE NGẪU NHIÊN · CORA", size=SMALL_SIZE - 4, color=C_ROUTER, weight=BOLD)
+        right_title = txt("RANDOM ROUTING · CORA", size=SMALL_SIZE - 4, color=C_ROUTER, weight=BOLD)
         right_title.next_to(right, UP, buff=0.12)
         ranking = VGroup(
             pill("RANDOM  86.4", C_BAD, width=3.0),
@@ -846,15 +846,15 @@ class S5_09_RoutingControls(GlanceScene):
                 txt(">", size=HEAD_SIZE, color=INK, weight=BOLD),
                 pill("GCNII  82.7", C_GNN, width=2.6),
             ).arrange(RIGHT, buff=0.3).move_to([0, 0.3, 0])
-            note = txt("trên đúng tập nốt mà router đã chọn", size=SMALL_SIZE - 4, color=MUTED)
+            note = txt("on the exact node set selected by the router", size=SMALL_SIZE - 4, color=MUTED)
             note.next_to(comparison, DOWN, buff=0.3)
             self.play(FadeIn(comparison, scale=0.96), FadeIn(note), run_time=min(1.8, tracker.duration))
 
-        banner = txt("GIÁ TRỊ NẰM Ở SỰ CHỌN LỌC HỌC ĐƯỢC", size=BODY_SIZE - 2, color=C_GOOD, weight=BOLD)
+        banner = txt("VALUE COMES FROM LEARNED SELECTIVITY", size=BODY_SIZE - 2, color=C_GOOD, weight=BOLD)
         banner.move_to([0, -1.6, 0])
         with self.voiceover(text=VO["ctrl_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
-        self.add(source("Bảng 10–12, Phụ lục F"))
+        self.add(source("Tables 10–12, Appendix F"))
         self.wait(0.4)
 
 
@@ -865,16 +865,16 @@ class S5_10_Scale(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Quy mô lớn — route rất ít, hiệu quả vẫn cao", color=C_GOOD).to_edge(UP, buff=0.85)
+        head = heading("Large scale: route very little, remain effective", color=C_GOOD).to_edge(UP, buff=0.85)
         self.add(head)
 
         dots = VGroup(*[Dot(radius=0.07, color=MUTED, fill_opacity=0.4) for _ in range(64)])
         dots.arrange_in_grid(rows=8, cols=8, buff=0.13).move_to([-4.3, 0.4, 0])
         # ~1.6% = K=1 trên batch 64 → đúng một chấm sáng trong lưới 8×8.
         dots[27].set_color(C_LLM).set_fill(opacity=1).scale(1.5)
-        cloud_label = txt("2.45M NỐT · ~62M CẠNH", size=SMALL_SIZE - 4, color=INK, weight=BOLD)
+        cloud_label = txt("2.45M NODES · ~62M EDGES", size=SMALL_SIZE - 4, color=INK, weight=BOLD)
         cloud_label.next_to(dots, UP, buff=0.25)
-        rate = metric_card("TỶ LỆ ROUTE", "~1.6%", C_LLM, note="K=1, batch 64", width=3.0)
+        rate = metric_card("ROUTING RATE", "~1.6%", C_LLM, note="K=1, batch 64", width=3.0)
         rate.move_to([-0.3, 0.4, 0])
 
         with self.voiceover(text=VO["scale_setup"]) as tracker:
@@ -896,11 +896,11 @@ class S5_10_Scale(GlanceScene):
             self.play(FadeIn(oom, shift=LEFT * 0.1), FadeIn(arxiv_year, shift=UP * 0.1),
                       run_time=min(1.8, tracker.duration))
 
-        banner = txt("RẺ  ·  CÂN BẰNG  ·  MỞ RỘNG TRIỆU NỐT", size=BODY_SIZE - 2, color=C_GOOD, weight=BOLD)
+        banner = txt("CHEAP  ·  BALANCED  ·  SCALES TO MILLIONS OF NODES", size=BODY_SIZE - 2, color=C_GOOD, weight=BOLD)
         banner.move_to([0, -2.7, 0])
         with self.voiceover(text=VO["scale_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
-        self.add(source("Bảng 5, tr.9"))
+        self.add(source("Table 5, p.9"))
         self.wait(0.4)
 
 
@@ -911,13 +911,16 @@ class S5_11_Callout(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Chốt lại — GLANCE trong năm ý", color=C_ROUTER).to_edge(UP, buff=0.85)
+        head = heading("Takeaways: GLANCE in five points", color=C_ROUTER).to_edge(UP, buff=0.85)
         with self.voiceover(text=VO["final_reconnect"]) as tracker:
             self.play(Write(head), run_time=min(2.2, tracker.duration))
 
         items = [
-            (VO["final_1"], C_GNN), (VO["final_2"], C_ROUTER), (VO["final_3"], C_LLM),
-            (VO["final_4"], C_GOOD), (VO["final_5"], C_LLM),
+            ("GNNs and LLMs excel on different nodes; local homophily predicts who wins.", C_GNN),
+            ("Top-K is non-differentiable, so rewards train the router decision by decision.", C_ROUTER),
+            ("Only the router and refiner are trained; the GNN and LLM remain frozen.", C_LLM),
+            ("Learned selectivity delivers the best balance and overall accuracy.", C_GOOD),
+            ("Routing only a small fraction of nodes still scales to million-node graphs.", C_LLM),
         ]
 
         def numbered_row(index, text, color):
@@ -941,10 +944,10 @@ class S5_11_Callout(GlanceScene):
 
         with self.voiceover(text=VO["final_punch"]) as tracker:
             self.play(FadeOut(VGroup(head, rows), shift=UP * 0.2), run_time=0.6)
-            not_more = txt("KHÔNG PHẢI NHIỀU LLM HƠN", size=HEAD_SIZE - 4, color=C_BAD, weight=BOLD)
+            not_more = txt("NOT MORE LLM", size=HEAD_SIZE - 4, color=C_BAD, weight=BOLD)
             not_more.move_to([0, 0.6, 0])
             strike = Line(not_more.get_left(), not_more.get_right(), color=C_BAD, stroke_width=6)
-            final_line = txt("MÀ LÀ LLM ĐÚNG CHỖ HƠN.", size=TITLE_SIZE - 6, color=C_GOOD, weight=BOLD)
+            final_line = txt("USE THE LLM IN THE RIGHT PLACES.", size=TITLE_SIZE - 6, color=C_GOOD, weight=BOLD)
             final_line.move_to([0, -0.4, 0])
             self.play(Write(not_more), run_time=1.0)
             self.play(Create(strike), run_time=0.5)
