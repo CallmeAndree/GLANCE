@@ -98,7 +98,8 @@ tiếng Việt vì nó trỏ tới bảng trong bản dịch paper mà nhóm đa
   "định tuyến", `embedding` → "véc-tơ biểu diễn". Phiên âm acronym thống nhất:
   `LLM` → "lờ lờ mờ", `MLP Q` → "mờ lờ bê kiu", `MLP` → "mờ lờ bê", `GNN` → "gờ nờ nờ",
   `GLANCE` → "gờ lans", `GCN` → "gờ xê en", `NCS` → "en xi ét",
-  `TAG` → "ti ây gi". Tên bộ dữ liệu đọc là `Cora` → "cô ra", `Pubmed` →
+  `TAG` → "ti ây gi". Tên baseline đọc là `E-LLaGNN` → "e lờ lờ a gờ nờ nờ",
+  `LLM-GNN` → "lờ lờ mờ, gờ nờ nờ", `LOGIN` → "lốc gin". Tên bộ dữ liệu đọc là `Cora` → "cô ra", `Pubmed` →
   "pắp mét", `Arxiv23` → "ác xíp hai ba". Các từ kỹ thuật còn lại phải dịch
   tự nhiên trong lời đọc: `graph` → "đồ thị", `feature` → "đặc trưng",
   `loss` → "hàm mất mát", `reward` → "phần thưởng", `Refiner` →

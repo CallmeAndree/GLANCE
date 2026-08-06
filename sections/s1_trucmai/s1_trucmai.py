@@ -979,7 +979,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(FadeIn(keep_gnn), GrowArrow(a_up), FadeIn(query_llm), GrowArrow(a_dn), run_time=1.5)
 
         with self.narrated_caption([
-            "Vậy hiện nay, các phương pháp dùng những quy tắc kinh nghiệm nào",
+            "Vậy hiện nay, các phương pháp dùng những quy tắc heuristic nào",
             "để quyết định gọi lờ lờ mờ?",
             "Đó là nội dung của phần hai."
         ]):

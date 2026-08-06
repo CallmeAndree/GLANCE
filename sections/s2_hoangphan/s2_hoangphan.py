@@ -138,7 +138,7 @@ class S2_02_TwoQuestions(GlanceScene):
         q2 = qcard("QUESTION 2", "Which nodes ACTUALLY\nimprove with an LLM?", C_LLM)
         VGroup(q1, q2).arrange(RIGHT, buff=0.8, aligned_edge=UP).shift(UP * 0.5)
 
-        beat(self, "Để đánh giá các quy tắc kinh nghiệm, cần tách bạch hai câu hỏi.",
+        beat(self, "Để đánh giá các quy tắc heuristic, cần tách bạch hai câu hỏi.",
              FadeIn(q1, shift=RIGHT * 0.3), run_time=0.9)
         beat(self, "Câu thứ nhất: nót nào có vẻ khó đối với gờ nờ nờ?")
         beat(self, "Câu thứ hai: nót nào thực sự được cải thiện nhờ lờ lờ mờ?",
@@ -160,7 +160,7 @@ class S2_02_TwoQuestions(GlanceScene):
              Create(c1), Create(c2), FadeIn(n1), FadeIn(n2), run_time=1.2)
         beat(self, "Chỉ phần giao mới đáng để trả chi phí gọi lờ lờ mờ.",
              FadeIn(lens), Write(core), run_time=1.0)
-        beat(self, "Các quy tắc kinh nghiệm trước gờ lans chủ yếu chỉ trả lời câu thứ nhất.",
+        beat(self, "Các quy tắc heuristic trước gờ lans chủ yếu chỉ trả lời câu thứ nhất.",
              c1.animate.set_fill(C_GNN, 0.4), run_time=1.0)
 
         # --- ba heuristic ------------------------------------------------------
@@ -175,9 +175,9 @@ class S2_02_TwoQuestions(GlanceScene):
         self.play(FadeOut(VGroup(c1, c2, lens, n1, n2, core), shift=DOWN * 0.4), run_time=0.6)
         beat(self, "bài báo xem xét ba tín hiệu đại diện.", FadeIn(head), run_time=0.6)
         for card, line in zip(cards, [
-            "Node degree, dùng trong E-LLaGNN.",
-            "Clustering density, dùng trong LLM-GNN.",
-            "Và GNN uncertainty, dùng trong LOGIN.",
+            "nót bậc, dùng trong e lờ lờ a gờ nờ nờ.",
+            "mật độ phân cụm, dùng trong lờ lờ mờ, gờ nờ nờ.",
+            "Và gờ nờ nờ uncertainty, dùng trong lốc gin.",
         ]):
             beat(self, line, FadeIn(card, shift=DOWN * 0.25), run_time=0.7)
         beat(self, "Ta sẽ lần lượt đem cả ba ra thử.")
@@ -202,7 +202,7 @@ class S2_03_Degree(GlanceScene):
                    color=MUTED).next_to(head, DOWN, buff=0.18)
         g = demo_tag().scale(1.05).shift(DOWN * 0.55)
 
-        beat(self, "quy tắc kinh nghiệm đầu tiên là nót bậc.", FadeIn(head), FadeIn(sub), run_time=0.8)
+        beat(self, "quy tắc heuristic đầu tiên là nót bậc.", FadeIn(head), FadeIn(sub), run_time=0.8)
         beat(self, "bậc là số hàng xóm nối với nót đó.")
         beat(self, "nót bậc thấp nhận ít thông tin qua truyền thông điệp.")
         beat(self, "Nên gờ nờ nờ có thể gặp khó, và ta ưu tiên định tuyến chúng sang lờ lờ mờ.",
@@ -273,7 +273,7 @@ class S2_03_Degree(GlanceScene):
              dim2_nodes.animate.set_opacity(0.15), dim2_edges.animate.set_opacity(0.15),
              rings.animate.set_opacity(0.15), tags.animate.set_opacity(0.15),
              FadeIn(hub_tag), run_time=1.2)
-        beat(self, "bậc của nó cao gấp đôi, nên quy tắc kinh nghiệm bỏ qua.")
+        beat(self, "bậc của nó cao gấp đôi, nên quy tắc heuristic bỏ qua.")
         beat(self, "Nhưng ba trong bốn hàng xóm lại khác lớp với nó.",
              hub_edges.animate.set_stroke(color=C_BAD, width=3.2),
              FadeIn(msg2), run_time=1.2)
@@ -304,7 +304,7 @@ class S2_04_Density(GlanceScene):
         g = demo_tag().scale(1.05).shift(DOWN * 0.55)
         self.add(head, sub, g)
 
-        beat(self, "quy tắc kinh nghiệm thứ hai là mật độ phân cụm.")
+        beat(self, "quy tắc heuristic thứ hai là mật độ phân cụm.")
         beat(self, "Nó đo xem các hàng xóm của một nót có nối với nhau không.")
         beat(self, "Tức nót đó nằm trong một cụm chặt chẽ tới mức nào.")
         beat(self, "Giả định: nót ở vùng thưa thì gờ nờ nờ khó mô hình hoá.")
@@ -321,9 +321,9 @@ class S2_04_Density(GlanceScene):
         dense_tag = mono("high density", size=17, color=C_HIGHLIGHT).next_to(
             g.nodes[4], UP, buff=0.55).set_z_index(4)
 
-        beat(self, "Vùng này nhiều tam giác nên mật độ cao, quy tắc kinh nghiệm bỏ qua.",
+        beat(self, "Vùng này nhiều tam giác nên mật độ cao, quy tắc heuristic bỏ qua.",
              FadeIn(tri), FadeIn(dense_tag), run_time=1.3)
-        beat(self, "Và ở đây quy tắc kinh nghiệm đúng: cả cụm cùng một lớp, gờ nờ nờ xử lý tốt.")
+        beat(self, "Và ở đây quy tắc heuristic đúng: cả cụm cùng một lớp, gờ nờ nờ xử lý tốt.")
 
         # Node 2: density thấp (1/6) nhưng homophily 0.75 → dễ, vẫn bị route.
         ring2 = Circle(radius=0.3, color=C_ROUTER, stroke_width=3).move_to(g.nodes[2])
@@ -389,7 +389,7 @@ class S2_05_Uncertainty(GlanceScene):
         arrow = Arrow(node.get_right(), axis.get_left() + LEFT * 0.15, buff=0.3,
                       stroke_width=3, color=C_EDGE, max_tip_length_to_length_ratio=0.12)
 
-        beat(self, "quy tắc kinh nghiệm thứ ba là gờ nờ nờ độ bất định.", FadeIn(head), FadeIn(sub), run_time=0.8)
+        beat(self, "quy tắc heuristic thứ ba là gờ nờ nờ uncertainty.", FadeIn(head), FadeIn(sub), run_time=0.8)
         beat(self, "Mô hình chạy nhiều lần lượt truyền xuôi với đờ-róp-ao bật.",
              GrowFromCenter(node), FadeIn(nlab), GrowArrow(arrow), Create(axis),
              FadeIn(ticks), FadeIn(ylab), FadeIn(counter), FadeIn(bars), run_time=1.3)
@@ -457,7 +457,7 @@ class S2_05_Uncertainty(GlanceScene):
         warn = txt("Cutting hard edges can cut useful information too.",
                    size=22, color=C_BAD).next_to(e, DOWN, buff=1.0)
 
-        beat(self, "Ngoài ra, lô gin còn dùng lờ lờ mờ để nối lại cạnh đồ thị.",
+        beat(self, "Ngoài ra, lốc gin còn dùng lờ lờ mờ để nối lại cạnh đồ thị.",
              Create(e), GrowFromCenter(a), GrowFromCenter(b), FadeIn(elab), run_time=1.0)
         beat(self, "Tức là chỉnh sửa hoặc loại bỏ những cạnh khó.")
         beat(self, "Việc này có rủi ro riêng.", Create(cut),
@@ -483,7 +483,7 @@ class S2_06_Setup(GlanceScene):
         head = heading("How do we evaluate a heuristic fairly?",
                        color=ACCENT).to_edge(UP, buff=0.9)
 
-        beat(self, "Vậy đánh giá một định tuyến quy tắc kinh nghiệm thế nào cho công bằng?",
+        beat(self, "Vậy đánh giá một định tuyến quy tắc heuristic thế nào cho công bằng?",
              Write(head), run_time=1.4)
         beat(self, "bài báo không chỉ nhìn độ chính xác của gờ nờ nờ trên nhóm nót bị coi là khó.")
         beat(self, "Thay vào đó, kiểm tra thẳng điều gì xảy ra sau khi định tuyến.")
@@ -498,12 +498,12 @@ class S2_06_Setup(GlanceScene):
         frozen = mono("both GNN and LLM are frozen", size=18,
                       color=C_GNN).next_to(flow, DOWN, buff=0.55)
 
-        beat(self, "Từ đồ thị, quy tắc kinh nghiệm chọn ra tốp ca phần trăm nót.",
+        beat(self, "Từ đồ thị, quy tắc heuristic chọn ra tốp ca phần trăm nót.",
              LaggedStart(*[FadeIn(b, shift=RIGHT * 0.2) for b in flow.boxes], lag_ratio=0.16),
              LaggedStart(*[GrowArrow(a) for a in flow.arrows], lag_ratio=0.16), run_time=2.0)
         beat(self, "Những nót đó đi qua lờ lờ mờ, rồi so với dự đoán gốc của gờ nờ nờ.")
         beat(self, "Quan trọng: cả gờ nờ nờ lẫn lờ lờ mờ đều được đóng băng.", FadeIn(frozen), run_time=0.7)
-        beat(self, "Nên mọi khác biệt chỉ đến từ việc quy tắc kinh nghiệm đã chọn tập nót nào.")
+        beat(self, "Nên mọi khác biệt chỉ đến từ việc quy tắc heuristic đã chọn tập nót nào.")
 
         def chips(label, items, color):
             lab = mono(label, size=17, color=MUTED)
@@ -528,7 +528,7 @@ class S2_06_Setup(GlanceScene):
              FadeIn(cfg[1]), run_time=0.7)
         beat(self, "Hai loại đặc trưng: gốc, và tăng cường sinh bởi quy en ba tám bi.",
              FadeIn(cfg[2]), run_time=0.7)
-        beat(self, "Mỗi quy tắc kinh nghiệm định tuyến tốp mười, mười lăm, rồi hai mươi phần trăm.",
+        beat(self, "Mỗi quy tắc heuristic định tuyến tốp mười, mười lăm, rồi hai mươi phần trăm.",
              FadeIn(cfg[3]), run_time=0.7)
 
         self.clear_scene()
@@ -547,7 +547,7 @@ class S2_06_Setup(GlanceScene):
              FadeIn(rules[2], shift=RIGHT * 0.2), run_time=0.7)
         beat(self, "Và ngẫu nhiên định tuyến làm mốc so sánh.",
              FadeIn(rules[3], shift=RIGHT * 0.2), run_time=0.7)
-        beat(self, "Đây là cái mốc mà mọi quy tắc kinh nghiệm ít nhất phải vượt qua.",
+        beat(self, "Đây là cái mốc mà mọi quy tắc heuristic ít nhất phải vượt qua.",
              Circumscribe(rules[3], color=MUTED, buff=0.16), run_time=1.4)
 
 
@@ -756,7 +756,7 @@ class S2_08_Table1(GlanceScene):
 
         beat(self, "Hãy nhìn pắp mét và ác xíp hai ba trước.",
              Create(frames), Indicate(good, color=C_LLM, scale_factor=1.04), run_time=1.4)
-        beat(self, "Ở đây độ bất định là quy tắc kinh nghiệm tốt nhất trong mọi thiết lập.")
+        beat(self, "Ở đây độ bất định là quy tắc heuristic tốt nhất trong mọi thiết lập.")
         beat(self, "Với gờ xê en dùng đặc trưng tăng cường trên pắp mét, en xi ét đạt không phẩy hai mươi.",
              Create(star_ring), Create(lead), FadeIn(readout, shift=LEFT * 0.2), run_time=1.0)
         beat(self, "Nghĩa là cứ một trăm nót được định tuyến, lờ lờ mờ tạo hai mươi lần sửa có lợi.")
@@ -787,7 +787,7 @@ class S2_08_Table1(GlanceScene):
                                          buff=0.03, corner_radius=0.03)
 
         beat(self, "Nhưng bây giờ nhìn sang cô ra.", Create(f_cora), run_time=0.9)
-        beat(self, "Cùng quy tắc kinh nghiệm đó, cùng mô hình nền đó, en xi ét rơi xuống âm không phẩy không chín.",
+        beat(self, "Cùng quy tắc heuristic đó, cùng mô hình nền đó, en xi ét rơi xuống âm không phẩy không chín.",
              Create(unc_ring), run_time=0.9)
         beat(self, "Và đây mới là điều đáng chú ý nhất.",
              Create(rand_ring), FadeIn(callout), run_time=0.9)
@@ -800,7 +800,7 @@ class S2_08_Table1(GlanceScene):
             txt("GNN uncertainty does not always", size=24, color=INK),
             txt("reflect LLM advantage.", size=24, color=C_BAD, weight=BOLD),
         ).arrange(DOWN, buff=0.24)
-        beat(self, "Kết luận rất rõ: gờ nờ nờ độ bất định không phải lúc nào cũng phản ánh lờ lờ mờ lợi thế.",
+        beat(self, "Kết luận rất rõ: gờ nờ nờ uncertainty không phải lúc nào cũng phản ánh lờ lờ mờ lợi thế.",
              Write(punch), run_time=1.7)
 
 
@@ -839,10 +839,10 @@ class S2_09_PubmedVsCora(GlanceScene):
 
         beat(self, "Đặt hai bộ dữ liệu cạnh nhau thì kết luận bật ra ngay.",
              FadeIn(head), FadeIn(sub), FadeIn(chart.axes), FadeIn(stamp), run_time=1.0)
-        beat(self, "Trên pắp mét, cùng một quy tắc kinh nghiệm cho en xi ét dương ở cả ba mức.",
+        beat(self, "Trên pắp mét, cùng một quy tắc heuristic cho en xi ét dương ở cả ba mức.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3)],
                          lag_ratio=0.15), FadeIn(lab_pub), run_time=1.5)
-        beat(self, "Trên cô ra, cũng quy tắc kinh nghiệm đó, cả ba mức đều âm.",
+        beat(self, "Trên cô ra, cũng quy tắc heuristic đó, cả ba mức đều âm.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3, 6)],
                          lag_ratio=0.15), FadeIn(lab_cora), run_time=1.5)
         beat(self, "Không phải kém đi một chút, mà đổi hẳn dấu.")
@@ -853,7 +853,7 @@ class S2_09_PubmedVsCora(GlanceScene):
             txt("Same rule, opposite sign.", size=26, color=INK),
             txt("The heuristic is dataset-dependent.", size=26, color=ACCENT, weight=BOLD),
         ).arrange(DOWN, buff=0.26)
-        beat(self, "Cùng một luật, ngược dấu. quy tắc kinh nghiệm này phụ thuộc bộ dữ liệu.",
+        beat(self, "Cùng một luật, ngược dấu. quy tắc heuristic này phụ thuộc bộ dữ liệu.",
              Write(punch), run_time=1.6)
 
 
@@ -940,7 +940,7 @@ class S2_11_Backbone(GlanceScene):
         beat(self, "Nhưng đổi sang mô hình nền mạnh hơn là gờ xê en hai.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3, 6)],
                          lag_ratio=0.15), FadeIn(l_gcnii), run_time=1.5)
-        beat(self, "Cùng quy tắc kinh nghiệm đó chỉ còn khoảng 0.08 đến 0.09. Giảm hơn một nửa.")
+        beat(self, "Cùng quy tắc heuristic đó chỉ còn khoảng 0.08 đến 0.09. Giảm hơn một nửa.")
         beat(self, "Lý do có thể hiểu thế này.")
         beat(self, "gờ xê en hai đã tự xử lý được một phần nót khó.")
         beat(self, "Nên phần còn lại cho lờ lờ mờ sửa cũng co hẹp theo.")
@@ -951,7 +951,7 @@ class S2_11_Backbone(GlanceScene):
             txt("Routing heuristics depend not only on the DATASET,", size=23, color=INK),
             txt("but also on the BACKBONE in use.", size=23, color=ACCENT, weight=BOLD),
         ).arrange(DOWN, buff=0.26)
-        beat(self, "định tuyến quy tắc kinh nghiệm không chỉ phụ thuộc bộ dữ liệu.", Write(punch), run_time=1.6)
+        beat(self, "định tuyến quy tắc heuristic không chỉ phụ thuộc bộ dữ liệu.", Write(punch), run_time=1.6)
         beat(self, "Mà còn phụ thuộc cả mô hình nền đang dùng.")
 
 
@@ -1019,7 +1019,7 @@ class S2_12_Limits(GlanceScene):
             txt("Not reliable enough to be a ROUTING POLICY on their own.", size=23,
                 color=C_BAD, weight=BOLD),
         ).arrange(DOWN, buff=0.26)
-        beat(self, "Kết luận của bài báo: quy tắc kinh nghiệm hiện có vẫn dùng được.",
+        beat(self, "Kết luận của bài báo: quy tắc heuristic hiện có vẫn dùng được.",
              Write(punch), run_time=1.8)
         beat(self, "Nhưng chỉ ở vai trò đặc trưng hoặc tín hiệu ban đầu đưa vào bộ định tuyến.")
         beat(self, "Chúng không đủ tin cậy để tự làm một chính sách định tuyến.")
@@ -1036,7 +1036,7 @@ class S2_13_Bridge(GlanceScene):
         grp = VGroup(line1, line2).arrange(DOWN, buff=0.32)
 
         # Câu cầu nối chốt trong plan.md, đọc y nguyên.
-        beat(self, "quy tắc kinh nghiệm thủ công không ổn định.", Write(line1), run_time=1.3)
+        beat(self, "quy tắc heuristic thủ công không ổn định.", Write(line1), run_time=1.3)
         beat(self, "Vậy tín hiệu nào mới đúng?", Write(line2), run_time=1.3)
         self.wait(0.8)
         self.play(FadeOut(grp), run_time=0.8)

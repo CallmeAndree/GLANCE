@@ -151,7 +151,7 @@ VO = {
     # Phần bổ sung — năm routing signals của Step 1 (§5.1.1, tr.5–6).
     # ------------------------------------------------------------------
     "fs_open": (
-        "Phân tích trước đó cho thấy không một quy tắc kinh nghiệm đơn lẻ nào đủ ổn định "
+        "Phân tích trước đó cho thấy không một quy tắc heuristic đơn lẻ nào đủ ổn định "
         "để quyết định nót nào cần lờ lờ mờ. Vì vậy, gờ lans không chỉ sử dụng độ đồng nhất, "
         "mà mô tả mỗi nót bằng năm tín hiệu định tuyến bổ sung cho nhau."
     ),
@@ -269,7 +269,7 @@ VO = {
         "Năm tín hiệu lần lượt cho bộ định tuyến biết gờ nờ nờ đã học được gì, tin tưởng đến đâu, "
         "nót có phù hợp với vùng lân cận không, bản thân nót chứa gì, "
         "và có bao nhiêu ngữ cảnh cấu trúc. "
-        "Bộ định tuyến học cách kết hợp chúng, thay vì phụ thuộc vào một quy tắc kinh nghiệm cố định."
+        "Bộ định tuyến học cách kết hợp chúng, thay vì phụ thuộc vào một quy tắc heuristic cố định."
     ),
 }
 
