@@ -335,8 +335,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     def construct(self):
         self.section_1_opening()
         self.section_2_tag()
-        self.section_3_two_sources()
-        self.section_4_cost_gain_paradox()
+        self.section_3_hybrid_systems()
         self.section_5_two_paradigms()
         self.section_6_static_fusion()
         self.section_7_node_comparison()
@@ -352,67 +351,19 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         subtitle = t("Graph + Language: A New Kind of Challenge", size=32, color=MID)
         VGroup(title, subtitle).arrange(DOWN, buff=0.45).move_to(ORIGIN)
 
-        with self.narrated_caption(["Xin chào mọi người.", "Trong đoạn phim này, chúng ta sẽ tìm hiểu bài báo gờ lans,"]):
+        with self.narrated_caption(["xin chào mọi người.", "trong đoạn phim này, chúng ta sẽ tìm hiểu bài báo gờ lans,"]):
             self.play(Write(title), run_time=1.0)
             self.play(FadeIn(subtitle, shift=UP * 0.2), run_time=0.8)
-
-        # GNN side – small graph on left
-        mini_graph = create_tag_graph(scale=0.55).move_to(LEFT * 4.0 + UP * 0.8)
-        gnn_label = t("Structure", size=22, color=MID).next_to(mini_graph, DOWN, buff=0.15)
-        gnn_msg1 = Arrow(mini_graph.nodes["B"].get_center(), mini_graph.nodes["A"].get_center(),
-                         buff=0.22, color=BRIGHT, stroke_width=2, tip_length=0.10)
-        gnn_msg2 = Arrow(mini_graph.nodes["C"].get_center(), mini_graph.nodes["A"].get_center(),
-                         buff=0.22, color=BRIGHT, stroke_width=2, tip_length=0.10)
-
-        # LLM side – doc card on right
-        doc_right = doc_icon("Node Text", ["Graph learning", "Heterophily", "Node features"],
-                             width=2.8, height=1.8).move_to(RIGHT * 4.0 + UP * 0.8)
-        sem_vec = custom_feature_vector("", [0.2, 0.9, 0.4, 0.8, 0.3, 0.7], color=BRIGHT, width=2.6)
-        sem_vec.next_to(doc_right, DOWN, buff=0.25)
-        llm_label = t("Semantics", size=22, color=MID).next_to(sem_vec, DOWN, buff=0.1)
 
         with self.narrated_caption(["một nghiên cứu về kết hợp mạng nơ-ron đồ thị", "và mô hình ngôn ngữ lớn."]):
             self.play(
                 title.animate.scale(0.5).to_corner(UL),
                 FadeOut(subtitle),
-                FadeIn(mini_graph, shift=RIGHT * 0.3),
-                FadeIn(gnn_label),
                 run_time=1.0
             )
-            self.play(GrowArrow(gnn_msg1), GrowArrow(gnn_msg2), run_time=0.8)
 
-        with self.narrated_caption(["gờ nờ nờ khai thác cấu trúc đồ thị.", "lờ lờ mờ khai thác ngữ nghĩa văn bản."]):
-            self.play(FadeIn(doc_right, shift=LEFT * 0.3), run_time=0.7)
-            self.play(
-                AnimationGroup(*[FadeIn(c) for c in sem_vec.cells], lag_ratio=0.07),
-                FadeIn(sem_vec[0][0]), FadeIn(sem_vec[0][2]), FadeIn(sem_vec[1]),
-                run_time=0.9
-            )
-            self.play(FadeIn(llm_label), run_time=0.4)
-
-        # Bring both toward center to show fusion – but show cost/question mark
-        fusion_q = t("But combining them is harder than it looks.", size=28, color=MID).move_to(DOWN * 2.3)
-        with self.narrated_caption(["Kết hợp hai mô hình nghe rất hợp lý.", "Nhưng thực tế phức tạp hơn ta nghĩ."]):
-            self.play(
-                mini_graph.animate.shift(RIGHT * 1.2),
-                gnn_label.animate.shift(RIGHT * 1.2),
-                doc_right.animate.shift(LEFT * 1.2),
-                sem_vec.animate.shift(LEFT * 1.2),
-                llm_label.animate.shift(LEFT * 1.2),
-                gnn_msg1.animate.shift(RIGHT * 1.2),
-                gnn_msg2.animate.shift(RIGHT * 1.2),
-                run_time=0.8
-            )
-            self.play(FadeIn(fusion_q, shift=UP * 0.15), run_time=0.7)
-
-        # Transition: fade out fusion view, keep title corner, flow into TAG
         tag_title = t("Text-Attributed Graph (TAG)", size=38, color=BRIGHT, weight=BOLD).to_edge(UP, buff=0.35)
-        with self.narrated_caption(["Để hiểu vấn đề, trước tiên cần hiểu", "loại dữ liệu mà bài báo đang xử lý:"]):
-            self.play(
-                FadeOut(mini_graph), FadeOut(gnn_label), FadeOut(gnn_msg1), FadeOut(gnn_msg2),
-                FadeOut(doc_right), FadeOut(sem_vec), FadeOut(llm_label), FadeOut(fusion_q),
-                run_time=0.4
-            )
+        with self.narrated_caption(["để hiểu vấn đề, trước tiên cần hiểu", "loại dữ liệu mà bài báo đang xử lý:"]):
             self.play(FadeIn(tag_title, shift=UP * 0.2), run_time=0.4)
 
         self.glance_title = title
@@ -431,10 +382,10 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         cite_BC = Arrow(doc2.get_right(), doc3.get_left(), buff=0.1, color=MID, stroke_width=2, tip_length=0.12)
         cite_AC = Arrow(doc1.get_top() + UP * 0.1, doc3.get_top() + UP * 0.1, path_arc=-1.2, color=DIM, stroke_width=1.5, tip_length=0.10)
 
-        with self.narrated_caption(["đồ thị có thuộc tính văn bản, hay ti ây gi.", "Trong thực tế, văn bản hiếm khi đứng một mình."]):
+        with self.narrated_caption(["đồ thị có thuộc tính văn bản, hay ti ây gi.", "trong thực tế, văn bản hiếm khi đứng một mình."]):
             self.play(FadeIn(doc1, shift=UP * 0.3), FadeIn(doc2, shift=UP * 0.3), FadeIn(doc3, shift=UP * 0.3), lag_ratio=0.2, run_time=1.2)
 
-        with self.narrated_caption(["Bài báo trích dẫn nhau,", "và bài đăng tương tác với nhau."]):
+        with self.narrated_caption(["bài báo trích dẫn nhau,", "và bài đăng tương tác với nhau."]):
             self.play(GrowArrow(cite_AB), run_time=0.5)
             self.play(GrowArrow(cite_BC), run_time=0.5)
             self.play(Create(cite_AC), run_time=0.4)
@@ -445,7 +396,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         node_B = graph.nodes["B"]
         node_C = graph.nodes["C"]
 
-        with self.narrated_caption(["Mỗi tài liệu trở thành một nót,"]):
+        with self.narrated_caption(["mỗi tài liệu trở thành một nót,"]):
             self.play(
                 ReplacementTransform(doc1, node_A),
                 ReplacementTransform(doc2, node_B),
@@ -459,7 +410,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             other_nodes = VGroup(*[n for k, n in graph.nodes.items() if k not in ["A", "B", "C"]])
             self.play(FadeIn(other_nodes, lag_ratio=0.1), run_time=0.7)
 
-        with self.narrated_caption(["Khi mỗi nót có cả nội dung văn bản", "lẫn kết nối với nót khác,"]):
+        with self.narrated_caption(["khi mỗi nót có cả nội dung văn bản", "lẫn kết nối với nót khác,"]):
             # Briefly highlight node A to show text+connections
             self.play(node_A.animate.set_stroke(BRIGHT, width=3.5), run_time=0.8)
 
@@ -468,146 +419,51 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             punch = t("TEXT + CONNECTIONS = ONE GRAPH", size=44, color=BRIGHT, weight=BOLD).set_z_index(100)
             blackout_tag = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(99)
             self.play(FadeIn(blackout_tag), FadeIn(punch, shift=UP * 0.15), run_time=0.7)
-            self.wait(1.0)
-            self.play(FadeOut(punch), FadeOut(blackout_tag), run_time=0.5)
+            self.wait(1.0) # wait briefly before ending section
 
         self.tag_graph = graph
+        self.tag_punch = punch
+        self.tag_blackout = blackout_tag
 
     # ─────────────────────────────────────────────────────────
-    # SECTION 3 — Complementary Strengths
+    # SECTION 3 — Hybrid Systems
     # ─────────────────────────────────────────────────────────
-    def section_3_two_sources(self):
+    def section_3_hybrid_systems(self):
         graph = self.tag_graph
-        node_A = graph.nodes["A"]
-
-        with self.narrated_caption(["Để phân loại một nót, ta có hai nguồn bằng chứng."]):
-            self.play(FadeOut(self.tag_title), run_time=0.4)
-            # Zoom into node A
-            self.play(
-                self.camera.frame.animate.scale(0.65).move_to(node_A),
-                node_A.animate.set_fill(BRIGHT, 0.4),
-                run_time=1.0
-            )
-
-        with self.narrated_caption(["Vùng lân cận cung cấp thông tin cấu trúc.", "Nội dung văn bản cung cấp thông tin ngữ nghĩa."]):
-            self.play(
-                self.camera.frame.animate.scale(1 / 0.65).move_to(ORIGIN),
-                FadeOut(graph.edges),
-                FadeOut(VGroup(*[n for k, n in graph.nodes.items() if k != "A"])),
-                node_A.animate.move_to(ORIGIN),
-                run_time=1.0
-            )
-            struct_label = t("NEIGHBORHOOD", size=22, color=MID).move_to(LEFT * 3.6 + UP * 2.1)
-            sem_label = t("NODE TEXT", size=22, color=MID).move_to(RIGHT * 3.6 + UP * 2.1)
-            neighborhood = create_target_neighborhood(kind="clean", label="Target", scale=0.85).move_to(LEFT * 3.6 + UP * 0.4)
-            doc = create_text_document("Node A", ["Graph Learning", "Methods", "Embedding"], width=2.6, height=1.6).move_to(RIGHT * 3.6 + UP * 0.4)
-            self.play(FadeIn(struct_label), FadeIn(sem_label), run_time=0.4)
-            self.play(
-                ReplacementTransform(node_A, neighborhood.target),
-                FadeIn(neighborhood.neighbors), FadeIn(neighborhood.edges),
-                FadeIn(doc),
-                run_time=1.0
-            )
-
-        with self.narrated_caption(["gờ nờ nờ học thông tin cấu trúc", "bằng cách truyền thông tin qua các cạnh."]):
-            gnn_module = module("GNN", width=1.8, height=0.7).move_to(LEFT * 3.6 + DOWN * 1.3)
-            down_arr1 = small_arrow(neighborhood.get_bottom(), gnn_module.get_top())
-            self.play(FadeIn(gnn_module), GrowArrow(down_arr1), run_time=0.7)
-            msgs = VGroup(*[create_message_vector(n.get_center(), neighborhood.target.get_center()) for n in neighborhood.neighbors]).set_stroke(width=2)
-            self.play(AnimationGroup(*[GrowArrow(m) for m in msgs], lag_ratio=0.1), run_time=1.0)
-
-        with self.narrated_caption(["Các tín hiệu từ hàng xóm được tổng hợp", "thành một véc-tơ biểu diễn cấu trúc."]):
-            self.play(FadeOut(msgs), run_time=0.4)
-            struct_vec = custom_feature_vector("STRUCTURAL EMBEDDING", [0.8, 0.2, 0.9, 0.7, 0.3, 0.6, 0.1, 0.8], color=BRIGHT, width=3.2).move_to(LEFT * 3.6 + DOWN * 2.3)
-            arr2 = small_arrow(gnn_module.get_bottom(), struct_vec.get_top())
-            self.play(GrowArrow(arr2), run_time=0.4)
-            self.play(FadeIn(struct_vec[0][0]), FadeIn(struct_vec[0][2]), FadeIn(struct_vec[1]), run_time=0.3)
-            self.play(AnimationGroup(*[FadeIn(c) for c in struct_vec.cells], lag_ratio=0.08), run_time=0.9)
-
-        with self.narrated_caption(["lờ lờ mờ đọc văn bản, nhận ra các từ khóa quan trọng,"]):
-            self.play(highlight_keywords(doc, [0, 1]), run_time=0.8)
-            llm_module = module("LLM", width=1.8, height=0.7, emphasized=True).move_to(RIGHT * 3.6 + DOWN * 1.3)
-            arr3 = small_arrow(doc.get_bottom(), llm_module.get_top())
-            self.play(FadeIn(llm_module), GrowArrow(arr3), run_time=0.7)
-
-        with self.narrated_caption(["rồi tạo ra một véc-tơ biểu diễn ngữ nghĩa."]):
-            sem_vec = custom_feature_vector("SEMANTIC EMBEDDING", [0.2, 0.9, 0.4, 0.2, 0.8, 0.3, 0.7, 0.9], color=BRIGHT, width=3.2).move_to(RIGHT * 3.6 + DOWN * 2.3)
-            arr4 = small_arrow(llm_module.get_bottom(), sem_vec.get_top())
-            self.play(GrowArrow(arr4), run_time=0.4)
-            self.play(FadeIn(sem_vec[0][0]), FadeIn(sem_vec[0][2]), FadeIn(sem_vec[1]), run_time=0.3)
-            self.play(AnimationGroup(*[FadeIn(c) for c in sem_vec.cells], lag_ratio=0.08), run_time=0.9)
-
-        with self.narrated_caption(["gờ nờ nờ hiểu nót qua kết nối.", "lờ lờ mờ hiểu nót qua nội dung.", "Hai mô hình bổ sung cho nhau."]):
-            blackout = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(99)
-            comp = t("STRUCTURE + SEMANTICS", size=48, color=BRIGHT, weight=BOLD).set_z_index(100)
-            self.play(FadeIn(blackout), FadeIn(comp, shift=UP * 0.2), run_time=0.8)
-            self.wait(0.5)
+        
+        with self.narrated_caption(["trước đây, ti ây gi thường được xử lý", "bằng cách đưa các đặc trưng văn bản đơn giản,"]):
+            self.play(FadeOut(self.tag_title), FadeOut(self.tag_punch), FadeOut(self.tag_blackout), run_time=0.4)
+            self.play(graph.animate.scale(0.85).move_to(LEFT * 3.5 + UP * 0.5), run_time=0.8)
             
-        self.play(
-            FadeOut(struct_label), FadeOut(sem_label), FadeOut(neighborhood),
-            FadeOut(doc), FadeOut(gnn_module), FadeOut(down_arr1), FadeOut(arr2), FadeOut(struct_vec),
-            FadeOut(llm_module), FadeOut(arr3), FadeOut(arr4), FadeOut(sem_vec),
-            FadeOut(blackout), FadeOut(comp),
-            run_time=0.8
-        )
-
-    # ─────────────────────────────────────────────────────────
-    # SECTION 4 — Cost–Gain Paradox
-    # ─────────────────────────────────────────────────────────
-    def section_4_cost_gain_paradox(self):
-        # Show a graph with many nodes, route all to LLM
-        mini_nodes = VGroup()
-        positions = [LEFT*3+UP*1.5, LEFT*1.5+UP*2, ORIGIN+UP*2.2, RIGHT*1.5+UP*1.5,
-                     LEFT*3+ORIGIN, LEFT*1.5+UP*0.5, ORIGIN+UP*0.5, RIGHT*1.5+ORIGIN,
-                     LEFT*2+DOWN*1.5, ORIGIN+DOWN*1.5, RIGHT*2+DOWN*1.5]
-        for i, pos in enumerate(positions):
-            n = node(str(i+1), radius=0.22).move_to(pos)
-            mini_nodes.add(n)
-
-        llm_box = module("LLM", width=2.2, height=0.9, emphasized=True).move_to(RIGHT * 4.5 + UP * 0.5)
-
-        with self.narrated_caption(["Nhưng ở đây xuất hiện một nghịch lý.", "Giả sử ta gọi lờ lờ mờ cho mọi nót trong đồ thị."]):
-            self.play(FadeIn(mini_nodes, lag_ratio=0.05), run_time=1.0)
-            self.play(FadeIn(llm_box), run_time=0.5)
-
-        # Animate query arrows from nodes to LLM, with cost counter
-        cost_label = t("LLM Calls: 0", size=28, color=LIGHT).to_corner(UR).shift(DOWN * 0.5)
-        self.play(FadeIn(cost_label), run_time=0.3)
-
-        llm_arrows = VGroup()
-        with self.narrated_caption(["Mỗi nót gửi một yêu cầu.", "Chi phí tăng lên nhanh chóng."]):
-            for i, n in enumerate(mini_nodes[:6]):
-                arr = Arrow(n.get_right(), llm_box.get_left(), buff=0.1, color=MID, stroke_width=1.5, tip_length=0.10)
-                llm_arrows.add(arr)
-                new_label = t(f"LLM Calls: {i+1}", size=28, color=BRIGHT if i >= 3 else LIGHT).to_corner(UR).shift(DOWN * 0.5)
-                self.play(GrowArrow(arr), ReplacementTransform(cost_label, new_label), run_time=0.3)
-                cost_label = new_label
-
-        with self.narrated_caption(["Nhưng độ chính xác tổng thể", "chỉ tăng một chút."]):
-            # Cost HIGH, gain LOW
-            cost_row_label = t("LLM Cost:", size=32, color=LIGHT)
-            cost_row_val = t("HIGH", size=48, color=RED, weight=BOLD)
-            cost_row = VGroup(cost_row_label, cost_row_val).arrange(RIGHT, buff=0.3).move_to(LEFT * 2 + UP * 0.5)
-
-            gain_row_label = t("Accuracy Gain:", size=32, color=LIGHT)
-            gain_row_val = t("LOW", size=32, color=MID, weight=BOLD)
-            gain_row = VGroup(gain_row_label, gain_row_val).arrange(RIGHT, buff=0.3).move_to(LEFT * 2 + DOWN * 0.3)
-
-            self.play(FadeOut(mini_nodes), FadeOut(cost_label), FadeOut(llm_arrows), run_time=0.5)
-            self.play(FadeIn(cost_row), run_time=0.6)
-            self.play(cost_row_val.animate.scale(1.25), run_time=0.4)
-            self.play(cost_row_val.animate.scale(1/1.25), run_time=0.3)
-            self.play(FadeIn(gain_row, shift=UP * 0.1), run_time=0.5)
-            self.play(gain_row_val.animate.set_opacity(0.5), run_time=0.4)
-
-        with self.narrated_caption(["Có thể lờ lờ mờ không vô ích.", "Có thể nó đang được dùng trên sai nót."]):
-            q1 = t("IS THE LLM USELESS?", size=40, color=LIGHT, weight=BOLD).move_to(UP * 0.5)
-            q2 = t("OR ARE WE USING IT ON THE WRONG NODES?", size=36, color=BRIGHT, weight=BOLD).move_to(DOWN * 0.5)
-            self.play(FadeOut(llm_box), ReplacementTransform(VGroup(cost_row, gain_row), q1), run_time=0.8)
-            self.wait(0.3)
-            self.play(FadeIn(q2, shift=UP * 0.15), run_time=0.7)
+        with self.narrated_caption(["chẳng hạn như tê ép y đê ép", "hoặc véc-tơ biểu diễn tĩnh, vào gờ nờ nờ."]):
+            tfidf = t("TF-IDF", size=32, color=LIGHT, weight=BOLD).move_to(RIGHT * 2.5 + UP * 2.0)
+            static_we = t("Static Word Embeddings", size=32, color=LIGHT, weight=BOLD).move_to(RIGHT * 2.5 + UP * 1.3)
+            self.play(FadeIn(tfidf, shift=LEFT * 0.2), run_time=1.0)
             self.wait(0.8)
-            self.play(FadeOut(q1), FadeOut(q2), run_time=0.7)
+            self.play(FadeIn(static_we, shift=LEFT * 0.2), run_time=1.0)
+            self.wait(1.2)
+            
+            simple_text = module("Simple Text Features", width=3.8, height=0.8, emphasized=False).move_to(RIGHT * 2.5 + UP * 1.65)
+            self.play(ReplacementTransform(VGroup(tfidf, static_we), simple_text), run_time=1.0)
+            
+            gnn_mod = module("GNN", width=2.0, height=0.8).move_to(RIGHT * 2.5 + UP * 0.1)
+            arr1 = small_arrow(simple_text.get_bottom(), gnn_mod.get_top())
+            pred_mod = module("Node Predictions", width=2.5, height=0.8).move_to(RIGHT * 2.5 + DOWN * 1.5)
+            arr2 = small_arrow(gnn_mod.get_bottom(), pred_mod.get_top())
+            
+            self.play(GrowArrow(arr1), FadeIn(gnn_mod), run_time=0.7)
+            self.play(GrowArrow(arr2), FadeIn(pred_mod), run_time=0.7)
+
+        with self.narrated_caption(["gần đây, thành công của các mô hình ngôn ngữ lớn", "đã thúc đẩy sự phát triển của", "các kiến trúc lai. sử dụng lờ lờ mờ cho học trên đồ thị."]):
+            self.play(
+                FadeOut(graph), FadeOut(simple_text), FadeOut(gnn_mod),
+                FadeOut(arr1), FadeOut(pred_mod), FadeOut(arr2),
+                run_time=0.8
+            )
+            hybrid_title = t("HYBRID GNN-LLM SYSTEMS", size=48, color=BRIGHT, weight=BOLD)
+            self.play(Write(hybrid_title), run_time=1.0)
+            self.wait(2.5)
+            self.play(FadeOut(hybrid_title), run_time=0.5)
 
     # ─────────────────────────────────────────────────────────
     # SECTION 5 — Two Existing GNN–LLM Paradigms
@@ -630,7 +486,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         pred_arrows = VGroup(*[small_arrow(pred_p[i].get_bottom(), pred_p[i+1].get_top()) for i in range(3)])
         pred_group = VGroup(predictor_title, VGroup(pred_p, pred_arrows)).arrange(DOWN, buff=0.35).scale(0.88).move_to(RIGHT * 3.5 + UP * 0.1)
 
-        with self.narrated_caption(["Các phương pháp hiện nay chia thành hai hướng:", "lờ lờ mờ làm bộ tăng cường và lờ lờ mờ-as-Predictor."]):
+        with self.narrated_caption(["các phương pháp hiện nay chia thành hai hướng:", "lờ lờ mờ làm bộ tăng cường và lờ lờ mờ-as-predictor."]):
             self.play(Write(title), run_time=0.7)
             self.play(FadeIn(enh_group), FadeIn(pred_group), run_time=1.0)
 
@@ -644,31 +500,47 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 FadeIn(noisy_nbhd.target), FadeIn(noisy_nbhd.neighbors), FadeIn(noisy_nbhd.edges),
                 run_time=0.8
             )
+            
+            # Show vector enhancement for target node
+            vec_raw = custom_feature_vector("Raw", [0.2, 0.3, 0.1, 0.2], color=DIM, width=1.5).move_to(RIGHT * 2.8 + UP * 2.6)
+            vec_rich = custom_feature_vector("Enhanced", [0.9, 0.8, 0.9, 0.7], color=BRIGHT, width=1.6).move_to(vec_raw)
+            
+            self.play(FadeIn(vec_raw, shift=DOWN*0.1), run_time=1.0)
             self.wait(1.5)
+            self.play(ReplacementTransform(vec_raw, vec_rich), run_time=1.5)
+            self.wait(1.5)
+            
+            inject_arr = small_arrow(vec_rich.get_bottom(), noisy_nbhd.target.get_top())
+            self.play(GrowArrow(inject_arr), run_time=0.8)
+            self.play(noisy_nbhd.target[0].animate.set_stroke(BRIGHT), noisy_nbhd.target[1].animate.set_color(BRIGHT), run_time=0.8)
+            self.wait(1.0)
+            self.play(FadeOut(vec_rich), FadeOut(inject_arr), run_time=0.6)
             noisy_msgs = VGroup(*[create_message_vector(
                 n.get_center(), noisy_nbhd.target.get_center(),
                 color=DARK if i not in {1, 2, 5, 7} else BRIGHT
             ) for i, n in enumerate(noisy_nbhd.neighbors)])
             self.play(AnimationGroup(*[GrowArrow(m) for m in noisy_msgs], lag_ratio=0.08), run_time=1.0)
 
-        with self.narrated_caption(["Tuy nhiên, dù véc-tơ ngữ nghĩa tốt hơn,", "gờ nờ nờ vẫn có thể bị kéo lệch bởi các hàng xóm nhiễu."]):
+        with self.narrated_caption(["tuy nhiên, dù véc-tơ ngữ nghĩa tốt hơn,", "gờ nờ nờ vẫn có thể bị kéo lệch bởi các hàng xóm nhiễu."]):
             # Emphasize the noisy neighbors (indices 1, 2, 5, 7)
             noisy_nodes = VGroup(*[noisy_nbhd.neighbors[i] for i in {1, 2, 5, 7}])
             noisy_arrows = VGroup(*[noisy_msgs[i] for i in {1, 2, 5, 7}])
             
             self.wait(1.8)
             
-            # Flash the noisy arrows and wiggle the target node
+            # Flash the noisy arrows and target node permanently
             self.play(
                 noisy_nodes.animate.set_color(gs.C_BAD),
                 noisy_arrows.animate.set_color(gs.C_BAD),
-                noisy_nbhd.target.animate.shift(RIGHT * 0.1).set_color(gs.C_BAD),
-                rate_func=there_and_back,
+                noisy_nbhd.target[0].animate.set_stroke(gs.C_BAD),
+                noisy_nbhd.target[1].animate.set_color(gs.C_BAD),
                 run_time=0.8
             )
-            self.play(noisy_nbhd.target.animate.shift(LEFT * 0.1), rate_func=there_and_back, run_time=0.4)
+            # Wiggle it back and forth
+            self.play(noisy_nbhd.target.animate.shift(RIGHT * 0.15), rate_func=there_and_back, run_time=0.4)
+            self.play(noisy_nbhd.target.animate.shift(LEFT * 0.15), rate_func=there_and_back, run_time=0.4)
             
-            self.wait(0.8) # Wait to let the visual sink in
+            self.wait(1.5) # Wait to let the visual sink in
             
             # Punchline ON TOP of the diagram
             bias_text = t("BETTER TEXT ≠ NO STRUCTURAL BIAS", size=44, color=BRIGHT, weight=BOLD).set_z_index(100)
@@ -676,13 +548,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(
                 FadeIn(blackout2),
                 FadeIn(bias_text, shift=UP * 0.1), 
-                run_time=0.5
+                run_time=1.0
             )
-            self.wait(0.5)
+            self.wait(1.5)
             
         # Predictor deep-dive
         token_text = t("Prompt Token Count: 128", size=30, color=MID).move_to(LEFT * 2.8 + DOWN * 0.4)
-        with self.narrated_caption(["lờ lờ mờ-as-Predictor đổi toàn bộ thông tin", "thành một câu lệnh văn bản dài."]):
+        with self.narrated_caption(["lờ lờ mờ-as-predictor đổi toàn bộ thông tin", "thành một câu lệnh văn bản dài."]):
             pred_group.move_to(RIGHT * 2.5 + DOWN * 0.1).scale(1.08)
             self.play(
                 FadeOut(noisy_nbhd), FadeOut(noisy_msgs), FadeOut(blackout2), FadeOut(bias_text),
@@ -692,20 +564,113 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             )
             self.play(Write(token_text), run_time=0.4)
 
-        with self.narrated_caption(["Vùng lân cận càng lớn, câu lệnh càng dài.", "Cấu trúc đồ thị dần biến mất trong chuỗi đơn vị từ."]):
-            # Token counter escalates live
-            for count, col in [(256, MID), (512, BRIGHT), (1024, RED), (2048, RED)]:
-                new_token = t(f"Prompt Token Count: {count}{'!!!' if count >= 1024 else '...'}", size=30, color=col).move_to(LEFT * 2.8 + DOWN * 0.4)
-                self.play(ReplacementTransform(token_text, new_token), run_time=0.25)
-                token_text = new_token
+        with self.narrated_caption(["vùng lân cận càng mở rộng,", "chuỗi văn bản càng dài và đắt đỏ hơn."]):
+            blackout3 = Rectangle(width=25, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(80)
+            self.play(FadeIn(blackout3), run_time=0.5)
 
-            l1 = t("GRAPH STRUCTURE", size=46, color=BRIGHT, weight=BOLD)
-            l2 = mt(r"\downarrow", size=55, color=gs.C_BAD)
-            l3 = t("LONG TEXT SEQUENCE", size=46, color=BRIGHT, weight=BOLD)
-            graph_loss = VGroup(l1, l2, l3).arrange(DOWN, buff=0.25).set_z_index(100)
+            # Helpers for visualization
+            def create_hop_nodes(labels, radius, color, center):
+                nodes = VGroup()
+                edges = VGroup()
+                angle_step = TAU / len(labels)
+                for i, lbl in enumerate(labels):
+                    pos = center + radius * np.array([np.cos(i * angle_step), np.sin(i * angle_step), 0])
+                    n = node(lbl, radius=0.18).move_to(pos)
+                    n[0].set_stroke(color)
+                    n[1].set_color(color)
+                    e = Line(center, pos, color=DIM, stroke_width=1.5).set_z_index(85)
+                    nodes.add(n)
+                    edges.add(e)
+                nodes.set_z_index(90)
+                return nodes, edges
+
+            def make_sequence(labels, colors, show_dots=False, final_node=None, final_color=None):
+                boxes = VGroup()
+                for lbl, col in zip(labels, colors):
+                    b = panel(0.4, 0.4, fill=BG, stroke=col).set_opacity(0.8)
+                    t_lbl = t(lbl, size=14, color=col).move_to(b)
+                    boxes.add(VGroup(b, t_lbl))
+                if show_dots:
+                    boxes.add(t("...", size=24, color=LIGHT))
+                if final_node:
+                    b = panel(0.4, 0.4, fill=BG, stroke=final_color).set_opacity(0.8)
+                    t_lbl = t(final_node, size=14, color=final_color).move_to(b)
+                    boxes.add(VGroup(b, t_lbl))
+                boxes.arrange(RIGHT, buff=0.08)
+                return boxes.set_z_index(90)
+
+            graph_center = LEFT * 3.5 + UP * 0.5
+            target_A = node("A", radius=0.25).move_to(graph_center).set_z_index(90)
+            target_A[0].set_stroke(BRIGHT)
+            target_A[1].set_color(BRIGHT)
+
+            # Stage 1
+            nodes_1, edges_1 = create_hop_nodes(["B", "C", "D", "E"], 0.8, WHITE, graph_center)
+            lbl_1 = t("1-hop context", size=20, color=WHITE).move_to(graph_center + DOWN * 2.9).set_z_index(90)
+            seq_1 = make_sequence(["A", "B", "C", "D", "E"], [BRIGHT] + [WHITE]*4).move_to(RIGHT * 3.0 + UP * 0.5)
             
-            blackout3 = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(99)
-            self.play(FadeIn(blackout3), FadeIn(graph_loss, shift=UP * 0.1), run_time=0.5)
+            c1_nodes = t("Graph nodes: 5", size=22, color=LIGHT)
+            c1_toks = t("Text tokens: 80", size=22, color=LIGHT)
+            counters = VGroup(c1_nodes, c1_toks).arrange(DOWN, aligned_edge=LEFT).to_corner(UR, buff=0.6).set_z_index(90)
+            
+            serialize_arr = small_arrow(LEFT * 1.0 + UP * 0.5, RIGHT * 0.5 + UP * 0.5).set_z_index(90)
+            serialize_txt = t("Serialize", size=20, color=LIGHT).next_to(serialize_arr, UP, buff=0.1).set_z_index(90)
+
+            self.play(
+                FadeIn(target_A), FadeIn(nodes_1), FadeIn(edges_1), FadeIn(lbl_1),
+                GrowArrow(serialize_arr), FadeIn(serialize_txt),
+                FadeIn(seq_1), FadeIn(counters),
+                run_time=1.0
+            )
+            self.wait(0.5)
+
+            # Stage 2
+            nodes_2, edges_2 = create_hop_nodes(["F", "G", "H", "I", "J", "K", "L", "M"], 1.6, LIGHT, graph_center)
+            lbl_2 = t("2-hop context", size=20, color=LIGHT).move_to(lbl_1).set_z_index(90)
+            seq_2 = make_sequence(["A", "B", "C", "D", "E", "F", "G", "H", "I"], [BRIGHT] + [WHITE]*4 + [LIGHT]*4, show_dots=True).move_to(RIGHT * 3.0 + UP * 0.5)
+            c2_nodes = t("Graph nodes: 18", size=22, color=LIGHT)
+            c2_toks = t("Text tokens: 420", size=22, color=LIGHT)
+            counters_2 = VGroup(c2_nodes, c2_toks).arrange(DOWN, aligned_edge=LEFT).to_corner(UR, buff=0.6).set_z_index(90)
+
+            self.play(
+                FadeOut(lbl_1), FadeIn(lbl_2),
+                FadeIn(nodes_2), FadeIn(edges_2),
+                ReplacementTransform(seq_1, seq_2),
+                ReplacementTransform(counters, counters_2),
+                run_time=1.0
+            )
+            self.wait(0.5)
+
+            # Stage 3
+            nodes_3, edges_3 = create_hop_nodes(["N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y"], 2.4, MID, graph_center)
+            lbl_3 = t("3-hop context", size=20, color=MID).move_to(lbl_1).set_z_index(90)
+            seq_3 = make_sequence(["A", "B", "C", "D", "E", "F", "G", "H", "I"], [BRIGHT] + [WHITE]*4 + [LIGHT]*4, show_dots=True, final_node="N", final_color=MID).move_to(RIGHT * 3.0 + UP * 0.5)
+            c3_nodes = t("Graph nodes: 52", size=22, color=LIGHT)
+            c3_toks = t("Text tokens: 1,300", size=22, color=RED)
+            counters_3 = VGroup(c3_nodes, c3_toks).arrange(DOWN, aligned_edge=LEFT).to_corner(UR, buff=0.6).set_z_index(90)
+
+            self.play(
+                FadeOut(lbl_2), FadeIn(lbl_3),
+                FadeIn(nodes_3), FadeIn(edges_3),
+                ReplacementTransform(seq_2, seq_3),
+                ReplacementTransform(counters_2, counters_3),
+                run_time=1.0
+            )
+            
+            # Highlight counter
+            self.play(c3_toks.animate.scale(1.2), run_time=0.4, rate_func=there_and_back)
+            
+            # Punchline
+            punchline1 = t("Larger graph context -> Longer text sequence", size=32, color=BRIGHT, weight=BOLD)
+            punchline2 = t("More tokens, higher LLM cost", size=26, color=RED)
+            punch_group = VGroup(punchline1, punchline2).arrange(DOWN, buff=0.2).move_to(ORIGIN).set_z_index(100)
+            
+            blackout_punch = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(95)
+            
+            self.play(FadeIn(blackout_punch), FadeIn(punch_group, shift=UP*0.2), run_time=1.0)
+            self.wait(1.5)
+            
+            graph_loss = VGroup(target_A, nodes_1, edges_1, nodes_2, edges_2, nodes_3, edges_3, lbl_3, serialize_arr, serialize_txt, seq_3, counters_3, blackout_punch, punch_group)
             
             # Note: Do not fade out here, let it remain until audio finishes
             self.sec5_objects = VGroup(pred_group, token_text, blackout3, graph_loss, title)
@@ -724,12 +689,12 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         arr_b = small_arrow(node_b.get_right(), strategy_box.get_left())
         arr_c = small_arrow(node_c.get_right(), strategy_box.get_left() + DOWN * 0.55)
 
-        with self.narrated_caption(["Dù dùng bộ tăng cường hay bộ dự đoán,", "nhiều phương pháp áp cùng một chiến lược kết hợp cho mọi nót."]):
+        with self.narrated_caption(["dù dùng bộ tăng cường hay bộ dự đoán,", "nhiều phương pháp áp cùng một chiến lược kết hợp cho mọi nót."]):
             self.play(FadeIn(node_a), FadeIn(node_b), FadeIn(node_c), run_time=0.7)
             self.play(FadeIn(strategy_box), run_time=0.6)
             self.play(GrowArrow(arr_a), GrowArrow(arr_b), GrowArrow(arr_c), run_time=0.8)
 
-        with self.narrated_caption(["Bài báo gọi đây là static fusion, hay kết hợp tĩnh."]):
+        with self.narrated_caption(["bài báo gọi đây là static fusion, hay kết hợp tĩnh."]):
             stamp = t("STATIC FUSION", size=42, color=BRIGHT, weight=BOLD).move_to(strategy_box.get_center())
             self.play(ReplacementTransform(strategy_box[1], stamp), run_time=0.7)
             self.wait(0.6)
@@ -752,18 +717,18 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         doc_A = create_text_document("Node A", ["Topic 1", "Topic 2", "Topic 3"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
         gnn_bar_A = probability_vector("GNN Prediction", [0.85, 0.10, 0.05], emphasized_index=0).move_to(RIGHT * 3.5 + DOWN * 0.2).scale(1.2)
 
-        with self.narrated_caption(["Ba nót có thể rất khác nhau.", "Nót A được gờ nờ nờ xử lý tốt."]):
+        with self.narrated_caption(["ba nót có thể rất khác nhau.", "nót a được gờ nờ nờ xử lý tốt."]):
             self.play(FadeOut(node_b), FadeOut(node_c), run_time=0.5)
             self.play(ReplacementTransform(node_a, group_A.target), run_time=0.8)
             self.play(Write(title_A), FadeIn(group_A.neighbors), FadeIn(group_A.edges), FadeIn(doc_A), run_time=1.0)
 
-        with self.narrated_caption(["Hàng xóm đồng thuận, gờ nờ nờ tạo véc-tơ ổn định."]):
+        with self.narrated_caption(["hàng xóm đồng thuận, gờ nờ nờ tạo véc-tơ ổn định."]):
             msgs_A = VGroup(*[create_message_vector(n.get_center(), group_A.target.get_center(), color=LIGHT)
                                for n in group_A.neighbors])
             self.play(AnimationGroup(*[GrowArrow(m) for m in msgs_A], lag_ratio=0.1), run_time=1.0)
             self.play(FadeIn(gnn_bar_A), run_time=0.7)
 
-        with self.narrated_caption(["gờ nờ nờ dự đoán đúng. Gọi lờ lờ mờ là không cần thiết."]):
+        with self.narrated_caption(["gờ nờ nờ dự đoán đúng. gọi lờ lờ mờ là không cần thiết."]):
             skip_label = t("[SKIP LLM]", size=34, color=gs.C_GOOD, weight=BOLD).next_to(gnn_bar_A, DOWN, buff=0.4)
             self.play(FadeIn(skip_label, shift=UP * 0.1), run_time=0.6)
             self.wait(0.4)
@@ -774,7 +739,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         doc_B = create_text_document("Node B", ["Graph Learning", "Heterophily", "Node Classification"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
         gnn_bar_B = probability_vector("GNN Prediction", [0.20, 0.65, 0.15], emphasized_index=1).move_to(RIGHT * 1.8 + DOWN * 0.8).scale(1.1)
 
-        with self.narrated_caption(["Nót B có vùng lân cận chứa nhiều loại khác nhau."]):
+        with self.narrated_caption(["nót b có vùng lân cận chứa nhiều loại khác nhau."]):
             self.play(
                 FadeOut(title_A),
                 FadeIn(title_B),
@@ -786,7 +751,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 run_time=1.1
             )
 
-        with self.narrated_caption(["Các tín hiệu kéo nhiều hướng, gờ nờ nờ dự đoán sai."]):
+        with self.narrated_caption(["các tín hiệu kéo nhiều hướng, gờ nờ nờ dự đoán sai."]):
             msgs_B = VGroup(*[create_message_vector(
                 n.get_center(), group_B.target.get_center(),
                 color=DARK if i not in {1, 2, 5, 7} else BRIGHT
@@ -796,7 +761,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             wrong_B = t("GNN: WRONG", color=gs.C_BAD, weight=BOLD, size=24).next_to(gnn_bar_B, DOWN, buff=0.15)
             self.play(FadeIn(wrong_B), run_time=0.4)
 
-        with self.narrated_caption(["Nhưng văn bản nót B rất rõ ràng.", "lờ lờ mờ sửa lại dự đoán thành công."]):
+        with self.narrated_caption(["nhưng văn bản nót b rất rõ ràng.", "lờ lờ mờ sửa lại dự đoán thành công."]):
             self.play(highlight_keywords(doc_B, [0, 1, 2]), run_time=0.8)
             llm_bar_B = probability_vector("LLM Corrected", [0.90, 0.05, 0.05], emphasized_index=0).move_to(RIGHT * 5.2 + DOWN * 0.8).scale(1.1)
             self.play(FadeIn(llm_bar_B), run_time=0.7)
@@ -815,7 +780,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         group_C = create_target_neighborhood(kind="noisy", label="C", scale=0.95).move_to(LEFT * 4 + UP * 0.4)
         doc_C = create_text_document("Node C", ["Some words...", "General text...", "Vague description"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
 
-        with self.narrated_caption(["Nót C cũng khó với gờ nờ nờ.", "Nhưng văn bản lại rất mơ hồ."]):
+        with self.narrated_caption(["nót c cũng khó với gờ nờ nờ.", "nhưng văn bản lại rất mơ hồ."]):
             llm_bar_C = probability_vector("LLM Output", [0.33, 0.34, 0.33], emphasized_index=None).move_to(RIGHT * 5.2 + DOWN * 0.8).scale(1.1)
             wrong_C = t("LLM: UNCERTAIN", color=gs.C_BAD, weight=BOLD, size=24).next_to(llm_bar_C, DOWN, buff=0.15)
             self.play(
@@ -832,7 +797,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             )
             self.play(FadeIn(wrong_C), run_time=0.4)
 
-        with self.narrated_caption(["lờ lờ mờ không đủ bằng chứng để sửa kết quả.", "Cả hai mô hình đều thất bại."]):
+        with self.narrated_caption(["lờ lờ mờ không đủ bằng chứng để sửa kết quả.", "cả hai mô hình đều thất bại."]):
             self.wait(0.6)
             # For Node C, GNN was also wrong. We just update the label for Node C's GNN
             gnn_bar_C = probability_vector("GNN Prediction", [0.10, 0.20, 0.70], emphasized_index=2).move_to(RIGHT * 1.8 + DOWN * 0.8).scale(1.1)
@@ -864,7 +829,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         
         vs = t("VS", size=48, color=MID, weight=BOLD).move_to(UP * 0.5)
 
-        with self.narrated_caption(["Nót B và Nót C đều khó với gờ nờ nờ.", "Nhưng chỉ Nót B nhận được lợi ích từ lờ lờ mờ."]):
+        with self.narrated_caption(["nót b và nót c đều khó với gờ nờ nờ.", "nhưng chỉ nót b nhận được lợi ích từ lờ lờ mờ."]):
             self.play(
                 FadeOut(c["title"]), FadeOut(c["group"]), FadeOut(c["doc"]),
                 FadeOut(c["gnn_bar"]), FadeOut(c["llm_bar"]),
@@ -891,7 +856,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
 
         conclusion = t("GNN DIFFICULTY ≠ LLM BENEFIT", size=44, color=gs.C_GOOD, weight=BOLD).set_z_index(100)
         blackout5 = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(99)
-        with self.narrated_caption(["Đây là điểm mấu chốt của bài báo."]):
+        with self.narrated_caption(["đây là điểm mấu chốt của bài báo."]):
             self.play(FadeIn(blackout5), FadeIn(conclusion, shift=UP * 0.2), run_time=0.8)
             self.wait(0.6)
 
@@ -904,16 +869,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     # SECTION 9 — Aggregate Accuracy
     # ─────────────────────────────────────────────────────────
     def section_9_aggregate_accuracy(self):
-        # Morph from comparison directly into population diagram
-        illustrative = t("ILLUSTRATIVE EXAMPLE", size=26, color=MID).to_corner(UR).shift(DOWN * 0.3)
-        with self.narrated_caption(["Sự khác biệt này giải thích vì sao", "độ chính xác tổng thể có thể tăng rất ít."]):
+        with self.narrated_caption(["sự khác biệt này giải thích vì sao", "độ chính xác tổng thể có thể tăng rất ít."]):
             self.play(
                 FadeOut(self.comparison_objects, shift=UP * 0.3),
-                FadeIn(illustrative),
                 run_time=0.8
             )
 
-        with self.narrated_caption(["Giả sử chín mươi phần trăm là các nót dễ,", "còn mười phần trăm là các nót khó."]):
+        with self.narrated_caption(["giả sử chín mươi phần trăm là các nót dễ,", "còn mười phần trăm là các nót khó."]):
             easy_group = VGroup(
                 t("90% Easy Nodes", size=38, color=BRIGHT, weight=BOLD),
                 t("GNN: 95%  ->  Fusion: 94%", size=26, color=LIGHT)
@@ -924,31 +886,31 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             ).arrange(DOWN, buff=0.2).move_to(RIGHT * 3.2 + UP * 1.4)
             self.play(FadeIn(easy_group, shift=UP * 0.2), FadeIn(hard_group, shift=UP * 0.2), run_time=1.0)
 
-        with self.narrated_caption(["Trên nhóm khó, lờ lờ mờ giúp tăng mười ba điểm phần trăm."]):
+        with self.narrated_caption(["trên nhóm khó, lờ lờ mờ giúp tăng mười ba điểm phần trăm."]):
             gnn_eq = mt(r"\text{GNN: } 0.9{\times}95\% + 0.1{\times}40\% = 89.5\%", size=38).move_to(DOWN * 0.5)
             self.play(Write(gnn_eq), run_time=0.9)
             gain_hard = t("Hard-node gain: +13%", size=28, color=gs.C_GOOD, weight=BOLD).next_to(hard_group, DOWN, buff=0.4)
             self.play(FadeIn(gain_hard, shift=UP * 0.1), run_time=0.6)
 
-        with self.narrated_caption(["Nhưng trên toàn đồ thị, tổng thể chỉ tăng 0.4 điểm."]):
+        with self.narrated_caption(["nhưng trên toàn đồ thị, tổng thể chỉ tăng 0.4 điểm."]):
             fusion_eq = mt(r"\text{Fusion: } 0.9{\times}94\% + 0.1{\times}53\% = 89.9\%", size=38).next_to(gnn_eq, DOWN, buff=0.4)
             self.play(TransformFromCopy(gnn_eq, fusion_eq), run_time=0.9)
             self.play(gnn_eq.animate.set_opacity(0.3), run_time=0.4)
             gain_overall = t("Overall gain: +0.4 percentage points", size=28, color=MID).next_to(fusion_eq, DOWN, buff=0.3)
             self.play(FadeIn(gain_overall), run_time=0.5)
 
-        with self.narrated_caption(["Lợi ích lớn ở một nhóm nhỏ trông rất nhỏ khi tính tổng."]):
+        with self.narrated_caption(["lợi ích lớn ở một nhóm nhỏ trông rất nhỏ khi tính tổng."]):
             takeaway = t("LARGE SUBGROUP GAINS CAN LOOK SMALL IN AGGREGATE", size=30, color=BRIGHT, weight=BOLD).move_to(DOWN * 3.2)
             self.play(FadeIn(takeaway, shift=UP * 0.1), run_time=0.7)
             self.wait(0.8)
 
-        self.sec9_objects = VGroup(illustrative, easy_group, hard_group, gnn_eq, fusion_eq, gain_hard, gain_overall, takeaway)
+        self.sec9_objects = VGroup(easy_group, hard_group, gnn_eq, fusion_eq, gain_hard, gain_overall, takeaway)
 
     # ─────────────────────────────────────────────────────────
     # SECTION 10 — GLANCE Research Question & Task 2
     # ─────────────────────────────────────────────────────────
     def section_10_glance_question(self):
-        with self.narrated_caption(["Tóm lại, khó với gờ nờ nờ chưa chắc có lợi từ lờ lờ mờ."]):
+        with self.narrated_caption(["tóm lại, khó với gờ nờ nờ chưa chắc có lợi từ lờ lờ mờ."]):
             self.play(FadeOut(self.sec9_objects, shift=UP * 0.3), run_time=0.7)
             beat1 = VGroup(
                 t("GNN DIFFICULTY", size=46, color=LIGHT, weight=BOLD),
@@ -958,18 +920,18 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(FadeIn(beat1, shift=UP * 0.2), run_time=0.8)
             self.wait(0.5)
 
-        with self.narrated_caption(["Vậy nót nào thực sự đáng để gọi lờ lờ mờ?"]):
+        with self.narrated_caption(["vậy nót nào thực sự đáng để gọi lờ lờ mờ?"]):
             self.play(FadeOut(beat1), run_time=0.6)
             q = t("WHICH NODES SHOULD QUERY THE LLM?", size=44, color=gs.C_GOOD, weight=BOLD)
             self.play(Write(q), run_time=0.9)
 
             # Router pipeline fades in below question
             router = VGroup(
-                module("Node").scale(1.15), module("GNN").scale(1.15), module("Router", emphasized=True).scale(1.15)
-            ).arrange(RIGHT, buff=0.75).move_to(LEFT * 2.2 + DOWN * 1.0)
+                module("Node"), module("GNN"), module("Router", emphasized=True)
+            ).arrange(RIGHT, buff=0.6).move_to(LEFT * 1.5 + DOWN * 1.0)
             r_arrows = VGroup(*[small_arrow(router[i].get_right(), router[i+1].get_left()) for i in range(2)])
-            keep_gnn = module("Keep GNN", width=2.4).scale(1.1).move_to(router[2].get_center() + RIGHT * 3.0 + UP * 1.3)
-            query_llm = module("Query LLM", width=2.4, emphasized=True).scale(1.1).move_to(router[2].get_center() + RIGHT * 3.0 + DOWN * 1.3)
+            keep_gnn = module("Keep GNN", width=2.4).move_to(router[2].get_center() + RIGHT * 2.6 + UP * 1.0)
+            query_llm = module("Query LLM", width=2.4, emphasized=True).move_to(router[2].get_center() + RIGHT * 2.6 + DOWN * 1.0)
             a_up = small_arrow(router[2].get_right() + UP * 0.15, keep_gnn.get_left())
             a_dn = small_arrow(router[2].get_right() + DOWN * 0.15, query_llm.get_left())
 
@@ -982,16 +944,15 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "Nếu phải chọn nót để gọi lờ lờ mờ,",
             "người ta đã chọn bằng cách nào?"
         ]):
-            circle_hl = Ellipse(width=query_llm.width + 0.4, height=query_llm.height + 0.4, color=gs.C_BAD, stroke_width=4)
-            circle_hl.move_to(query_llm)
-            question_mark = t("?", size=60, color=gs.C_BAD, weight=BOLD).next_to(circle_hl, RIGHT, buff=0.3)
+            box_hl = SurroundingRectangle(query_llm, color=gs.C_GOOD, buff=0.15, corner_radius=0.1)
+            question_mark = t("?", size=48, color=gs.C_GOOD, weight=BOLD).next_to(box_hl, RIGHT, buff=0.25)
             
-            self.play(Create(circle_hl), run_time=0.8)
+            self.play(Create(box_hl), run_time=0.8)
             self.play(FadeIn(question_mark, shift=LEFT*0.2), run_time=0.6)
             self.wait(0.8)
             self.play(
                 FadeOut(q), FadeOut(router), FadeOut(r_arrows),
                 FadeOut(keep_gnn), FadeOut(query_llm), FadeOut(a_up), FadeOut(a_dn),
-                FadeOut(circle_hl), FadeOut(question_mark),
+                FadeOut(box_hl), FadeOut(question_mark),
                 run_time=0.7
             )
