@@ -279,7 +279,7 @@ def _first_available(candidates, fallback="sans-serif"):
 
 
 FONT_MAIN = _first_available(
-    ["Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans", "Liberation Sans"]
+    ["Be Vietnam Pro", "Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans", "Liberation Sans"]
 )
 FONT_MONO = _first_available(
     ["Menlo", "SF Mono", "DejaVu Sans Mono", "Liberation Mono", "Courier New"]
