@@ -524,7 +524,7 @@ class S5_05_JointObjective(GlanceScene):
         self.play(FadeOut(rules), chain.animate.move_to([0, 1.5, 0]), run_time=0.5)
 
         formula = txt(
-            "lʳᵒᵘᵗᵉ = −rᵥ · log π(fᵥ)  −  λₑₙₜ · H[π(fᵥ)]",
+            "lʳᵒᵘᵗᵉ = −rᵥ · log π(fᵥ)  −  λ_ent · H[π(fᵥ)]",
             size=BODY_SIZE - 4, color=INK, weight=BOLD,
         ).move_to([0, 0.55, 0])
         with self.voiceover(text=VO["obj_entropy"]) as tracker:
@@ -539,33 +539,41 @@ class S5_05_JointObjective(GlanceScene):
         with self.voiceover(text=VO["obj_pred"]) as tracker:
             self.play(FadeIn(pred_card), FadeIn(pred_text), run_time=min(1.6, tracker.duration))
 
-        total = pill("LOSS TỔNG", INK, width=2.6).move_to([0, -1.4, 0])
+        total = pill("LOSS TỔNG", INK, width=2.6).move_to([0, -1.75, 0])
         with self.voiceover(text=VO["obj_total"]) as tracker:
             self.play(FadeIn(route_card), FadeIn(route_text), run_time=1.0)
             self.play(FadeIn(total, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
 
         modules = VGroup(
-            labeled_box("GNN  F", C_GNN, width=2.4, height=0.85),
-            labeled_box("LLM  L", C_LLM, width=2.4, height=0.85),
-            labeled_box("REFINER  ξ", C_GOOD, width=2.4, height=0.85),
-            labeled_box("ROUTER  π", C_ROUTER, width=2.4, height=0.85),
-        ).arrange(RIGHT, buff=0.35).move_to([0, -2.05, 0])
+            labeled_box("GNN  F", C_GNN, width=2.1, height=0.75),
+            labeled_box("LLM  L", C_LLM, width=2.1, height=0.75),
+            labeled_box("REFINER  ξ", C_GOOD, width=2.1, height=0.75),
+            labeled_box("ROUTER  π", C_ROUTER, width=2.1, height=0.75),
+        ).arrange(RIGHT, buff=0.3).move_to([0, -2.35, 0])
+        # Hai mũi tên backprop nối THẲNG từ card loss xuống đúng module nó cập
+        # nhật — không thay hẳn cảnh, để khán giả thấy loss tổng và 4 khối là
+        # MỘT bức tranh liên tục, không phải hai slide rời nhau.
+        to_refiner = Arrow(pred_card.get_bottom(), modules[2].get_top(), buff=0.1, color=C_GNN, stroke_width=3)
+        to_router = Arrow(route_card.get_bottom(), modules[3].get_top(), buff=0.1, color=C_ROUTER, stroke_width=3)
+
         with self.voiceover(text=VO["obj_freeze"]) as tracker:
-            self.play(
-                FadeOut(VGroup(chain, formula, pred_card, pred_text, route_card, route_text, total)),
-                FadeIn(modules),
-                run_time=1.0,
-            )
+            self.play(FadeOut(VGroup(chain, formula, total)), FadeIn(modules), run_time=0.8)
+            self.play(GrowArrow(to_refiner), GrowArrow(to_router), run_time=1.0)
             self.play(freeze(modules[0]), freeze(modules[1]),
                       Indicate(modules[2], color=C_GOOD), Indicate(modules[3], color=C_ROUTER),
                       run_time=min(1.6, tracker.duration))
+            self.play(
+                FadeOut(VGroup(pred_card, pred_text, route_card, route_text, to_refiner, to_router)),
+                modules.animate.move_to([0, -1.4, 0]),
+                run_time=0.7,
+            )
 
         hparam = VGroup(
             txt("batch 32  ·  route top-12 mỗi batch  ·  β = {0.1, 0.2, 0.3}",
                 size=SMALL_SIZE - 4, color=MUTED),
             txt("lịch giảm ngân sách: K từ 32 xuống 8, hệ số r = 0.5",
                 size=SMALL_SIZE - 5, color=MUTED),
-        ).arrange(DOWN, buff=0.12).move_to([0, -3.1, 0])
+        ).arrange(DOWN, buff=0.12).move_to([0, -2.6, 0])
         with self.voiceover(text=VO["obj_hparam"]) as tracker:
             self.play(FadeIn(hparam, shift=UP * 0.06), run_time=min(1.6, tracker.duration))
         self.add(source("Appendix C.4, tr.17"))
