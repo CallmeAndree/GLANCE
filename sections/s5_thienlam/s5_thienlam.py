@@ -216,15 +216,15 @@ VO = {
     "scale_verdict": "Chọn lọc học được không chỉ cân bằng và chính xác, mà còn rẻ và mở rộng tới quy mô triệu nốt.",
     # --- S5_11 Callout ---
     "final_reconnect": (
-        "Ở đầu đoạn phim, câu hỏi đặt ra là: có cách nào kết hợp gờ nờ nờ và lờ lờ mờ mà biết tính "
+        "Ở đầu đoạn phim, câu hỏi đặt ra là: có cách nào kết hợp gờ, nờ, nờ và lờ, lờ, mờ mà biết tính "
         "chi phí không? Đây là câu trả lời của gờ lans, gói trong năm ý."
     ),
-    "final_1": "Một: gờ nờ nờ và lờ lờ mờ giỏi ở những nốt khác nhau; hô mô phi li cục bộ dự báo ai sẽ thắng.",
+    "final_1": "Một: gờ, nờ, nờ và lờ, lờ, mờ giỏi ở những nốt khác nhau; hô mô phi li cục bộ dự báo ai sẽ thắng.",
     "final_2": "Hai: vì tốp ca không khả vi, phần thưởng chấm điểm từng quyết định để dạy bộ định tuyến.",
-    "final_3": "Ba: chỉ bộ định tuyến và bộ tinh chỉnh được huấn luyện; gờ nờ nờ và lờ lờ mờ đóng băng.",
+    "final_3": "Ba: chỉ bộ định tuyến và bộ tinh chỉnh được huấn luyện; gờ, nờ, nờ và lờ, lờ, mờ đóng băng.",
     "final_4": "Bốn: kết quả là mô hình cân bằng nhất và dẫn đầu tổng thể, nhờ sự chọn lọc học được.",
     "final_5": "Năm: chỉ định tuyến một phần nhỏ nốt, gờ lans vẫn mở rộng tới đồ thị hàng triệu nốt.",
-    "final_punch": "Tất cả gói trong một câu — đừng dùng nhiều lờ lờ mờ hơn, hãy dùng lờ lờ mờ đúng chỗ.",
+    "final_punch": "Tất cả gói trong một câu — đừng dùng nhiều lờ, lờ, mờ hơn, hãy dùng lờ, lờ, mờ đúng chỗ.",
 }
 
 
