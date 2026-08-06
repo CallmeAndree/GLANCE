@@ -23,6 +23,13 @@ ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 
 SRC_T1 = "Bảng 1, tr.4"
 
+ASSET_DIR = pathlib.Path(__file__).resolve().parent / "assets"
+PAPER_ASSETS = [
+    ("E-LLaGNN", "arXiv:2407.14996", ASSET_DIR / "ellagnn_page.jpg"),
+    ("LLM-GNN", "arXiv:2310.04668", ASSET_DIR / "llm_gnn_page.jpg"),
+    ("LOGIN", "arXiv:2405.13902", ASSET_DIR / "login_page.jpg"),
+]
+
 # --------------------------------------------------------------------------
 # Nhịp thuyết minh
 #
@@ -75,23 +82,70 @@ def ncs_color(value, cap=0.22):
 
 
 # --------------------------------------------------------------------------
-# Đồ thị dùng trong section
+# Đồ thị riêng của section 2
 #
-# demo_tag() là đồ thị 12 node dùng chung cả video. Nó hợp với phần degree một
-# cách may mắn: node 7 degree 2 nhưng cả hai hàng xóm cùng class (dễ), node 9
-# degree 4 nhưng homophily 0.25 (khó). Đúng hai phản ví dụ cần cho heuristic
-# degree, nên giữ nguyên đồ thị chung thay vì vẽ đồ thị riêng.
+# demo_tag() được dựng cho câu chuyện homophily ở section 3, nên nó không có
+# vùng "dày đặc nhưng heterophilous". Thiếu vùng đó thì phần clustering density
+# mất hẳn phản ví dụ. Vì vậy section này dùng tag_graph() với layout riêng, dựng
+# sao cho mỗi vùng phá đúng một heuristic:
+#
+#   S1..S4  chuỗi thưa, toàn class A  -> degree thấp + density 0, nhưng DỄ
+#   H       hub 7 hàng xóm, 6 khác class -> degree cao, nhưng KHÓ
+#   D1..D6  cụm nhiều tam giác, class trộn -> density cao, nhưng KHÓ
+#
+# Giữ đúng hai class như demo_tag() (A teal, B amber) để viền tím C_ROUTER của
+# node được route không lẫn với màu class nào.
 # --------------------------------------------------------------------------
 
-DEG = {n: sum(1 for u, v in DEMO_EDGES if n in (u, v)) for n in DEMO_POS}
-LOW_DEGREE = [7, 10, 11]      # degree 2, tập mà degree-based routing chọn
-EASY_LOW_DEG = 7              # degree 2, homophily 1.0 → GNN vốn đã đúng
-HARD_HIGH_DEG = 9             # degree 4, homophily 0.25 → GNN sai, không được route
+S2_POS = {
+    "S1": [-5.7, 1.5, 0], "S2": [-4.8, 0.4, 0], "S3": [-5.3, -0.9, 0], "S4": [-4.2, -2.0, 0],
+    "H": [-1.5, 0.3, 0],
+    "N1": [-3.0, 1.4, 0], "N2": [-3.1, -0.8, 0], "N3": [-1.8, 2.2, 0], "N4": [-0.2, 1.5, 0],
+    "N5": [-0.1, -0.9, 0], "N6": [-2.4, -1.8, 0], "N7": [-0.8, -2.2, 0],
+    "D1": [2.2, 1.6, 0], "D2": [3.6, 2.0, 0], "D3": [4.7, 0.8, 0],
+    "D4": [3.5, -0.3, 0], "D5": [2.3, 0.2, 0], "D6": [4.3, -1.6, 0],
+}
+S2_EDGES = [
+    ("S1", "S2"), ("S2", "S3"), ("S3", "S4"),
+    ("H", "N1"), ("H", "N2"), ("H", "N3"), ("H", "N4"),
+    ("H", "N5"), ("H", "N6"), ("H", "N7"),
+    # Ghép cặp các lá của hub để bậc 1 chỉ còn nằm ở vùng thưa bên trái.
+    ("N1", "N3"), ("N6", "N7"),
+    ("D1", "D2"), ("D1", "D3"), ("D1", "D5"), ("D2", "D3"), ("D2", "D5"),
+    ("D3", "D4"), ("D3", "D5"), ("D3", "D6"), ("D4", "D5"), ("D4", "D6"),
+    ("S3", "N2"), ("N4", "D1"), ("N5", "D5"),
+]
+S2_LABELS = {
+    "S1": "A", "S2": "A", "S3": "A", "S4": "A",
+    "H": "A", "N5": "A",
+    "N1": "B", "N2": "B", "N3": "B", "N4": "B", "N6": "B", "N7": "B",
+    "D1": "B", "D2": "A", "D3": "B", "D4": "A", "D5": "A", "D6": "B",
+}
+
+SPARSE = ["S1", "S2", "S3", "S4"]
+DENSE = ["D1", "D2", "D3", "D4", "D5", "D6"]
+# 5 tam giác trong cụm phải, dùng để tô phần "mật độ cao".
+DENSE_TRIS = [("D1", "D2", "D3"), ("D1", "D2", "D5"), ("D2", "D3", "D5"),
+              ("D3", "D4", "D5"), ("D3", "D4", "D6")]
+
+DEG = {n: sum(1 for u, v in S2_EDGES if n in (u, v)) for n in S2_POS}
+# Chỉ S1 và S4 có bậc 1, và cả hai nằm trong vùng thưa toàn một lớp.
+# 2 trên 18 nót ~ 11%, xấp xỉ mức 10% mà paper dùng.
+LOW_DEGREE = ["S1", "S4"]
+EASY_LOW_DEG = "S1"     # bậc 1, hàng xóm duy nhất cùng lớp -> GNN vốn đã đúng
+HARD_HIGH_DEG = "H"     # bậc 7, 6/7 hàng xóm khác lớp -> GNN sai, mà không được route
+
+
+def s2_graph():
+    """Đồ thị minh hoạ của section 2. Node to và cạnh dày hơn mặc định cho dễ đọc."""
+    g = tag_graph(S2_EDGES, S2_POS, labels=S2_LABELS, radius=0.21)
+    g.edges.set_stroke(width=2.8)
+    return g
 
 
 def neighbors_of(n):
     out = []
-    for u, v in DEMO_EDGES:
+    for u, v in S2_EDGES:
         if u == n:
             out.append(v)
         elif v == n:
@@ -99,30 +153,124 @@ def neighbors_of(n):
     return out
 
 
+def edge_mobjs(graph, pred):
+    """Các cạnh thoả pred(u, v). tag_graph dựng .edges đúng thứ tự S2_EDGES."""
+    return VGroup(*[m for (u, v), m in zip(S2_EDGES, graph.edges) if pred(u, v)])
+
+
 def deg_label(graph, n, color=ACCENT):
     return mono(f"deg {DEG[n]}", size=17, color=color).next_to(
-        graph.nodes[n], UP, buff=0.18).set_z_index(4)
+        graph.nodes[n], UP, buff=0.2).set_z_index(4)
 
 
 # ===========================================================================
-class S2_01_Title(GlanceScene):
+class S2_01_AdaptiveFusion(GlanceScene):
     section, section_name = SECTION, SECTION_NAME
 
     def construct(self):
-        card = title_card(
-            f"{SECTION} — {SECTION_NAME}",
-            "Do existing heuristics pick the right nodes?",
-            OWNER,
-            accent=ACCENT,
+        # Không dùng title card: scene nối trực tiếp từ câu hỏi ở cuối section 1.
+        static_head = heading("Static fusion", color=C_BAD).to_edge(UP, buff=0.75)
+        nodes = VGroup(*[
+            Dot(radius=0.18, color=C_GNN)
+            for _ in range(5)
+        ]).arrange(DOWN, buff=0.48).move_to(LEFT * 3.4 + DOWN * 0.2)
+        node_label = mono("all nodes", size=17, color=MUTED).next_to(nodes, LEFT, buff=0.35)
+        llm = labeled_box("LLM", C_LLM).move_to(RIGHT * 3.1 + DOWN * 0.2)
+        all_arrows = VGroup(*[
+            Arrow(
+                node.get_right(), llm.get_left(), buff=0.2,
+                color=C_EDGE, stroke_width=2.5,
+                max_tip_length_to_length_ratio=0.08,
+            )
+            for node in nodes
+        ])
+        static_note = txt("Every node queries the LLM", size=21, color=C_BAD)
+        static_note.to_edge(DOWN, buff=0.55)
+
+        beat(
+            self,
+            "Thay vì định tuyến mọi nót sang lờ lờ mờ như cách kết hợp tĩnh, tại sao không chỉ chọn những nót thật sự có lợi khi gọi lờ lờ mờ?",
+            FadeIn(static_head), FadeIn(nodes), FadeIn(node_label), FadeIn(llm),
+            LaggedStart(*[GrowArrow(a) for a in all_arrows], lag_ratio=0.08),
+            FadeIn(static_note),
+            run_time=1.8,
         )
-        beat(self, "Nếu chỉ gọi lờ lờ mờ cho một phần nót, ta chọn nót nào?",
-             FadeIn(card, shift=UP * 0.3), run_time=1.2)
-        beat(self, "Phần này đánh giá ba tiêu chí đã được dùng trước gờ lans.")
-        self.play(FadeOut(card), run_time=0.6)
+
+        adaptive_head = heading("Adaptive fusion", color=C_ROUTER).move_to(static_head)
+        selected = (1, 3)
+        rings = VGroup(*[
+            Circle(radius=0.28, color=C_ROUTER, stroke_width=3).move_to(nodes[i])
+            for i in selected
+        ])
+        routed_arrows = VGroup(*[
+            Arrow(
+                nodes[i].get_right(), llm.get_left(), buff=0.2,
+                color=C_ROUTER, stroke_width=3,
+                max_tip_length_to_length_ratio=0.08,
+            )
+            for i in selected
+        ])
+        adaptive_note = txt(
+            "Route only nodes with expected LLM benefit",
+            size=21, color=C_ROUTER, weight=BOLD,
+        ).to_edge(DOWN, buff=0.55)
+
+        beat(
+            self,
+            "Hướng tiếp cận này được gọi là kết hợp thích ứng.",
+            Transform(static_head, adaptive_head), FadeOut(all_arrows),
+            FadeOut(static_note), FadeOut(node_label),
+            LaggedStart(*[nodes[i].animate.set_opacity(0.28)
+                          for i in range(len(nodes)) if i not in selected], lag_ratio=0.08),
+            LaggedStart(*[Create(r) for r in rings], lag_ratio=0.15),
+            LaggedStart(*[GrowArrow(a) for a in routed_arrows], lag_ratio=0.15),
+            FadeIn(adaptive_note),
+            run_time=1.4,
+        )
+
+        self.clear_scene()
+
+        def paper_card(name, arxiv_id, image_path):
+            page = ImageMobject(str(image_path)).set_height(4.45)
+            frame = SurroundingRectangle(
+                page, color=C_EDGE, stroke_width=2, buff=0.05,
+            )
+            label = VGroup(
+                txt(name, size=22, color=ACCENT, weight=BOLD),
+                mono(arxiv_id, size=14, color=MUTED),
+            ).arrange(DOWN, buff=0.08).next_to(page, UP, buff=0.18)
+            return Group(page, frame, label)
+
+        papers = Group(*[
+            paper_card(name, arxiv_id, image_path)
+            for name, arxiv_id, image_path in PAPER_ASSETS
+        ]).arrange(RIGHT, buff=0.42, aligned_edge=DOWN).shift(DOWN * 0.42)
+        paper_head = heading(
+            "Three prior adaptive-fusion methods", color=ACCENT,
+        ).to_edge(UP, buff=0.45)
+
+        beat(
+            self,
+            "Ta hãy cùng khảo sát ba công trình từng áp dụng cách tiếp cận này: e lờ lờ a gờ nờ nờ, lờ lờ mờ, gờ nờ nờ, và lốc gin.",
+            FadeIn(paper_head),
+            LaggedStart(*[FadeIn(card, shift=UP * 0.2) for card in papers], lag_ratio=0.2),
+            run_time=1.8,
+        )
+        beat(self, "Chúng dùng tiêu chí nào để đánh giá và định tuyến nót sang lờ lờ mờ?")
+        beat(self, "Từng tiêu chí mạnh yếu ra sao?")
+        # Câu hỏi thứ ba hướng về GLANCE, vì section này chỉ ra hạn chế của từng
+        # công trình chứ không đi sâu vào cơ chế riêng của chúng. Trả lời ở S2_12.
+        beat(self, "Và gờ lans đã kế thừa được gì từ cả ba?")
 
 
 # ===========================================================================
 class S2_02_TwoQuestions(GlanceScene):
+    """Thước đo để chấm ba tiêu chí sắp xem.
+
+    Không có scene này thì khán giả nghe ba lời phủ định liên tiếp mà chưa biết
+    thứ *nên* đo là gì, và khái niệm lợi thế của LLM mãi tới S2_12 mới xuất hiện.
+    """
+
     section, section_name = SECTION, SECTION_NAME
 
     def construct(self):
@@ -132,63 +280,40 @@ class S2_02_TwoQuestions(GlanceScene):
             t = txt(tag, size=SMALL_SIZE, color=color, weight=BOLD)
             b = txt(text, size=BODY_SIZE, color=INK, line_spacing=0.85)
             inner = VGroup(t, b).arrange(DOWN, buff=0.28, aligned_edge=LEFT)
-            return VGroup(panel(inner, color=color, buff=0.42), inner)
+            return VGroup(panel(inner, color=color, buff=0.4), inner)
 
         q1 = qcard("QUESTION 1", "Which nodes look HARD\nfor the GNN?", C_GNN)
         q2 = qcard("QUESTION 2", "Which nodes ACTUALLY\nimprove with an LLM?", C_LLM)
-        VGroup(q1, q2).arrange(RIGHT, buff=0.8, aligned_edge=UP).shift(UP * 0.5)
+        VGroup(q1, q2).arrange(RIGHT, buff=0.8, aligned_edge=UP).shift(UP * 0.55)
 
-        beat(self, "Để đánh giá các quy tắc heuristic, cần tách bạch hai câu hỏi.",
+        beat(self, "Trước khi chấm ba tiêu chí đó, ta cần một thước đo.")
+        beat(self, "Có hai câu hỏi rất dễ tưởng là một.",
              FadeIn(q1, shift=RIGHT * 0.3), run_time=0.9)
-        beat(self, "Câu thứ nhất: nót nào có vẻ khó đối với gờ nờ nờ?")
-        beat(self, "Câu thứ hai: nót nào thực sự được cải thiện nhờ lờ lờ mờ?",
+        beat(self, "Câu thứ nhất: nót nào trông có vẻ khó với gờ nờ nờ?")
+        beat(self, "Câu thứ hai: nót nào thật sự khá lên khi gọi lờ lờ mờ?",
              FadeIn(q2, shift=LEFT * 0.3), run_time=0.9)
 
-        # --- Venn: hai tập không trùng nhau -----------------------------------
-        c1 = Circle(radius=1.55, stroke_color=C_GNN, stroke_width=3.2).set_fill(C_GNN, 0.12)
-        c2 = Circle(radius=1.55, stroke_color=C_LLM, stroke_width=3.2).set_fill(C_LLM, 0.12)
-        c1.move_to(LEFT * 0.9 + DOWN * 0.6)
-        c2.move_to(RIGHT * 0.9 + DOWN * 0.6)
+        # --- hai tập không trùng nhau -------------------------------------------
+        c1 = Circle(radius=1.5, stroke_color=C_GNN, stroke_width=3.2).set_fill(C_GNN, 0.12)
+        c2 = Circle(radius=1.5, stroke_color=C_LLM, stroke_width=3.2).set_fill(C_LLM, 0.12)
+        c1.move_to(LEFT * 0.88 + DOWN * 0.75)
+        c2.move_to(RIGHT * 0.88 + DOWN * 0.75)
         lens = Intersection(c1, c2, fill_color=C_ROUTER, fill_opacity=0.55, stroke_width=0)
         n1 = txt("GNN difficulty", size=SMALL_SIZE, color=C_GNN).next_to(c1, LEFT, buff=0.2)
         n2 = txt("LLM advantage", size=SMALL_SIZE, color=C_LLM).next_to(c2, RIGHT, buff=0.2)
-        core = txt("the overlap: nodes worth routing", size=SMALL_SIZE,
+        core = txt("only the overlap is worth paying for", size=SMALL_SIZE,
                    color=C_ROUTER, weight=BOLD).next_to(VGroup(c1, c2), DOWN, buff=0.4)
 
         self.play(FadeOut(q1, shift=UP * 0.3), FadeOut(q2, shift=UP * 0.3), run_time=0.6)
-        beat(self, "Hai câu hỏi nghe giống nhau, nhưng tập nót thì không trùng.",
+        beat(self, "Nghe thì giống nhau, nhưng hai tập nót này không trùng nhau.",
              Create(c1), Create(c2), FadeIn(n1), FadeIn(n2), run_time=1.2)
-        beat(self, "Chỉ phần giao mới đáng để trả chi phí gọi lờ lờ mờ.",
+        beat(self, "Chỉ phần giao mới đáng để ta trả tiền cho một lời gọi.",
              FadeIn(lens), Write(core), run_time=1.0)
-        beat(self, "Các quy tắc heuristic trước gờ lans chủ yếu chỉ trả lời câu thứ nhất.",
-             c1.animate.set_fill(C_GNN, 0.4), run_time=1.0)
+        beat(self, "Ba tiêu chí sắp xem đều chỉ nhìn được vòng tròn bên trái.",
+             c1.animate.set_fill(C_GNN, 0.42), run_time=1.0)
+        beat(self, "Hãy nhớ hình này, ta sẽ quay lại nó ở cuối phần.")
 
-        # --- ba heuristic ------------------------------------------------------
-        cards = VGroup(
-            self._hcard("Node degree", "E-LLaGNN"),
-            self._hcard("Clustering density", "LLM-GNN"),
-            self._hcard("GNN uncertainty", "LOGIN"),
-        ).arrange(RIGHT, buff=0.5).shift(DOWN * 0.2)
-        head = txt("Three representative signals", size=BODY_SIZE,
-                   color=INK).next_to(cards, UP, buff=0.9)
-
-        self.play(FadeOut(VGroup(c1, c2, lens, n1, n2, core), shift=DOWN * 0.4), run_time=0.6)
-        beat(self, "bài báo xem xét ba tín hiệu đại diện.", FadeIn(head), run_time=0.6)
-        for card, line in zip(cards, [
-            "nót bậc, dùng trong e lờ lờ a gờ nờ nờ.",
-            "mật độ phân cụm, dùng trong lờ lờ mờ, gờ nờ nờ.",
-            "Và gờ nờ nờ uncertainty, dùng trong lốc gin.",
-        ]):
-            beat(self, line, FadeIn(card, shift=DOWN * 0.25), run_time=0.7)
-        beat(self, "Ta sẽ lần lượt đem cả ba ra thử.")
         self.clear_scene()
-
-    @staticmethod
-    def _hcard(name, method):
-        n = txt(name, size=22, color=ACCENT, weight=BOLD)
-        m = mono(method, size=17, color=MUTED)
-        inner = VGroup(n, m).arrange(DOWN, buff=0.2)
-        return VGroup(panel(inner, buff=0.34), inner)
 
 
 # ===========================================================================
@@ -200,9 +325,12 @@ class S2_03_Degree(GlanceScene):
         head = heading("Heuristic 1: Node degree", color=ACCENT).to_edge(UP, buff=0.85)
         sub = mono("E-LLaGNN  ·  route the lowest-degree nodes", size=18,
                    color=MUTED).next_to(head, DOWN, buff=0.18)
-        g = demo_tag().scale(1.05).shift(DOWN * 0.55)
+        g = s2_graph().scale(0.9).move_to(DOWN * 0.4)
+        ring_r = g.nodes["H"].radius * 1.9
 
-        beat(self, "quy tắc heuristic đầu tiên là nót bậc.", FadeIn(head), FadeIn(sub), run_time=0.8)
+        beat(self, "Đầu tiên là e lờ lờ a gờ nờ nờ.",
+             FadeIn(head), FadeIn(sub), run_time=0.8)
+        beat(self, "Công trình này dùng nót bậc làm tiêu chí định tuyến.")
         beat(self, "bậc là số hàng xóm nối với nót đó.")
         beat(self, "nót bậc thấp nhận ít thông tin qua truyền thông điệp.")
         beat(self, "Nên gờ nờ nờ có thể gặp khó, và ta ưu tiên định tuyến chúng sang lờ lờ mờ.",
@@ -213,7 +341,7 @@ class S2_03_Degree(GlanceScene):
 
         # --- tập được route -----------------------------------------------------
         rings = VGroup(*[
-            Circle(radius=0.3, color=C_ROUTER, stroke_width=3).move_to(g.nodes[n])
+            Circle(radius=ring_r, color=C_ROUTER, stroke_width=3).move_to(g.nodes[n])
             for n in LOW_DEGREE
         ])
         tags = VGroup(*[deg_label(g, n, C_ROUTER) for n in LOW_DEGREE])
@@ -221,60 +349,51 @@ class S2_03_Degree(GlanceScene):
                       txt("Routed to the LLM", size=19, color=C_ROUTER))
         chip.to_corner(UR, buff=0.6)
 
-        beat(self, "Đây là các nót bậc thấp nhất, chúng sẽ được định tuyến.",
-             LaggedStart(*[Create(r) for r in rings], lag_ratio=0.12),
-             LaggedStart(*[FadeIn(t) for t in tags], lag_ratio=0.12),
+        beat(self, "Đây là hai nót bậc thấp nhất, chúng sẽ được định tuyến.",
+             LaggedStart(*[Create(r) for r in rings], lag_ratio=0.15),
+             LaggedStart(*[FadeIn(t) for t in tags], lag_ratio=0.15),
              FadeIn(chip), run_time=1.6)
 
-        # --- phản ví dụ 1: degree thấp nhưng dễ ----------------------------------
-        keep = {EASY_LOW_DEG, *neighbors_of(EASY_LOW_DEG)}
+        # --- phản ví dụ 1: bậc thấp nhất nhưng dễ --------------------------------
+        # Giữ sáng cả vùng thưa để thấy rõ nó chỉ có một lớp duy nhất.
+        keep = set(SPARSE)
         dim_nodes = VGroup(*[d for i, d in g.nodes.items() if i not in keep])
-        dim_edges = VGroup(*[
-            m for (u, v), m in zip(DEMO_EDGES, g.edges) if not ({u, v} <= keep)
-        ])
-        dim_rings = VGroup(*[r for n, r in zip(LOW_DEGREE, rings) if n != EASY_LOW_DEG])
-        dim_tags = VGroup(*[t for n, t in zip(LOW_DEGREE, tags) if n != EASY_LOW_DEG])
-        ok = check(size=0.5).next_to(g.nodes[EASY_LOW_DEG], RIGHT, buff=0.5).set_z_index(4)
-        msg1 = txt("Both neighbors share its class. The GNN was already right.",
-                   size=21, color=C_GOOD).to_edge(DOWN, buff=0.5)
+        dim_edges = edge_mobjs(g, lambda u, v: not ({u, v} <= keep))
+        ok = check(size=0.5).next_to(g.nodes[EASY_LOW_DEG], RIGHT, buff=0.45).set_z_index(4)
+        msg1 = txt("The whole region is one class. The GNN was already right.",
+                   size=21, color=C_GOOD).to_edge(DOWN, buff=0.45)
 
-        beat(self, "Nhưng hãy nhìn kỹ nót này. Nó chỉ có hai hàng xóm.",
+        beat(self, "Nhưng hãy nhìn kỹ vùng bên trái này.",
              dim_nodes.animate.set_opacity(0.15), dim_edges.animate.set_opacity(0.15),
-             dim_rings.animate.set_opacity(0.15), dim_tags.animate.set_opacity(0.15),
              run_time=1.2)
-        beat(self, "Cả hai hàng xóm đều cùng lớp với nó.",
-             Create(ok), run_time=0.8)
-        beat(self, "truyền thông điệp chỉ đưa vào tín hiệu đồng thuận.", FadeIn(msg1), run_time=0.6)
+        beat(self, "Hàng xóm duy nhất của nó cùng lớp, và cả vùng cũng chỉ có một lớp.",
+             Create(ok), FadeIn(msg1), run_time=1.0)
+        beat(self, "truyền thông điệp chỉ đưa vào tín hiệu đồng thuận.")
         beat(self, "gờ nờ nờ vốn đã đúng ở đây. Gọi lờ lờ mờ chỉ là lãng phí tiền.")
 
         self.play(dim_nodes.animate.set_opacity(1), dim_edges.animate.set_opacity(1),
-                  dim_rings.animate.set_opacity(1), dim_tags.animate.set_opacity(1),
                   FadeOut(ok), FadeOut(msg1), run_time=0.7)
 
-        # --- phản ví dụ 2: degree cao nhưng khó ----------------------------------
+        # --- phản ví dụ 2: bậc cao nhất nhưng khó --------------------------------
         hub_nb = neighbors_of(HARD_HIGH_DEG)
         keep2 = {HARD_HIGH_DEG, *hub_nb}
         dim2_nodes = VGroup(*[d for i, d in g.nodes.items() if i not in keep2])
-        dim2_edges = VGroup(*[
-            m for (u, v), m in zip(DEMO_EDGES, g.edges) if not ({u, v} <= keep2)
-        ])
-        hub_edges = VGroup(*[
-            m for (u, v), m in zip(DEMO_EDGES, g.edges) if HARD_HIGH_DEG in (u, v)
-        ])
+        dim2_edges = edge_mobjs(g, lambda u, v: not ({u, v} <= keep2))
+        hub_edges = edge_mobjs(g, lambda u, v: HARD_HIGH_DEG in (u, v))
         hub_tag = VGroup(
-            panel(mono("degree = 4", size=17, color=C_BAD), buff=0.18, fill_opacity=0.95),
-            mono("degree = 4", size=17, color=C_BAD),
-        ).next_to(g.nodes[HARD_HIGH_DEG], DOWN, buff=0.4).set_z_index(4)
-        bad = cross(size=0.42).next_to(g.nodes[HARD_HIGH_DEG], RIGHT, buff=0.55).set_z_index(4)
-        msg2 = txt("Degree 4, but 3 of 4 neighbors are a different class.",
-                   size=21, color=C_BAD).to_edge(DOWN, buff=0.5)
+            panel(mono("degree = 7", size=17, color=C_BAD), buff=0.18, fill_opacity=0.95),
+            mono("degree = 7", size=17, color=C_BAD),
+        ).next_to(g.nodes[HARD_HIGH_DEG], DOWN, buff=0.42).set_z_index(4)
+        bad = cross(size=0.42).next_to(g.nodes[HARD_HIGH_DEG], RIGHT, buff=0.5).set_z_index(4)
+        msg2 = txt("Degree 7, but 6 of 7 neighbors are a different class.",
+                   size=21, color=C_BAD).to_edge(DOWN, buff=0.45)
 
-        beat(self, "Bây giờ ngược lại, hãy nhìn nót này.",
+        beat(self, "Bây giờ ngược lại, hãy nhìn nót giữa hình.",
              dim2_nodes.animate.set_opacity(0.15), dim2_edges.animate.set_opacity(0.15),
              rings.animate.set_opacity(0.15), tags.animate.set_opacity(0.15),
              FadeIn(hub_tag), run_time=1.2)
-        beat(self, "bậc của nó cao gấp đôi, nên quy tắc heuristic bỏ qua.")
-        beat(self, "Nhưng ba trong bốn hàng xóm lại khác lớp với nó.",
+        beat(self, "bậc của nó cao nhất đồ thị, nên tiêu chí bỏ qua.")
+        beat(self, "Nhưng sáu trong bảy hàng xóm lại khác lớp với nó.",
              hub_edges.animate.set_stroke(color=C_BAD, width=3.2),
              FadeIn(msg2), run_time=1.2)
         beat(self, "truyền thông điệp trộn tín hiệu mâu thuẫn, gờ nờ nờ dự đoán sai.",
@@ -301,43 +420,63 @@ class S2_04_Density(GlanceScene):
         head = heading("Heuristic 2: Clustering density", color=ACCENT).to_edge(UP, buff=0.85)
         sub = mono("LLM-GNN  ·  route the lowest-density nodes", size=18,
                    color=MUTED).next_to(head, DOWN, buff=0.18)
-        g = demo_tag().scale(1.05).shift(DOWN * 0.55)
-        self.add(head, sub, g)
+        g = s2_graph().scale(0.9).move_to(DOWN * 0.4)
+        ring_r = g.nodes["H"].radius * 1.9
 
-        beat(self, "quy tắc heuristic thứ hai là mật độ phân cụm.")
+        beat(self, "Tiếp theo là lờ lờ mờ, gờ nờ nờ.",
+             FadeIn(head), FadeIn(sub), run_time=0.8)
+        beat(self, "Công trình này dùng mật độ phân cụm làm tiêu chí định tuyến.",
+             FadeIn(g), run_time=0.8)
         beat(self, "Nó đo xem các hàng xóm của một nót có nối với nhau không.")
         beat(self, "Tức nót đó nằm trong một cụm chặt chẽ tới mức nào.")
         beat(self, "Giả định: nót ở vùng thưa thì gờ nờ nờ khó mô hình hoá.")
 
-        # Cụm tam giác 0-1-4 / 0-3-4: dày đặc và toàn class A.
-        tri = VGroup(
-            Polygon(*[g.nodes[i].get_center() for i in (0, 1, 4)],
-                    fill_color=C_HIGHLIGHT, fill_opacity=0.16, stroke_width=0),
-            Polygon(*[g.nodes[i].get_center() for i in (0, 3, 4)],
-                    fill_color=C_HIGHLIGHT, fill_opacity=0.16, stroke_width=0),
-            Polygon(*[g.nodes[i].get_center() for i in (1, 2, 4)],
-                    fill_color=C_HIGHLIGHT, fill_opacity=0.16, stroke_width=0),
-        ).set_z_index(-2)
+        # --- vùng thưa bên trái: bị định tuyến dù dễ -----------------------------
+        sparse_nodes = VGroup(*[g.nodes[n] for n in SPARSE])
+        sparse_box = DashedVMobject(
+            panel(sparse_nodes, color=C_ROUTER, buff=0.42, fill_opacity=0), num_dashes=52)
+        sparse_rings = VGroup(*[
+            Circle(radius=ring_r, color=C_ROUTER, stroke_width=3).move_to(g.nodes[n])
+            for n in SPARSE
+        ])
+        sparse_tag = mono("density = 0", size=17, color=C_ROUTER).next_to(
+            sparse_box, UP, buff=0.2).set_z_index(4)
+        msg1 = txt("Sparse, but the whole region shares one class. Easy.",
+                   size=21, color=C_GOOD).to_edge(DOWN, buff=0.45)
+
+        beat(self, "Vùng bên trái gần như không có tam giác nào.",
+             Create(sparse_box), FadeIn(sparse_tag), run_time=1.1)
+        beat(self, "mật độ bằng không, nên tiêu chí định tuyến cả vùng này.",
+             LaggedStart(*[Create(r) for r in sparse_rings], lag_ratio=0.12), run_time=1.2)
+        beat(self, "Vậy mà cả vùng chỉ có một lớp duy nhất.", FadeIn(msg1), run_time=0.8)
+        beat(self, "Thưa, nhưng vẫn dễ. Bốn lời gọi lờ lờ mờ bị phí.")
+
+        self.play(FadeOut(sparse_rings), FadeOut(msg1),
+                  sparse_box.animate.set_stroke(opacity=0.25),
+                  sparse_tag.animate.set_opacity(0.25), run_time=0.7)
+
+        # --- cụm dày bên phải: bị bỏ qua dù khó ----------------------------------
+        tri = VGroup(*[
+            Polygon(*[g.nodes[n].get_center() for n in t],
+                    fill_color=C_HIGHLIGHT, fill_opacity=0.2, stroke_width=0)
+            for t in DENSE_TRIS
+        ]).set_z_index(-2)
         dense_tag = mono("high density", size=17, color=C_HIGHLIGHT).next_to(
-            g.nodes[4], UP, buff=0.55).set_z_index(4)
+            VGroup(*[g.nodes[n] for n in DENSE]), UP, buff=0.3).set_z_index(4)
+        hetero = edge_mobjs(
+            g, lambda u, v: u in DENSE and v in DENSE and S2_LABELS[u] != S2_LABELS[v])
+        msg2 = txt("Dense, yet 6 of 10 edges join different classes.",
+                   size=21, color=C_BAD).to_edge(DOWN, buff=0.45)
 
-        beat(self, "Vùng này nhiều tam giác nên mật độ cao, quy tắc heuristic bỏ qua.",
-             FadeIn(tri), FadeIn(dense_tag), run_time=1.3)
-        beat(self, "Và ở đây quy tắc heuristic đúng: cả cụm cùng một lớp, gờ nờ nờ xử lý tốt.")
-
-        # Node 2: density thấp (1/6) nhưng homophily 0.75 → dễ, vẫn bị route.
-        ring2 = Circle(radius=0.3, color=C_ROUTER, stroke_width=3).move_to(g.nodes[2])
-        tag2 = mono("low density", size=17, color=C_ROUTER).next_to(
-            g.nodes[2], RIGHT, buff=0.3).set_z_index(4)
-        msg = txt("Sparse neighborhood, but 3 of 4 neighbors still share its class.",
-                  size=21, color=C_GOOD).to_edge(DOWN, buff=0.5)
-
-        beat(self, "Nhưng nhìn nót này: hàng xóm của nó gần như không nối với nhau.",
-             FadeOut(tri), FadeOut(dense_tag), Create(ring2), FadeIn(tag2), run_time=1.2)
-        beat(self, "mật độ thấp nên nó bị định tuyến.")
-        beat(self, "Vậy mà ba trên bốn hàng xóm vẫn cùng lớp với nó.",
-             FadeIn(msg), run_time=0.8)
-        beat(self, "Thưa, nhưng vẫn dễ. Một lời gọi lờ lờ mờ nữa bị phí.")
+        beat(self, "Còn cụm bên phải thì ngược lại hoàn toàn.",
+             FadeIn(tri), FadeIn(dense_tag), run_time=1.2)
+        beat(self, "Rất nhiều tam giác, mật độ cao, nên tiêu chí bỏ qua cụm này.")
+        beat(self, "Nhưng hãy nhìn kỹ vào màu.",
+             tri.animate.set_fill(opacity=0.07), run_time=0.7)
+        beat(self, "Sáu trong mười cạnh của cụm nối hai nót khác lớp.",
+             hetero.animate.set_stroke(color=C_BAD, width=3.6), FadeIn(msg2), run_time=1.2)
+        beat(self, "Cụm dày đặc, mà truyền thông điệp vẫn bị nhiễu.")
+        beat(self, "Đây mới là chỗ cần lờ lờ mờ, nhưng nó không được chọn.")
 
         self.clear_scene()
         punch = VGroup(
@@ -389,7 +528,8 @@ class S2_05_Uncertainty(GlanceScene):
         arrow = Arrow(node.get_right(), axis.get_left() + LEFT * 0.15, buff=0.3,
                       stroke_width=3, color=C_EDGE, max_tip_length_to_length_ratio=0.12)
 
-        beat(self, "quy tắc heuristic thứ ba là gờ nờ nờ uncertainty.", FadeIn(head), FadeIn(sub), run_time=0.8)
+        beat(self, "Cuối cùng là lốc gin.", FadeIn(head), FadeIn(sub), run_time=0.8)
+        beat(self, "Công trình này dùng gờ nờ nờ uncertainty làm tiêu chí định tuyến.")
         beat(self, "Mô hình chạy nhiều lần lượt truyền xuôi với đờ-róp-ao bật.",
              GrowFromCenter(node), FadeIn(nlab), GrowArrow(arrow), Create(axis),
              FadeIn(ticks), FadeIn(ylab), FadeIn(counter), FadeIn(bars), run_time=1.3)
@@ -483,7 +623,7 @@ class S2_06_Setup(GlanceScene):
         head = heading("How do we evaluate a heuristic fairly?",
                        color=ACCENT).to_edge(UP, buff=0.9)
 
-        beat(self, "Vậy đánh giá một định tuyến quy tắc heuristic thế nào cho công bằng?",
+        beat(self, "Vậy đánh giá một tiêu chí định tuyến thế nào cho công bằng?",
              Write(head), run_time=1.4)
         beat(self, "bài báo không chỉ nhìn độ chính xác của gờ nờ nờ trên nhóm nót bị coi là khó.")
         beat(self, "Thay vào đó, kiểm tra thẳng điều gì xảy ra sau khi định tuyến.")
@@ -498,12 +638,12 @@ class S2_06_Setup(GlanceScene):
         frozen = mono("both GNN and LLM are frozen", size=18,
                       color=C_GNN).next_to(flow, DOWN, buff=0.55)
 
-        beat(self, "Từ đồ thị, quy tắc heuristic chọn ra tốp ca phần trăm nót.",
+        beat(self, "Từ đồ thị, tiêu chí chọn ra tốp ca phần trăm nót.",
              LaggedStart(*[FadeIn(b, shift=RIGHT * 0.2) for b in flow.boxes], lag_ratio=0.16),
              LaggedStart(*[GrowArrow(a) for a in flow.arrows], lag_ratio=0.16), run_time=2.0)
         beat(self, "Những nót đó đi qua lờ lờ mờ, rồi so với dự đoán gốc của gờ nờ nờ.")
         beat(self, "Quan trọng: cả gờ nờ nờ lẫn lờ lờ mờ đều được đóng băng.", FadeIn(frozen), run_time=0.7)
-        beat(self, "Nên mọi khác biệt chỉ đến từ việc quy tắc heuristic đã chọn tập nót nào.")
+        beat(self, "Nên mọi khác biệt chỉ đến từ việc tiêu chí đã chọn tập nót nào.")
 
         def chips(label, items, color):
             lab = mono(label, size=17, color=MUTED)
@@ -528,7 +668,11 @@ class S2_06_Setup(GlanceScene):
              FadeIn(cfg[1]), run_time=0.7)
         beat(self, "Hai loại đặc trưng: gốc, và tăng cường sinh bởi quy en ba tám bi.",
              FadeIn(cfg[2]), run_time=0.7)
-        beat(self, "Mỗi quy tắc heuristic định tuyến tốp mười, mười lăm, rồi hai mươi phần trăm.",
+        # Bảng 1 chỉ báo cáo cột tăng cường. Nói rõ ở đây, nếu không khán giả sẽ
+        # đi tìm hàng "gốc" trong bản đồ nhiệt ở S2_08 và không thấy.
+        beat(self, "Bảng số lát nữa chỉ lấy cột tăng cường, cho gọn.",
+             Circumscribe(cfg[2][1][1], color=C_LLM, buff=0.12), run_time=1.2)
+        beat(self, "Mỗi tiêu chí lần lượt định tuyến tốp mười, mười lăm, rồi hai mươi phần trăm.",
              FadeIn(cfg[3]), run_time=0.7)
 
         self.clear_scene()
@@ -547,7 +691,7 @@ class S2_06_Setup(GlanceScene):
              FadeIn(rules[2], shift=RIGHT * 0.2), run_time=0.7)
         beat(self, "Và ngẫu nhiên định tuyến làm mốc so sánh.",
              FadeIn(rules[3], shift=RIGHT * 0.2), run_time=0.7)
-        beat(self, "Đây là cái mốc mà mọi quy tắc heuristic ít nhất phải vượt qua.",
+        beat(self, "Đây là cái mốc mà mọi tiêu chí ít nhất phải vượt qua.",
              Circumscribe(rules[3], color=MUTED, buff=0.16), run_time=1.4)
 
 
@@ -756,7 +900,7 @@ class S2_08_Table1(GlanceScene):
 
         beat(self, "Hãy nhìn pắp mét và ác xíp hai ba trước.",
              Create(frames), Indicate(good, color=C_LLM, scale_factor=1.04), run_time=1.4)
-        beat(self, "Ở đây độ bất định là quy tắc heuristic tốt nhất trong mọi thiết lập.")
+        beat(self, "Ở đây độ bất định là tiêu chí tốt nhất trong mọi thiết lập.")
         beat(self, "Với gờ xê en dùng đặc trưng tăng cường trên pắp mét, en xi ét đạt không phẩy hai mươi.",
              Create(star_ring), Create(lead), FadeIn(readout, shift=LEFT * 0.2), run_time=1.0)
         beat(self, "Nghĩa là cứ một trăm nót được định tuyến, lờ lờ mờ tạo hai mươi lần sửa có lợi.")
@@ -765,43 +909,21 @@ class S2_08_Table1(GlanceScene):
         self.play(FadeOut(frames), FadeOut(star_ring), FadeOut(lead), FadeOut(readout),
                   run_time=0.6)
 
+        # Đòn kết trên cô ra để dành cho S2_09, nơi biểu đồ cột cho thấy việc đổi
+        # dấu rõ hơn hẳn bản đồ nhiệt. Ở đây chỉ gieo câu hỏi, tránh kể cùng một
+        # kết luận hai lần trong vòng chín mươi giây.
         f_cora = SurroundingRectangle(
             VGroup(*[hm.cell[(bb, s, c)] for bb in ["GCN", "GCNII"]
                      for s in STRATS for c in hm.cols("Cora")]),
             color=C_BAD, stroke_width=3, buff=0.05, corner_radius=0.04)
-        c_unc = hm.cell[("GCN", "Uncertainty", 0)]
-        c_rand = hm.cell[("GCN", "Random", 0)]
-        callout_inner = VGroup(
-            VGroup(mono("uncertainty", size=18, color=ACCENT),
-                   mono("-0.09", size=26, color=C_BAD)).arrange(RIGHT, buff=0.35),
-            VGroup(mono("random", size=18, color=MUTED),
-                   mono("-0.02", size=26, color=MUTED)).arrange(RIGHT, buff=0.35),
-        ).arrange(DOWN, buff=0.26, aligned_edge=LEFT)
-        callout = VGroup(panel(callout_inner, buff=0.3), callout_inner)
-        callout.to_edge(RIGHT, buff=0.4).shift(UP * 0.1)
 
-        # Viền nhấn thay cho phóng to: callout bên phải đã hiện sẵn hai con số cỡ lớn.
-        unc_ring = SurroundingRectangle(c_unc, color=C_BAD, stroke_width=3.5,
-                                        buff=0.03, corner_radius=0.03)
-        rand_ring = SurroundingRectangle(c_rand, color=MUTED, stroke_width=3,
-                                         buff=0.03, corner_radius=0.03)
-
-        beat(self, "Nhưng bây giờ nhìn sang cô ra.", Create(f_cora), run_time=0.9)
-        beat(self, "Cùng quy tắc heuristic đó, cùng mô hình nền đó, en xi ét rơi xuống âm không phẩy không chín.",
-             Create(unc_ring), run_time=0.9)
-        beat(self, "Và đây mới là điều đáng chú ý nhất.",
-             Create(rand_ring), FadeIn(callout), run_time=0.9)
-        beat(self, "Định tuyến ngẫu nhiên trên cô ra chỉ là âm không phẩy không hai.")
-        beat(self, "Chọn kỹ nót mà gờ nờ nờ không chắc chắn còn hại hơn chọn ngẫu nhiên.",
-             Circumscribe(callout, color=C_BAD, buff=0.1), run_time=1.5)
-
-        self.clear_scene()
-        punch = VGroup(
-            txt("GNN uncertainty does not always", size=24, color=INK),
-            txt("reflect LLM advantage.", size=24, color=C_BAD, weight=BOLD),
-        ).arrange(DOWN, buff=0.24)
-        beat(self, "Kết luận rất rõ: gờ nờ nờ uncertainty không phải lúc nào cũng phản ánh lờ lờ mờ lợi thế.",
-             Write(punch), run_time=1.7)
+        beat(self, "Nhưng bây giờ nhìn sang cột cô ra bên trái.",
+             Create(f_cora), run_time=0.9)
+        beat(self, "Cả mảng đỏ. Trên bộ dữ liệu này không tiêu chí nào có lợi.")
+        beat(self, "Kể cả tiêu chí vừa thắng ở hai bộ kia.",
+             Indicate(hm.cell[("GCN", "Uncertainty", 0)], color=C_BAD, scale_factor=1.15),
+             run_time=1.2)
+        beat(self, "Chuyện gì đang xảy ra ở đây?")
 
 
 # ===========================================================================
@@ -837,24 +959,50 @@ class S2_09_PubmedVsCora(GlanceScene):
         lab_cora.move_to([cora_bars.get_center()[0], lab_y, 0])
         stamp = source(SRC_T1)
 
-        beat(self, "Đặt hai bộ dữ liệu cạnh nhau thì kết luận bật ra ngay.",
+        # Mốc ngẫu nhiên trên cô ra. Random đổi theo từng mức k (-0.02 / -0.06 /
+        # -0.04), nên phải vẽ ba đoạn riêng: một đường ngang duy nhất sẽ khiến
+        # khán giả hiểu random là hằng số, và câu "tệ hơn random" chỉ đúng ở 10%.
+        rand_marks = VGroup()
+        for i, rv in enumerate(T1["GCN"]["Random"][0:3]):
+            bar = chart.bars[3 + i][0]
+            y = chart.axes.c2p(0, rv)[1]
+            rand_marks.add(DashedLine(
+                [bar.get_center()[0] - 0.44, y, 0],
+                [bar.get_center()[0] + 0.44, y, 0],
+                stroke_color=MUTED, stroke_width=3, dash_length=0.1))
+        rand_lab = mono("random", size=15, color=MUTED)
+        rand_lab.next_to(rand_marks[-1], RIGHT, buff=0.18)
+
+        beat(self, "Tách riêng độ bất định ra, đặt hai bộ dữ liệu cạnh nhau.",
              FadeIn(head), FadeIn(sub), FadeIn(chart.axes), FadeIn(stamp), run_time=1.0)
-        beat(self, "Trên pắp mét, cùng một quy tắc heuristic cho en xi ét dương ở cả ba mức.",
+        beat(self, "Trên pắp mét, tiêu chí này cho en xi ét dương ở cả ba mức.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3)],
                          lag_ratio=0.15), FadeIn(lab_pub), run_time=1.5)
-        beat(self, "Trên cô ra, cũng quy tắc heuristic đó, cả ba mức đều âm.",
+        beat(self, "Trên cô ra, vẫn tiêu chí đó, cả ba mức đều âm.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3, 6)],
                          lag_ratio=0.15), FadeIn(lab_cora), run_time=1.5)
         beat(self, "Không phải kém đi một chút, mà đổi hẳn dấu.")
-        beat(self, "Cùng một luật chọn nót, hai bộ dữ liệu cho hai kết quả trái ngược.")
+        beat(self, "Ba đường nét đứt là mốc chọn nót ngẫu nhiên trên cô ra.",
+             LaggedStart(*[Create(m) for m in rand_marks], lag_ratio=0.2),
+             FadeIn(rand_lab), run_time=1.4)
+        beat(self, "Ở mức mười phần trăm, chọn bừa chỉ âm không phẩy không hai.")
+        beat(self, "Còn chọn kỹ những nót mà gờ nờ nờ không chắc chắn nhất.")
+        beat(self, "Lại tụt xuống âm không phẩy không chín, tệ hơn hẳn chọn bừa.",
+             Indicate(VGroup(chart.bars[3], rand_marks[0]),
+                      color=C_BAD, scale_factor=1.08), run_time=1.4)
+        beat(self, "Ở hai mức còn lại nó nhúc nhích khá hơn ngẫu nhiên, nhưng vẫn âm cả ba.")
 
         self.clear_scene()
         punch = VGroup(
             txt("Same rule, opposite sign.", size=26, color=INK),
             txt("The heuristic is dataset-dependent.", size=26, color=ACCENT, weight=BOLD),
         ).arrange(DOWN, buff=0.26)
-        beat(self, "Cùng một luật, ngược dấu. quy tắc heuristic này phụ thuộc bộ dữ liệu.",
+        beat(self, "Cùng một luật, ngược dấu. Tiêu chí này phụ thuộc bộ dữ liệu.",
              Write(punch), run_time=1.6)
+        # Kết luận này trước đây nằm ở S2_08, chuyển xuống đây để đòn kết gọn vào
+        # một chỗ. Cũng là lần đầu nối lại với vòng tròn bên phải ở S2_02.
+        beat(self, "Nói cách khác, độ bất định của gờ nờ nờ không phải lúc nào cũng "
+                   "phản ánh lợi thế của lờ lờ mờ.")
 
 
 # ===========================================================================
@@ -940,7 +1088,7 @@ class S2_11_Backbone(GlanceScene):
         beat(self, "Nhưng đổi sang mô hình nền mạnh hơn là gờ xê en hai.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3, 6)],
                          lag_ratio=0.15), FadeIn(l_gcnii), run_time=1.5)
-        beat(self, "Cùng quy tắc heuristic đó chỉ còn khoảng 0.08 đến 0.09. Giảm hơn một nửa.")
+        beat(self, "Cùng tiêu chí đó chỉ còn khoảng không chấm không tám đến không chấm không chín. Giảm hơn một nửa.")
         beat(self, "Lý do có thể hiểu thế này.")
         beat(self, "gờ xê en hai đã tự xử lý được một phần nót khó.")
         beat(self, "Nên phần còn lại cho lờ lờ mờ sửa cũng co hẹp theo.")
@@ -951,7 +1099,7 @@ class S2_11_Backbone(GlanceScene):
             txt("Routing heuristics depend not only on the DATASET,", size=23, color=INK),
             txt("but also on the BACKBONE in use.", size=23, color=ACCENT, weight=BOLD),
         ).arrange(DOWN, buff=0.26)
-        beat(self, "định tuyến quy tắc heuristic không chỉ phụ thuộc bộ dữ liệu.", Write(punch), run_time=1.6)
+        beat(self, "tiêu chí định tuyến không chỉ phụ thuộc bộ dữ liệu.", Write(punch), run_time=1.6)
         beat(self, "Mà còn phụ thuộc cả mô hình nền đang dùng.")
 
 
@@ -986,7 +1134,7 @@ class S2_12_Limits(GlanceScene):
         beat(self, "Đổi gờ nờ nờ thì tập nót khó cũng đổi theo.")
         beat(self, "Và thứ ba, quan trọng nhất.",
              FadeIn(lims[2], shift=RIGHT * 0.25), run_time=0.8)
-        beat(self, "Cả ba đều chỉ là tín hiệu thay thế cho gờ nờ nờ độ khó.",
+        beat(self, "Cả ba đều chỉ là tín hiệu thay thế cho độ khó với gờ nờ nờ.",
              Circumscribe(lims[2], color=C_ROUTER, buff=0.18), run_time=1.4)
 
         adv = MathTex(r"\text{LLM advantage}", r"\;=\;",
@@ -1000,29 +1148,52 @@ class S2_12_Limits(GlanceScene):
         grp = VGroup(adv, note).arrange(DOWN, buff=0.4)
 
         self.play(FadeOut(lims), FadeOut(head), run_time=0.6)
-        beat(self, "Trong khi đó, thứ bộ định tuyến thật sự cần ước lượng là lờ lờ mờ lợi thế.",
+        beat(self, "Trong khi đó, thứ bộ định tuyến thật sự cần ước lượng là lợi thế của lờ lờ mờ.",
              Write(adv), run_time=1.8)
         beat(self, "Tức phần hàm mất mát tiết kiệm được khi dùng lờ lờ mờ so với chỉ dùng gờ nờ nờ.",
              FadeIn(note), run_time=0.7)
 
         self.play(grp.animate.scale(0.75).to_edge(UP, buff=1.0), run_time=0.8)
+
+        # --- gọi lại hai vòng tròn ở S2_02, đóng vòng lập luận -------------------
+        c1 = Circle(radius=1.4, stroke_color=C_GNN, stroke_width=3.2).set_fill(C_GNN, 0.42)
+        c2 = Circle(radius=1.4, stroke_color=C_LLM, stroke_width=3.2).set_fill(C_LLM, 0.12)
+        c1.move_to(LEFT * 0.82 + DOWN * 0.9)
+        c2.move_to(RIGHT * 0.82 + DOWN * 0.9)
+        lens = Intersection(c1, c2, fill_color=C_ROUTER, fill_opacity=0.55, stroke_width=0)
+        n1 = txt("what the three signals measure", size=18,
+                 color=C_GNN).next_to(c1, LEFT, buff=0.18)
+        n2 = txt("what a router needs", size=18,
+                 color=C_LLM).next_to(c2, RIGHT, buff=0.18)
+
+        beat(self, "Còn nhớ hai vòng tròn ở đầu phần không?",
+             Create(c1), Create(c2), FadeIn(lens), run_time=1.2)
+        beat(self, "Ba tiêu chí ta vừa xem đều đo vòng bên trái.",
+             FadeIn(n1), run_time=0.8)
+        beat(self, "Còn thứ ta cần lại nằm ở vòng bên phải.",
+             FadeIn(n2), Indicate(c2, color=C_LLM, scale_factor=1.06), run_time=1.3)
+
+        self.play(FadeOut(VGroup(c1, c2, lens, n1, n2)), run_time=0.6)
         cost_inner = txt("The gain must be large enough to pay for that call.",
                          size=22, color=INK)
-        cost = VGroup(panel(cost_inner, buff=0.3), cost_inner).shift(DOWN * 0.4)
+        cost = VGroup(panel(cost_inner, buff=0.3), cost_inner).shift(DOWN * 0.5)
         beat(self, "Và còn một yếu tố nữa: chi phí.", FadeIn(cost), run_time=0.8)
         beat(self, "nót đáng định tuyến không chỉ vì gờ nờ nờ làm chưa tốt.")
         beat(self, "Mà vì lờ lờ mờ phải cải thiện đủ nhiều để bù lại giá của lời gọi đó.")
 
+        # --- trả lời câu hỏi thứ ba đã đặt ở S2_01 -------------------------------
         self.clear_scene()
         punch = VGroup(
-            txt("Existing heuristics: usable as a FEATURE or a PRIOR.", size=23, color=INK),
-            txt("Not reliable enough to be a ROUTING POLICY on their own.", size=23,
-                color=C_BAD, weight=BOLD),
+            txt("GLANCE keeps all three signals, as INPUTS to a router.",
+                size=23, color=INK),
+            txt("What it drops: letting any single one make the DECISION.",
+                size=23, color=C_BAD, weight=BOLD),
         ).arrange(DOWN, buff=0.26)
-        beat(self, "Kết luận của bài báo: quy tắc heuristic hiện có vẫn dùng được.",
+
+        beat(self, "Vậy quay lại câu hỏi ban đầu: gờ lans kế thừa được gì từ ba công trình này?")
+        beat(self, "Nó giữ lại cả ba tín hiệu, nhưng chỉ dùng làm đầu vào cho một bộ định tuyến.",
              Write(punch), run_time=1.8)
-        beat(self, "Nhưng chỉ ở vai trò đặc trưng hoặc tín hiệu ban đầu đưa vào bộ định tuyến.")
-        beat(self, "Chúng không đủ tin cậy để tự làm một chính sách định tuyến.")
+        beat(self, "Và bỏ hẳn cách để một tín hiệu đơn lẻ tự quyết định.")
 
 
 # ===========================================================================
@@ -1036,7 +1207,7 @@ class S2_13_Bridge(GlanceScene):
         grp = VGroup(line1, line2).arrange(DOWN, buff=0.32)
 
         # Câu cầu nối chốt trong plan.md, đọc y nguyên.
-        beat(self, "quy tắc heuristic thủ công không ổn định.", Write(line1), run_time=1.3)
+        beat(self, "Heuristic thủ công không ổn định.", Write(line1), run_time=1.3)
         beat(self, "Vậy tín hiệu nào mới đúng?", Write(line2), run_time=1.3)
         self.wait(0.8)
         self.play(FadeOut(grp), run_time=0.8)
