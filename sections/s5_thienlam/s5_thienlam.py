@@ -948,8 +948,11 @@ class S5_11_Callout(GlanceScene):
             self.play(Write(head), run_time=min(2.2, tracker.duration))
 
         items = [
-            (VO["final_1"], C_GNN), (VO["final_2"], C_ROUTER), (VO["final_3"], C_LLM),
-            (VO["final_4"], C_GOOD), (VO["final_5"], C_LLM),
+            ("Một: GNN + LLM mạnh ở những node khác nhau", C_GNN),
+            ("Hai: reward chấm điểm từng quyết định route", C_ROUTER),
+            ("Ba: chỉ router và refiner được train; GNN và LLM freeze", C_LLM),
+            ("Bốn: cân bằng tốt và dẫn đầu tổng thể", C_GOOD),
+            ("Năm: chỉ route một phần nhỏ node, vẫn mở rộng tốt", C_LLM),
         ]
 
         def numbered_row(index, text, color):
