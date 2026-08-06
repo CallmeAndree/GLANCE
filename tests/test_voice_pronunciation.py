@@ -151,9 +151,9 @@ class VoicePronunciationTest(unittest.TestCase):
     def test_required_acronym_pronunciations_are_used(self):
         script = " ".join(text.casefold() for _, _, text in voiceover_texts())
         for pronunciation in (
-            "eo eo em",
-            "em eo pi khiu",
-            "gi en en",
+            "lờ lờ mờ",
+            "mờ lờ bê kiu",
+            "gờ nờ nờ",
             "gờ lans",
             "nót",
         ):

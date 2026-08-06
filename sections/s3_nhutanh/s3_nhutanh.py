@@ -66,13 +66,13 @@ VO = {
     ),
     "high": (
         "Khi độ đồng nhất cục bộ cao, thông tin từ hàng xóm thường nhất quán với nót trung tâm. "
-        "Vì gi en en học bằng cách tổng hợp thông tin lân cận, "
+        "Vì gờ nờ nờ học bằng cách tổng hợp thông tin lân cận, "
         "quá trình truyền thông điệp thường có lợi trong trường hợp này."
     ),
     "low": (
         "Ngược lại, khi độ đồng nhất cục bộ thấp, phần lớn hàng xóm thuộc lớp khác. "
         "Việc tổng hợp các biểu diễn này có thể đưa tín hiệu không phù hợp "
-        "vào nót trung tâm, và khiến gi en en dự đoán sai."
+        "vào nót trung tâm, và khiến gờ nờ nờ dự đoán sai."
     ),
     # --- Cảnh 2: relative degree ---
     "rd_intro": (
@@ -95,16 +95,16 @@ VO = {
     # --- Cảnh 3: GNN và LLM bổ sung nhau ---
     "cp_setup": (
         "Sau đó, tác giả chia các nót thành từng nhóm theo độ đồng nhất cục bộ "
-        "và bậc tương đối, rồi so sánh độ chính xác của gi en en với eo eo em trong mỗi nhóm."
+        "và bậc tương đối, rồi so sánh độ chính xác của gờ nờ nờ với lờ lờ mờ trong mỗi nhóm."
     ),
     "cp_trend": (
         "Kết quả cho thấy một xu hướng bổ sung rõ rệt. "
         "Gi en en hoạt động tốt ở những vùng có độ đồng nhất cao và được kết nối tốt. "
-        "Nhưng khi độ đồng nhất hoặc bậc tương đối giảm, lợi thế của eo eo em tăng lên."
+        "Nhưng khi độ đồng nhất hoặc bậc tương đối giảm, lợi thế của lờ lờ mờ tăng lên."
     ),
     "cp_gain": (
-        "Trên Cô-ra, ở nhóm nót khó, eo eo em đạt mức cải thiện tới hai mươi phẩy bốn phần trăm "
-        "so với mô hình tốt tiếp theo là gi xi en hai sử dụng đặc trưng được eo eo em tăng cường."
+        "Trên Cô-ra, ở nhóm nót khó, lờ lờ mờ đạt mức cải thiện tới hai mươi phẩy bốn phần trăm "
+        "so với mô hình tốt tiếp theo là gi xi en hai sử dụng đặc trưng được lờ lờ mờ tăng cường."
     ),
     "cp_interact": (
         "Hai tín hiệu này còn tương tác với nhau. "
@@ -118,7 +118,7 @@ VO = {
         "đúng vào những thông tin không có sẵn đối với các nót cần dự đoán."
     ),
     "eh_mlp": (
-        "Để giải quyết vấn đề này, tác giả huấn luyện một em eo pi khiu "
+        "Để giải quyết vấn đề này, tác giả huấn luyện một mờ lờ bê kiu "
         "trên đặc trưng nót để dự đoán nhãn tạm thời."
     ),
     "eh_estimate": (
@@ -134,8 +134,8 @@ VO = {
     # --- Cảnh kết ---
     "end_summary": (
         "Như vậy, độ đồng nhất cục bộ và bậc tương đối không trực tiếp dự đoán nhãn. "
-        "Chúng giúp nhận diện những nót có cấu trúc bất lợi đối với gi en en, "
-        "và nơi eo eo em có khả năng tạo thêm giá trị."
+        "Chúng giúp nhận diện những nót có cấu trúc bất lợi đối với gờ nờ nờ, "
+        "và nơi lờ lờ mờ có khả năng tạo thêm giá trị."
     ),
     "end_router": (
         "Tuy nhiên, kết quả cũng cho thấy không có một tín hiệu đơn lẻ nào "
@@ -152,43 +152,43 @@ VO = {
     # ------------------------------------------------------------------
     "fs_open": (
         "Phân tích trước đó cho thấy không một quy tắc kinh nghiệm đơn lẻ nào đủ ổn định "
-        "để quyết định nót nào cần eo eo em. Vì vậy, gờ lans không chỉ sử dụng độ đồng nhất, "
+        "để quyết định nót nào cần lờ lờ mờ. Vì vậy, gờ lans không chỉ sử dụng độ đồng nhất, "
         "mà mô tả mỗi nót bằng năm tín hiệu định tuyến bổ sung cho nhau."
     ),
     "fs_roles": (
-        "Mỗi tín hiệu phản ánh một khía cạnh khác nhau: thông tin gi en en đã học được, "
-        "mức độ tin cậy của gi en en, sự nhất quán với hàng xóm, "
+        "Mỗi tín hiệu phản ánh một khía cạnh khác nhau: thông tin gờ nờ nờ đã học được, "
+        "mức độ tin cậy của gờ nờ nờ, sự nhất quán với hàng xóm, "
         "nội dung riêng của nót, và lượng thông tin cấu trúc sẵn có."
     ),
     # --- Signal 1: node embedding ---
     "ne_intro": (
         "Tín hiệu đầu tiên là véc-tơ biểu diễn của nót, "
-        "do một gi en en đã được huấn luyện trước tạo ra."
+        "do một gờ nờ nờ đã được huấn luyện trước tạo ra."
     ),
     "ne_build": (
         "Gi en en tổng hợp đặc trưng của nót v với thông tin từ vùng lân cận trong phạm vi ca bước, "
         "tạo thành véc-tơ biểu diễn z của v. "
-        "Véc-tơ này mã hoá những gì gi en en đã hiểu về cả nội dung "
+        "Véc-tơ này mã hoá những gì gờ nờ nờ đã hiểu về cả nội dung "
         "và vị trí cấu trúc của nót."
     ),
     "ne_not_pred": (
         "Đây không phải là nhãn dự đoán cuối cùng. "
         "Nó là biểu diễn trung gian giàu thông tin, giúp bộ định tuyến nhận biết "
-        "những kiểu vùng lân cận mà gi en en thường xử lý tốt hoặc gặp khó khăn."
+        "những kiểu vùng lân cận mà gờ nờ nờ thường xử lý tốt hoặc gặp khó khăn."
     ),
     # --- Signal 2: node uncertainty ---
     "un_intro": (
         "Tín hiệu thứ hai là độ bất định của nót: "
-        "mức độ không chắc chắn của gi en en đối với nót đang xét."
+        "mức độ không chắc chắn của gờ nờ nờ đối với nót đang xét."
     ),
     "un_dropout": (
         "Gờ lans sử dụng kỹ thuật loại bỏ ngẫu nhiên khi suy luận để tạo nhiều dự đoán. "
-        "Nếu các lần chạy đều đưa ra phân phối gần giống nhau, gi en en tương đối chắc chắn. "
+        "Nếu các lần chạy đều đưa ra phân phối gần giống nhau, gờ nờ nờ tương đối chắc chắn. "
         "Nếu kết quả thay đổi mạnh, độ bất định sẽ cao."
     ),
     "un_caveat": (
-        "Độ bất định cao là một dấu hiệu nót có thể khó đối với gi en en, "
-        "nhưng không tự động có nghĩa eo eo em sẽ tốt hơn. "
+        "Độ bất định cao là một dấu hiệu nót có thể khó đối với gờ nờ nờ, "
+        "nhưng không tự động có nghĩa lờ lờ mờ sẽ tốt hơn. "
         "Vì vậy, gờ lans chỉ dùng nó như một tín hiệu trong tổ hợp."
     ),
     # --- Signal 3: soft homophily estimation ---
@@ -214,16 +214,16 @@ VO = {
     ),
     "sh_soft": (
         "So với việc chỉ kiểm tra hai nhãn dự đoán có giống nhau hay không, "
-        "phiên bản mềm còn giữ lại mức độ chắc chắn của em eo pi."
+        "phiên bản mềm còn giữ lại mức độ chắc chắn của mờ lờ bê."
     ),
     # --- Signal 4: original node features ---
     "nf_intro": (
         "Tín hiệu thứ tư là đặc trưng ban đầu của nót, ký hiệu x của v. "
         "Đây là biểu diễn nội dung vốn có của nót, "
-        "trước khi gi en en tổng hợp thông tin từ hàng xóm."
+        "trước khi gờ nờ nờ tổng hợp thông tin từ hàng xóm."
     ),
     "nf_compare": (
-        "Véc-tơ biểu diễn của nót cho biết gi en en đã biến đổi thông tin như thế nào, "
+        "Véc-tơ biểu diễn của nót cho biết gờ nờ nờ đã biến đổi thông tin như thế nào, "
         "còn đặc trưng ban đầu giúp bộ định tuyến vẫn truy cập trực tiếp "
         "vào tín hiệu nội tại của nót."
     ),
@@ -237,7 +237,7 @@ VO = {
         "số hàng xóm trực tiếp của nót v."
     ),
     "dg_context": (
-        "Bậc cho biết gi en en có bao nhiêu nguồn thông tin lân cận để tổng hợp. "
+        "Bậc cho biết gờ nờ nờ có bao nhiêu nguồn thông tin lân cận để tổng hợp. "
         "Nót có bậc thấp thường nhận được ít ngữ cảnh cấu trúc hơn."
     ),
     "dg_caveat": (
@@ -253,20 +253,20 @@ VO = {
     # --- Cảnh kết: kết hợp năm signals ---
     "cb_concat": (
         "Năm tín hiệu sau đó được kết hợp thành véc-tơ đặc trưng định tuyến f của v. "
-        "Không tín hiệu nào tự mình quyết định nót có được gửi tới eo eo em hay không."
+        "Không tín hiệu nào tự mình quyết định nót có được gửi tới lờ lờ mờ hay không."
     ),
     "cb_score": (
         "Bộ định tuyến học trọng số cho các tín hiệu, tính điểm định tuyến a của v, "
         "và đưa giá trị này qua một hàm kích hoạt dạng chữ ét. "
-        "Điểm càng cao, nót càng có khả năng hưởng lợi từ eo eo em."
+        "Điểm càng cao, nót càng có khả năng hưởng lợi từ lờ lờ mờ."
     ),
     "cb_topk": (
         "Cuối cùng, gờ lans chọn ca nót có điểm cao nhất trong mỗi lô nhỏ. "
-        "Các nót còn lại tiếp tục sử dụng dự đoán gi en en, "
-        "nhờ đó duy trì một ngân sách eo eo em cố định."
+        "Các nót còn lại tiếp tục sử dụng dự đoán gờ nờ nờ, "
+        "nhờ đó duy trì một ngân sách lờ lờ mờ cố định."
     ),
     "cb_close": (
-        "Năm tín hiệu lần lượt cho bộ định tuyến biết gi en en đã học được gì, tin tưởng đến đâu, "
+        "Năm tín hiệu lần lượt cho bộ định tuyến biết gờ nờ nờ đã học được gì, tin tưởng đến đâu, "
         "nót có phù hợp với vùng lân cận không, bản thân nót chứa gì, "
         "và có bao nhiêu ngữ cảnh cấu trúc. "
         "Bộ định tuyến học cách kết hợp chúng, thay vì phụ thuộc vào một quy tắc kinh nghiệm cố định."

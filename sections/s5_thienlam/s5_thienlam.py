@@ -75,7 +75,7 @@ VO = {
         "cách huấn luyện đó đúng."
     ),
     # --- S5_02 TopK ---
-    "topk_setup": "Bộ định tuyến chỉ có ca tấm vé gọi eo eo em. tốp ca giữ số lần gọi cố định trong mỗi bát.",
+    "topk_setup": "Bộ định tuyến chỉ có ca tấm vé gọi lờ lờ mờ. tốp ca giữ số lần gọi cố định trong mỗi bát.",
     "topk_jump": (
         "Nhưng điểm đổi nhẹ thì tập tốp ca vẫn giữ nguyên; đến đúng lúc đổi hạng, "
         "quyết định lại nhảy đột ngột từ có sang không."
@@ -87,25 +87,25 @@ VO = {
     # --- S5_03 Counterfactual ---
     "cf_intro": "Thay vì đạo hàm qua tốp ca, gờ lans chấm kết quả của từng quyết định bằng phần thưởng.",
     "cf_branch": (
-        "Với một nốt được định tuyến, gờ lans dựng hai thế giới đối chứng: thế giới không gọi eo eo em, "
-        "dùng đầu dự đoán H có sẵn của gi en en; và thế giới đã gọi eo eo em, đi qua bộ tinh chỉnh xi."
+        "Với một nốt được định tuyến, gờ lans dựng hai thế giới đối chứng: thế giới không gọi lờ lờ mờ, "
+        "dùng đầu dự đoán H có sẵn của gờ nờ nờ; và thế giới đã gọi lờ lờ mờ, đi qua bộ tinh chỉnh xi."
     ),
     "cf_same_label": (
         "Cả hai hàm mất mát đều là en-trô-pi chéo so với cùng một nhãn thật — hàm mất mát càng thấp thì dự đoán "
-        "càng tốt. Hàm mất mát thế giới đã gọi eo eo em không phải của riêng eo eo em, mà là của cả nhánh "
-        "gi en en cộng eo eo em cộng bộ tinh chỉnh."
+        "càng tốt. Hàm mất mát thế giới đã gọi lờ lờ mờ không phải của riêng lờ lờ mờ, mà là của cả nhánh "
+        "gờ nờ nờ cộng lờ lờ mờ cộng bộ tinh chỉnh."
     ),
     # --- S5_04 Reward ---
     "reward_route": (
-        "Nếu định tuyến: phần thưởng bằng mức eo eo em giúp hàm mất mát giảm bao nhiêu, trừ đi bê ta — "
-        "chi phí quy đổi của một lần gọi eo eo em."
+        "Nếu định tuyến: phần thưởng bằng mức lờ lờ mờ giúp hàm mất mát giảm bao nhiêu, trừ đi bê ta — "
+        "chi phí quy đổi của một lần gọi lờ lờ mờ."
     ),
     "reward_beta": (
         "Bê ta lớn thì bộ định tuyến dè dặt hơn, chỉ định tuyến khi lợi ích thật rõ ràng; bê ta nhỏ thì bộ định tuyến "
-        "sẵn sàng gọi eo eo em nhiều hơn. Nếu mức cải thiện nhỏ hơn bê ta, phần thưởng vẫn âm."
+        "sẵn sàng gọi lờ lờ mờ nhiều hơn. Nếu mức cải thiện nhỏ hơn bê ta, phần thưởng vẫn âm."
     ),
     "reward_skip": (
-        "Nếu bỏ qua: không có hàm mất mát của eo eo em để so sánh, nên gờ lans dùng âm hàm mất mát của gi en en "
+        "Nếu bỏ qua: không có hàm mất mát của lờ lờ mờ để so sánh, nên gờ lans dùng âm hàm mất mát của gờ nờ nờ "
         "để chấm quyết định bỏ qua."
     ),
     # --- S5_05 Joint objective ---
@@ -119,14 +119,14 @@ VO = {
     ),
     "obj_pred": (
         "hàm mất mát dự đoán rẽ nhánh theo việc nốt có nằm trong tốp ca hay không: nốt được định tuyến "
-        "dùng hàm mất mát của nhánh gi en en cộng eo eo em, nốt còn lại dùng hàm mất mát của riêng gi en en."
+        "dùng hàm mất mát của nhánh gờ nờ nờ cộng lờ lờ mờ, nốt còn lại dùng hàm mất mát của riêng gờ nờ nờ."
     ),
     "obj_total": (
         "hàm mất mát tổng cộng gộp hàm mất mát dự đoán với hàm mất mát của bộ định tuyến có trọng số — vừa dạy dự đoán đúng, "
-        "vừa dạy phân bổ ngân sách gọi eo eo em."
+        "vừa dạy phân bổ ngân sách gọi lờ lờ mờ."
     ),
     "obj_freeze": (
-        "Chỉ bộ định tuyến pi và bộ tinh chỉnh xi được cập nhật; gi en en và eo eo em bị đóng băng hoàn toàn — "
+        "Chỉ bộ định tuyến pi và bộ tinh chỉnh xi được cập nhật; gờ nờ nờ và lờ lờ mờ bị đóng băng hoàn toàn — "
         "Gờ lans không huấn luyện lại hai mô hình nền."
     ),
     "obj_hparam": (
@@ -137,21 +137,21 @@ VO = {
     "obj_question": "Nhưng liệu cách huấn luyện này có thật sự tạo ra một bộ định tuyến học đúng không?",
     # --- S5_06 Setup ---
     "setup_question": (
-        "Câu hỏi trung tâm của phần thực nghiệm: gờ lans có gộp được điểm mạnh của gi en en và "
-        "eo eo em trong cùng một mô hình không?"
+        "Câu hỏi trung tâm của phần thực nghiệm: gờ lans có gộp được điểm mạnh của gờ nờ nờ và "
+        "lờ lờ mờ trong cùng một mô hình không?"
     ),
     "setup_data": (
         "Sân thử gồm ba đồ thị chuẩn — cô ra, pắp mét, ác xíp hai ba — cùng hai đồ thị cực lớn: "
         "ác xíp dia và ô gi bi pró đắc."
     ),
     "setup_baseline": (
-        "Đối thủ đều mạnh: các gi en en kinh điển gờ xê en, gráp xây giơ, gờ xê en hai chạy trên "
-        "ba chiến lược khác nhau; thêm nhóm gi en en chuyên xử lý dị phối gồm ép a gờ xê en, "
+        "Đối thủ đều mạnh: các gờ nờ nờ kinh điển gờ xê en, gráp xây giơ, gờ xê en hai chạy trên "
+        "ba chiến lược khác nhau; thêm nhóm gờ nờ nờ chuyên xử lý dị phối gồm ép a gờ xê en, "
         "gờ gờ xê en, gờ bê ca gờ en en."
     ),
     "setup_budget": (
-        "Mấu chốt: mặc định gờ lans chỉ gọi eo eo em cho mười hai trên ba mươi hai nốt mỗi bát — "
-        "nó phải thắng trong khi gọi eo eo em ít hơn hẳn đối thủ."
+        "Mấu chốt: mặc định gờ lans chỉ gọi lờ lờ mờ cho mười hai trên ba mươi hai nốt mỗi bát — "
+        "nó phải thắng trong khi gọi lờ lờ mờ ít hơn hẳn đối thủ."
     ),
     # --- S5_07 Balanced results ---
     "res_overall": (
@@ -173,11 +173,11 @@ VO = {
     "router_question": "Vậy bộ định tuyến có thật sự học đúng chỗ không?",
     "router_hist": (
         "Khi soi các nốt được định tuyến, khối lượng dồn hẳn về vùng hô mô phi li thấp — đúng vùng mà "
-        "gi en en hay sai còn eo eo em có thể sửa."
+        "gờ nờ nờ hay sai còn lờ lờ mờ có thể sửa."
     ),
     "router_graph": (
         "Nhìn trên đồ thị mẫu, nốt chín — hô mô phi li thấp, hàng xóm khác lớp — là kiểu nốt "
-        "bộ định tuyến ưu tiên gọi eo eo em; nốt bốn thì hầu như không cần."
+        "bộ định tuyến ưu tiên gọi lờ lờ mờ; nốt bốn thì hầu như không cần."
     ),
     "router_budget": (
         "Tăng ngân sách ca giúp nhiều nhất ở vùng hô mô phi li thấp; vùng hô mô phi li cao gần như "
@@ -187,26 +187,26 @@ VO = {
         "Cắt bỏ lần lượt từng đặc trưng định tuyến đều làm độ chính xác giảm; bỏ đặc trưng hô mô phi "
         "li ước lượng gây thiệt hại lớn nhất."
     ),
-    "router_verdict": "Chính tín hiệu hô mô phi li dạy bộ định tuyến biết khi nào nên gọi eo eo em.",
+    "router_verdict": "Chính tín hiệu hô mô phi li dạy bộ định tuyến biết khi nào nên gọi lờ lờ mờ.",
     # --- S5_09 Controls ---
-    "ctrl_intro": "Bằng chứng mạnh nhất không phải là thêm eo eo em, mà là chọn đúng nốt để gọi.",
+    "ctrl_intro": "Bằng chứng mạnh nhất không phải là thêm lờ lờ mờ, mà là chọn đúng nốt để gọi.",
     "ctrl_all": (
         "định tuyến hết mọi nốt trên pắp mét: hai nhóm khó tăng, nhưng hai nhóm dễ lại giảm gần hai "
-        "mươi điểm — eo eo em có thể làm hại nốt dễ."
+        "mươi điểm — lờ lờ mờ có thể làm hại nốt dễ."
     ),
     "ctrl_random": (
-        "Giữ nguyên eo eo em và bộ tinh chỉnh nhưng định tuyến ngẫu nhiên trên cô ra: chỉ còn tám mươi sáu "
+        "Giữ nguyên lờ lờ mờ và bộ tinh chỉnh nhưng định tuyến ngẫu nhiên trên cô ra: chỉ còn tám mươi sáu "
         "phẩy bốn, thua cả bây xơ lai gờ xê en hai tám mươi bảy phẩy bảy."
     ),
     "ctrl_same_set": (
-        "Trên đúng tập nốt mà bộ định tuyến đã chọn, nhánh gi en en cộng eo eo em qua bộ tinh chỉnh đạt tám "
+        "Trên đúng tập nốt mà bộ định tuyến đã chọn, nhánh gờ nờ nờ cộng lờ lờ mờ qua bộ tinh chỉnh đạt tám "
         "mươi bảy phẩy sáu — cao hơn hẳn nếu để gờ xê en hai tự xử lý."
     ),
     "ctrl_verdict": "định tuyến hết thì hại nốt dễ; định tuyến bừa thì thua bây xơ lai — giá trị nằm ở sự chọn lọc học được.",
     # --- S5_10 Scale ---
     "scale_setup": (
         "Trên ô gi bi pró đắc — hai phẩy bốn lăm triệu nốt, gần sáu mươi hai triệu cạnh — gờ lans "
-        "chỉ gọi eo eo em cho khoảng một phẩy sáu phần trăm nốt, tức một nốt trong mỗi sáu mươi tư."
+        "chỉ gọi lờ lờ mờ cho khoảng một phẩy sáu phần trăm nốt, tức một nốt trong mỗi sáu mươi tư."
     ),
     "scale_result": (
         "Vậy mà vẫn dẫn đầu: tám mươi hai phẩy ba, cao hơn gờ xê en hai tám mươi mốt phẩy tám, "
@@ -215,15 +215,15 @@ VO = {
     "scale_verdict": "Chọn lọc học được không chỉ cân bằng và chính xác, mà còn rẻ và mở rộng tới quy mô triệu nốt.",
     # --- S5_11 Callout ---
     "final_reconnect": (
-        "Ở đầu đoạn phim, câu hỏi đặt ra là: có cách nào kết hợp gi en en và eo eo em mà biết tính "
+        "Ở đầu đoạn phim, câu hỏi đặt ra là: có cách nào kết hợp gờ nờ nờ và lờ lờ mờ mà biết tính "
         "chi phí không? Đây là câu trả lời của gờ lans, gói trong năm ý."
     ),
-    "final_1": "Một: gi en en và eo eo em giỏi ở những nốt khác nhau; hô mô phi li cục bộ dự báo ai sẽ thắng.",
+    "final_1": "Một: gờ nờ nờ và lờ lờ mờ giỏi ở những nốt khác nhau; hô mô phi li cục bộ dự báo ai sẽ thắng.",
     "final_2": "Hai: vì tốp ca không khả vi, phần thưởng chấm điểm từng quyết định để dạy bộ định tuyến.",
-    "final_3": "Ba: chỉ bộ định tuyến và bộ tinh chỉnh được huấn luyện; gi en en và eo eo em đóng băng.",
+    "final_3": "Ba: chỉ bộ định tuyến và bộ tinh chỉnh được huấn luyện; gờ nờ nờ và lờ lờ mờ đóng băng.",
     "final_4": "Bốn: kết quả là mô hình cân bằng nhất và dẫn đầu tổng thể, nhờ sự chọn lọc học được.",
     "final_5": "Năm: chỉ định tuyến một phần nhỏ nốt, gờ lans vẫn mở rộng tới đồ thị hàng triệu nốt.",
-    "final_punch": "Tất cả gói trong một câu — đừng dùng nhiều eo eo em hơn, hãy dùng eo eo em đúng chỗ.",
+    "final_punch": "Tất cả gói trong một câu — đừng dùng nhiều lờ lờ mờ hơn, hãy dùng lờ lờ mờ đúng chỗ.",
 }
 
 
@@ -333,9 +333,9 @@ class S5_03_CounterfactualLoss(GlanceScene):
 
         upper = panel(Rectangle(width=8.4, height=1.5)).move_to([0.7, 1.0, 0])
         lower = panel(Rectangle(width=8.4, height=1.5), color=C_LLM).move_to([0.7, -0.7, 0])
-        up_text = txt("KHÔNG GỌI LLM  ·  gi en en → đầu H → p_H  ·  lᴳ = CE(yᵥ, p_H)",
+        up_text = txt("KHÔNG GỌI LLM  ·  gờ nờ nờ → đầu H → p_H  ·  lᴳ = CE(yᵥ, p_H)",
                        size=SMALL_SIZE - 3, color=C_GNN).move_to(upper).scale_to_fit_width(7.8)
-        low_text = txt("ĐÃ GỌI LLM  ·  gi en en + eo eo em → refiner ξ → p_ξ  ·  lᴸ = CE(yᵥ, p_ξ)",
+        low_text = txt("ĐÃ GỌI LLM  ·  gờ nờ nờ + lờ lờ mờ → refiner ξ → p_ξ  ·  lᴸ = CE(yᵥ, p_ξ)",
                         size=SMALL_SIZE - 3, color=C_LLM).move_to(lower).scale_to_fit_width(7.8)
         arrow_up = Arrow(node.get_right(), upper.get_left(), buff=0.1, color=C_GNN, stroke_width=3)
         arrow_down = Arrow(node.get_right(), lower.get_left(), buff=0.1, color=C_LLM, stroke_width=3)

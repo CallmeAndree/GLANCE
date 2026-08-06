@@ -20,8 +20,6 @@ esac
 
 # Thứ tự section trong video. Thêm section mới thì thêm vào đây.
 SECTIONS=(
-  "sections/s0_background/s0a_related_work.py"
-  "sections/s0_background/s0b_preliminaries.py"
   "sections/s1_trucmai/s1_trucmai.py"
   "sections/s2_hoangphan/s2_hoangphan.py"
   "sections/s3_nhutanh/s3_nhutanh.py"
