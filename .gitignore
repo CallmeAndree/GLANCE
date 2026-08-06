@@ -29,6 +29,7 @@ venv/
 media/voiceovers/
 .env
 *.env
+.run/
 
 # Paper PDF giữ ngoài repo, không commit
 *.pdf

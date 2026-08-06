@@ -142,13 +142,13 @@ Quy tắc:
 
 | Lệnh | Service | Khi nào dùng |
 |---|---|---|
-| `GLANCE_TTS=timed manim ...` | Timed API | mặc định — cần `GLANCE_TIMED_TTS_URL` + `GLANCE_TIMED_TTS_TOKEN` trong `.env`, trả MP3 và timing từng segment |
+| `GLANCE_TTS=timed manim ...` | Speech API | mặc định — URL `/v1/audio/speech`, key ở `.run/api.key`, voice `longkhongphainong`, trả MP3 trực tiếp |
 | `GLANCE_TTS=gtts manim ...` | gTTS `vi` | dự phòng — free, cần mạng, giọng hơi máy |
-| `GLANCE_TTS=azure manim ...` | Azure `en-US-AvaMultilingualNeural` | bản nộp — tự code-switch Việt-Anh, cần `AZURE_SUBSCRIPTION_KEY` + `AZURE_SERVICE_REGION` trong `.env` |
+| `GLANCE_TTS=azure manim ...` | Azure `en-US-AvaMultilingualNeural` | dự phòng chất lượng cao — tự code-switch Việt-Anh, cần `AZURE_SUBSCRIPTION_KEY` + `AZURE_SERVICE_REGION` trong `.env` |
 | `GLANCE_TTS=record manim ...` | RecorderService | thu giọng thật qua CLI lúc render (`brew install sox`) |
 
-Timed API và gTTS cần mạng khi render lời thoại mới; audio đã sinh được cache theo
-text + backend trong `media/voiceovers/`. Không commit token timed API.
+Speech API và gTTS cần mạng khi render lời thoại mới; audio đã sinh được cache theo
+text + backend + voice trong `media/voiceovers/`. Không commit `.run/api.key`.
 Với Azure, `GlanceScene` tự bọc các thuật ngữ trong `EN_TERMS` và acronym trong
 `EN_ACRONYMS` bằng locale `en-US`; phần còn lại dùng `vi-VN`. Đổi sang giọng nam
 bằng `GLANCE_VOICE=en-US-AndrewMultilingualNeural`. Có thể dùng bản HD Ava/Andrew
@@ -222,9 +222,8 @@ mất dưới một giây. Nó gác:
 
 - **Phiên âm lời thoại** theo bảng trong `plan.md`, quét cả dict `VO` lẫn chuỗi truyền
   trực tiếp vào `voiceover(text=...)`, `narrated_caption(...)` và `beat()`.
-- **Nợ phiên âm chỉ được giảm.** `s1`, `s2`, `s4` còn nợ, số ghi trong `BASELINE` ở đầu
-  `tests/test_voice_pronunciation.py`. Thêm lời thoại chưa phiên âm vào các file đó sẽ
-  làm test đỏ ngay. Sửa bớt thì hạ con số theo đúng thông báo của test.
+- **Nợ phiên âm hiện bằng 0.** Bất kỳ lời thoại mới nào chứa thuật ngữ chưa phiên âm
+  đều làm test đỏ ngay.
 - Hạ tầng giọng đọc: `TimedTTSService` và phần code-switch.
 
 CI ở `.github/workflows/ci.yml` chạy đúng những thứ này cho mỗi push và PR vào `main`,
@@ -262,8 +261,7 @@ ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 build/final
 | `latex` not found | chưa cài LaTeX | cài MacTeX, hoặc thay `MathTex` bằng `txt()` |
 | Chữ tràn khỏi khung | không giới hạn bề rộng | `mobj.scale_to_fit_width(11)` trước khi đặt vị trí |
 | Scene thiếu trong `final.mp4` | đổi tên class sau khi render | xoá `media/` rồi render lại |
-| Test báo `nhiều hơn mức đã ghi` | thêm lời thoại chưa phiên âm vào file đang nợ | phiên âm câu vừa thêm theo `plan.md` |
-| Test báo `Sửa BASELINE ... xuống N` | đã sửa bớt nợ nhưng chưa hạ con số | sửa `BASELINE` trong `tests/test_voice_pronunciation.py` thành `N` |
+| Test phiên âm đỏ | lời thoại còn thuật ngữ tiếng Anh chưa chuyển | phiên âm theo bảng trong `plan.md` |
 | Phụ đề hiện hai lần | vừa `voiceover` vừa `add_subcaption` | bỏ `add_subcaption` |
 | Hình chạy lố sang câu nói sau | tổng `run_time` > `tracker.duration` | rút bớt animation trong khối |
 | gTTS lỗi mạng khi render | không có internet | render lại khi có mạng, hoặc `GLANCE_TTS=record` |

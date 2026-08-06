@@ -4,15 +4,8 @@ Test quét **mọi** lời thoại, không chỉ dict `VO`: các section truyề
 tiếp vào `voiceover(text=...)`, `narrated_caption(...)` hay helper `beat()` cũng
 được kiểm. Trước đây chỉ quét `VO` nên s1, s2, s4 lọt hoàn toàn khỏi tầm kiểm.
 
-Repo còn nợ phiên âm ở ba file đó. Thay vì để CI đỏ và khoá cả nhóm, số nợ được
-ghi trong BASELINE dưới đây và siết dần:
-
-  * file chưa có trong BASELINE mà xuất hiện vi phạm  -> fail
-  * file trong BASELINE mà vi phạm TĂNG               -> fail
-  * file trong BASELINE mà vi phạm GIẢM               -> fail, kèm số mới để
-    cập nhật, để con số nợ ghi trong repo luôn đúng sự thật
-
-Mục tiêu là mọi dòng BASELINE về 0 rồi xoá hẳn cả BASELINE.
+Toàn bộ nợ phiên âm đã được xử lý. Bất kỳ chuỗi lời thoại nào chứa lại thuật ngữ
+chưa phiên âm đều làm test đỏ ngay.
 """
 
 import ast
@@ -23,22 +16,28 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FORBIDDEN_ENGLISH = re.compile(
-    r"\b(?:LLMs?|GNNs?|GLANCE|MLP\s*Q|NCS|GCNII|node|neighborhood|"
-    r"local homophily|relative degree|message passing|routing|router|signals?|"
-    r"embedding|uncertainty|dropout|estimated (?:local )?homophily|"
-    r"true homophily|heuristics?|degree|original features?|score|sigmoid|"
-    r"top k|mini batch|layer|representation|backbone|prediction|pipeline|"
-    r"Text-Attributed Graph|heterophily|context)\b",
+    r"(?<![\w-])(?:"
+    r"LLMs?|GNNs?|GLANCE|MLP(?:\s*Q)?|NCS|GCNII|GCN|TAG|LOGIN|"
+    r"Text-Attributed Graph|Graph Mining|Net Correction (?:Score|điểm)|"
+    r"local homophily|relative degree|message passing|structural information|"
+    r"clustering density|forward pass|hidden state|policy gradient|class label|"
+    r"wrong to correct|correct to wrong|one[- ]hop|two[- ]hop|top[- ]?k|"
+    r"mini batch|average rank|query rate|low[- ]shot|fine[- ]tune|"
+    r"Qwen3(?:-Embed)?-8B|Cora|Pubmed|Arxiv23|Top-3|"
+    r"node|neighborhood|routing|router|route(?:d)?|signals?|embedding|"
+    r"uncertainty|dropout|estimated (?:local )?homophily|true homophily|"
+    r"heuristics?|degree|original features?|score|sigmoid|layer|representation|"
+    r"backbone|prediction|pipeline|heterophily|heterophilous|context|paper|graph|class|text|"
+    r"density|label|proxy|abstract|rewiring|accuracy|freeze|frozen|baseline|"
+    r"features?|enhanced|random|correction|WC|CW|datasets?|loss|prior|ego|"
+    r"Refiner|vectors?|softmax|prompts?|batch|encoder|shared|semantic|fused|"
+    r"reward|entropy|skip|models?|video|tokens?|Year|Products|overall|heatmap|"
+    r"difficulty|advantage|OOM|scale|Update|Aggregate|animation|linear|ReLU|"
+    r"output|head|message|Task|Enhancer|Predictor|compute|budget|policy|Gain|"
+    r"refine(?:d)?|hop|K"
+    r")(?![\w-])",
     re.IGNORECASE,
 )
-
-# Số CHUỖI lời thoại còn vi phạm (không phải số lần xuất hiện thuật ngữ),
-# đo tại thời điểm mở rộng test. Chỉ được giảm. Xem mục B2 trong bản duyệt.
-BASELINE = {
-    "sections/s1_trucmai/s1_trucmai.py": 29,
-    "sections/s2_hoangphan/s2_hoangphan.py": 118,
-    "sections/s4_trannguyen/s4_trannguyen.py": 91,
-}
 
 # Hàm nhận lời thoại ở đối số đầu tiên.
 _TEXT_FIRST_ARG = {"narrated_caption", "say"}
@@ -136,13 +135,11 @@ def violations_by_file():
 
 
 class VoicePronunciationTest(unittest.TestCase):
-    def test_no_untranslated_english_in_unlisted_files(self):
-        """File chưa có trong BASELINE thì không được có vi phạm nào."""
+    def test_no_untranslated_english(self):
+        """Mọi lời thoại đều phải tuân thủ bảng phiên âm."""
         found = violations_by_file()
         problems = []
         for rel, items in sorted(found.items()):
-            if rel in BASELINE:
-                continue
             problems.append(f"{rel} ({len(items)} chuỗi):")
             problems.extend(f"    {item}" for item in items)
         self.assertEqual(
@@ -150,25 +147,6 @@ class VoicePronunciationTest(unittest.TestCase):
             "Lời thoại còn thuật ngữ chưa phiên âm, xem bảng trong plan.md.\n"
             + "\n".join(problems),
         )
-
-    def test_baseline_files_only_improve(self):
-        """Nợ phiên âm ở các file đã biết chỉ được giảm, và số phải đúng."""
-        found = violations_by_file()
-        problems = []
-        for rel, allowed in sorted(BASELINE.items()):
-            actual = len(found.get(rel, []))
-            if actual > allowed:
-                problems.append(
-                    f"{rel}: {actual} chuỗi vi phạm, nhiều hơn mức đã ghi {allowed}. "
-                    "Lời thoại mới phải phiên âm theo plan.md."
-                )
-            elif actual < allowed:
-                problems.append(
-                    f"{rel}: còn {actual} chuỗi, đã ít hơn mức ghi {allowed}. "
-                    f"Sửa BASELINE trong file test này xuống {actual}"
-                    + (" rồi xoá hẳn dòng đó." if actual == 0 else ".")
-                )
-        self.assertEqual(problems, [], "\n".join(problems))
 
     def test_required_acronym_pronunciations_are_used(self):
         script = " ".join(text.casefold() for _, _, text in voiceover_texts())

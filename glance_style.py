@@ -11,8 +11,6 @@ Usage inside sections/<yours>/<yours>.py:
     from glance_style import *
 """
 
-import base64
-import binascii
 import json
 import os
 import pathlib
@@ -34,23 +32,32 @@ import manimpango
 
 
 DEFAULT_TIMED_TTS_URL = (
-    "https://carrier-partly-vault-mirrors.trycloudflare.com/api/tts/timed"
+    "https://gig-largest-submissions-pending.trycloudflare.com/v1/audio/speech"
 )
+DEFAULT_TIMED_TTS_VOICE = "longkhongphainong"
+DEFAULT_TIMED_TTS_KEY_FILE = ".run/api.key"
 
 
 class TimedTTSService(SpeechService):
-    """Adapter cho API trả JSON gồm MP3 base64 và timing từng segment."""
+    """Adapter cho API speech tương thích OpenAI, trả file audio trực tiếp."""
 
-    def __init__(self, endpoint, token, audio_format="mp3", timeout=120, **kwargs):
+    def __init__(
+        self,
+        endpoint,
+        token,
+        voice=DEFAULT_TIMED_TTS_VOICE,
+        audio_format="mp3",
+        timeout=120,
+        **kwargs,
+    ):
         if not endpoint:
             raise ValueError("Thiếu endpoint cho timed TTS.")
         if not token:
-            raise ValueError(
-                "Thiếu GLANCE_TIMED_TTS_TOKEN cho backend GLANCE_TTS=timed."
-            )
+            raise ValueError("Thiếu API key cho backend GLANCE_TTS=timed.")
         super().__init__(**kwargs)
         self.endpoint = endpoint.rstrip("/")
         self.token = token
+        self.voice = voice
         self.audio_format = audio_format.lower()
         self.timeout = timeout
 
@@ -61,6 +68,7 @@ class TimedTTSService(SpeechService):
             "input_text": input_text,
             "service": "glance-timed-tts-v1",
             "endpoint": self.endpoint,
+            "voice": self.voice,
             "format": self.audio_format,
         }
 
@@ -74,7 +82,11 @@ class TimedTTSService(SpeechService):
             self.get_audio_basename(input_data) + f".{self.audio_format}"
         )
         payload = json.dumps(
-            {"text": input_text, "format": self.audio_format},
+            {
+                "input": input_text,
+                "voice": self.voice,
+                "response_format": self.audio_format,
+            },
             ensure_ascii=False,
         ).encode("utf-8")
         request = urlrequest.Request(
@@ -89,7 +101,7 @@ class TimedTTSService(SpeechService):
 
         try:
             with urlrequest.urlopen(request, timeout=self.timeout) as response:
-                result = json.loads(response.read().decode("utf-8"))
+                audio = response.read()
         except urlerror.HTTPError as exc:
             detail = exc.read(500).decode("utf-8", errors="replace")
             raise RuntimeError(
@@ -97,25 +109,8 @@ class TimedTTSService(SpeechService):
             ) from exc
         except urlerror.URLError as exc:
             raise RuntimeError(f"Không kết nối được timed TTS: {exc.reason}") from exc
-        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise RuntimeError("Timed TTS không trả JSON hợp lệ.") from exc
-
-        try:
-            audio = base64.b64decode(result["audio_base64"], validate=True)
-        except (KeyError, TypeError, ValueError, binascii.Error) as exc:
-            raise RuntimeError("Timed TTS thiếu audio_base64 MP3 hợp lệ.") from exc
         if not audio:
             raise RuntimeError("Timed TTS trả file audio rỗng.")
-
-        response_format = str(result.get("format", self.audio_format)).lower()
-        if response_format != self.audio_format:
-            raise RuntimeError(
-                "Timed TTS trả format "
-                f"{response_format!r}, khác format yêu cầu {self.audio_format!r}."
-            )
-        segments = result.get("segments", [])
-        if not isinstance(segments, list):
-            raise RuntimeError("Timed TTS trả trường segments không hợp lệ.")
 
         destination = cache_dir / audio_path
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -127,10 +122,22 @@ class TimedTTSService(SpeechService):
             "input_text": text,
             "input_data": input_data,
             "original_audio": audio_path,
-            "segments": segments,
-            "api_duration": result.get("duration"),
-            "sample_rate": result.get("sample_rate"),
         }
+
+
+def _read_tts_key(key_file):
+    """Đọc bearer key ngoài Git; đường dẫn tương đối tính từ root repo."""
+    path = pathlib.Path(key_file).expanduser()
+    if not path.is_absolute():
+        path = pathlib.Path(__file__).resolve().parent / path
+    if not path.is_file():
+        raise ValueError(
+            f"Thiếu API key tại {path}. Tạo file này theo README; không commit key."
+        )
+    token = path.read_text(encoding="utf-8").strip()
+    if not token:
+        raise ValueError(f"API key tại {path} đang rỗng.")
+    return token
 
 # --------------------------------------------------------------------------
 # Fonts. Vietnamese diacritics need a font with full Latin Extended coverage.
@@ -1004,9 +1011,9 @@ class GlanceScene(VoiceoverScene):
     Phụ đề .srt được plugin sinh tự động từ chính `text` — không gọi
     add_subcaption thủ công nữa, sẽ bị trùng.
 
-    Giọng đọc tự chọn: có GLANCE_TIMED_TTS_TOKEN trong .env thì dùng timed API,
+    Giọng đọc tự chọn: có file key cho speech API thì dùng backend chính,
     sau đó mới thử Azure và gTTS. Ép thủ công bằng biến môi trường:
-        GLANCE_TTS=timed  (API JSON gồm MP3 base64 + segment timing)
+        GLANCE_TTS=timed  (speech API trả MP3 trực tiếp)
         GLANCE_TTS=azure  (giọng vi-VN tự nhiên, cần AZURE_* trong .env)
         GLANCE_TTS=gtts   (free, cần mạng, hay bị rate-limit khi nhiều câu mới)
         GLANCE_TTS=record (tự thu giọng thật qua CLI lúc render)
@@ -1037,7 +1044,13 @@ class GlanceScene(VoiceoverScene):
         _load_env()
         backend = os.environ.get("GLANCE_TTS", "").lower()
         if not backend:
-            if os.environ.get("GLANCE_TIMED_TTS_TOKEN"):
+            key_file = os.environ.get(
+                "GLANCE_TIMED_TTS_KEY_FILE", DEFAULT_TIMED_TTS_KEY_FILE
+            )
+            key_path = pathlib.Path(key_file).expanduser()
+            if not key_path.is_absolute():
+                key_path = pathlib.Path(__file__).resolve().parent / key_path
+            if key_path.is_file():
                 backend = "timed"
             elif os.environ.get("AZURE_SUBSCRIPTION_KEY"):
                 backend = "azure"
@@ -1045,11 +1058,17 @@ class GlanceScene(VoiceoverScene):
                 backend = "gtts"
 
         if backend in ("timed", "api"):
+            key_file = os.environ.get(
+                "GLANCE_TIMED_TTS_KEY_FILE", DEFAULT_TIMED_TTS_KEY_FILE
+            )
             return TimedTTSService(
                 endpoint=os.environ.get(
                     "GLANCE_TIMED_TTS_URL", DEFAULT_TIMED_TTS_URL
                 ),
-                token=os.environ.get("GLANCE_TIMED_TTS_TOKEN", ""),
+                token=_read_tts_key(key_file),
+                voice=os.environ.get(
+                    "GLANCE_TIMED_TTS_VOICE", DEFAULT_TIMED_TTS_VOICE
+                ),
                 audio_format=os.environ.get("GLANCE_TIMED_TTS_FORMAT", "mp3"),
                 timeout=float(os.environ.get("GLANCE_TIMED_TTS_TIMEOUT", "120")),
             )

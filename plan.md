@@ -97,6 +97,11 @@ tiếng Việt vì nó trỏ tới bảng trong bản dịch paper mà nhóm đa
   còn lại ưu tiên tiếng Việt tự nhiên, như `routing` →
   "định tuyến", `embedding` → "véc-tơ biểu diễn". Phiên âm acronym thống nhất:
   `LLM` → "eo eo em", `MLP Q` → "em eo pi khiu", `GNN` → "gi en en",
-  `GLANCE` → "gờ lans".
+  `GLANCE` → "gờ lans", `GCN` → "gờ xê en", `NCS` → "en xi ét",
+  `TAG` → "ti ây gi". Tên bộ dữ liệu đọc là `Cora` → "cô ra", `Pubmed` →
+  "pắp mét", `Arxiv23` → "ác xíp hai ba". Các từ kỹ thuật còn lại phải dịch
+  tự nhiên trong lời đọc: `graph` → "đồ thị", `feature` → "đặc trưng",
+  `loss` → "hàm mất mát", `reward` → "phần thưởng", `Refiner` →
+  "bộ tinh chỉnh", `prompt` → "câu lệnh", `Top-K` → "tốp ca".
 - Lần đầu xuất hiện thuật ngữ: hiện chữ tiếng Anh + một dòng giải thích tiếng Việt.
 - Không dùng ký tự gạch dài `—` / `–` trên hình. Dùng `:` `,` hoặc `·`.
