@@ -191,8 +191,9 @@ VO = {
     # --- S5_09 Controls ---
     "ctrl_intro": "Bằng chứng mạnh nhất không phải là thêm lờ lờ mờ, mà là chọn đúng nốt để gọi.",
     "ctrl_all": (
-        "định tuyến hết mọi nốt trên pắp mét: hai nhóm khó tăng, nhưng hai nhóm dễ lại giảm gần hai "
-        "mươi điểm — lờ lờ mờ có thể làm hại nốt dễ."
+        "định tuyến hết mọi nốt trên pắp mét: hai nhóm khó tăng, tổng thể thậm chí nhích lên cộng một "
+        "phẩy năm điểm — nhưng đổi lại, hai nhóm dễ sụp gần hai mươi điểm; con số tổng che mất cái giá "
+        "phải trả đó."
     ),
     "ctrl_random": (
         "Giữ nguyên lờ lờ mờ và bộ tinh chỉnh nhưng định tuyến ngẫu nhiên trên cô ra: chỉ còn tám mươi sáu "
@@ -251,6 +252,8 @@ class S5_02_TopKProblem(GlanceScene):
         self.banner()
         head = heading("Vấn đề cốt lõi — top-K không khả vi", color=ACCENT).to_edge(UP, buff=0.85)
 
+        budget = pill("NGÂN SÁCH CỨNG  ·  K = 2", C_LLM, width=4.4).move_to([0, 1.9, 0])
+
         labels = ["A", "B", "C", "D", "E", "F"]
         scores = [0.91, 0.82, 0.79, 0.61, 0.44, 0.20]
         nodes = VGroup(*[labeled_box(l, C_ROUTER, width=1.05, height=0.85) for l in labels])
@@ -262,7 +265,7 @@ class S5_02_TopKProblem(GlanceScene):
         tickets = VGroup(*[check(color=C_LLM).next_to(n, UP, buff=0.14) for n in nodes[:2]])
 
         with self.voiceover(text=VO["topk_setup"]) as tracker:
-            self.play(Write(head), run_time=1.0)
+            self.play(Write(head), FadeIn(budget, scale=0.92), run_time=1.0)
             self.play(
                 LaggedStart(*[GrowFromCenter(n) for n in nodes], lag_ratio=0.12),
                 run_time=1.4,
@@ -285,28 +288,56 @@ class S5_02_TopKProblem(GlanceScene):
         cut = DashedLine(step_axis.c2p(2.5, -0.15), step_axis.c2p(2.5, 1.15), color=C_BAD, stroke_width=2)
         jump_label = txt("đổi hạng → quyết định nhảy", size=SMALL_SIZE - 4, color=C_BAD)
         jump_label.next_to(cut, DOWN, buff=0.55)
+        marker = Dot(step_axis.c2p(2.35, 0), radius=0.09, color=YELLOW)
 
         with self.voiceover(text=VO["topk_jump"]) as tracker:
-            self.play(FadeOut(tickets), run_time=0.3)
+            self.play(FadeOut(tickets), FadeOut(budget), run_time=0.3)
             self.play(
                 nodes.animate.scale(0.75).to_edge(UP, buff=1.7),
                 score_texts.animate.scale(0.75).next_to(nodes.copy().scale(0.75).to_edge(UP, buff=1.7), DOWN),
                 Create(step_axis), Create(step),
                 run_time=1.6,
             )
-            self.play(Create(cut), FadeIn(jump_label, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
+            self.play(Create(cut), FadeIn(jump_label, shift=UP * 0.1), FadeIn(marker, scale=0.6),
+                      run_time=min(1.4, tracker.duration))
+
+        # Điểm B tụt nhẹ từ 0.82 xuống 0.78 — thấp hơn C (0.79) — nên đổi hạng:
+        # B và C hoán đổi vị trí, "vé" đi theo C chứ không theo B.
+        b_center = nodes[1].get_center().copy()
+        c_center = nodes[2].get_center().copy()
+        score_078 = txt("0.78", size=SMALL_SIZE - 5, color=C_BAD, weight=BOLD).move_to(score_texts[2])
+        score_079_moved = score_texts[2].copy().move_to(score_texts[1])
+        nodes[1].generate_target()
+        nodes[1].target.move_to(c_center)
+        nodes[2].generate_target()
+        nodes[2].target.move_to(b_center)
+        self.play(
+            Transform(score_texts[1], score_078),
+            Transform(score_texts[2], score_079_moved),
+            MoveToTarget(nodes[1]), MoveToTarget(nodes[2]),
+            tickets[1].animate.move_to(b_center + UP * 0.55),
+            marker.animate.move_to(step_axis.c2p(2.65, 1)),
+            run_time=1.6,
+        )
+        self.play(Flash(marker, color=C_BAD, flash_radius=0.35), run_time=0.6)
+        self.wait(0.5)
 
         chain = pipeline(
             [("ROUTER π", C_ROUTER), ("TOP-K", C_BAD), ("LOSS CUỐI", C_GOOD)],
         ).move_to([0, -1.1, 0])
         blocked = cross(color=C_BAD, size=0.5).move_to(chain.boxes[1])
+        grad_arrow = Arrow(
+            chain.boxes[2].get_left(), chain.boxes[1].get_right(),
+            buff=0.10, color=YELLOW, stroke_width=5,
+        )
 
         with self.voiceover(text=VO["topk_block"]) as tracker:
             self.play(
-                FadeOut(VGroup(nodes, score_texts, step_axis, step, cut, jump_label)),
+                FadeOut(VGroup(nodes, score_texts, step_axis, step, cut, jump_label, marker, tickets[1])),
                 run_time=0.5,
             )
             self.play(FadeIn(chain), run_time=1.0)
+            self.play(GrowArrow(grad_arrow), run_time=0.7)
             self.play(FadeIn(blocked, scale=1.4), Flash(chain.boxes[1], color=C_BAD, flash_radius=0.7),
                       run_time=min(1.2, tracker.duration))
         banner = txt("LOSS  ×→  TOP-K  ×→  ROUTER", size=BODY_SIZE, color=C_BAD, weight=BOLD)
@@ -325,35 +356,72 @@ class S5_03_CounterfactualLoss(GlanceScene):
         head = heading("Cách giải — thay gradient bằng reward", color=C_GOOD).to_edge(UP, buff=0.85)
         self.add(head)
 
-        node = labeled_box("v", C_ROUTER, width=0.9, height=0.9).move_to([-5.1, 0, 0])
+        node = labeled_box("v", C_ROUTER, width=0.9, height=0.9).move_to([-5.6, 0, 0])
         route_tag = pill("ROUTE", C_LLM, width=1.7).next_to(node, UP, buff=0.25)
 
         with self.voiceover(text=VO["cf_intro"]):
             self.play(GrowFromCenter(node), FadeIn(route_tag, shift=DOWN * 0.15), run_time=1.2)
 
-        upper = panel(Rectangle(width=8.4, height=1.5)).move_to([0.7, 1.0, 0])
-        lower = panel(Rectangle(width=8.4, height=1.5), color=C_LLM).move_to([0.7, -0.7, 0])
-        up_text = txt("KHÔNG GỌI LLM  ·  gờ nờ nờ → đầu H → p_H  ·  lᴳ = CE(yᵥ, p_H)",
-                       size=SMALL_SIZE - 3, color=C_GNN).move_to(upper).scale_to_fit_width(7.8)
-        low_text = txt("ĐÃ GỌI LLM  ·  gờ nờ nờ + lờ lờ mờ → refiner ξ → p_ξ  ·  lᴸ = CE(yᵥ, p_ξ)",
-                        size=SMALL_SIZE - 3, color=C_LLM).move_to(lower).scale_to_fit_width(7.8)
+        upper = panel(Rectangle(width=7.0, height=1.5)).move_to([0.1, 1.0, 0])
+        lower = panel(Rectangle(width=7.0, height=1.5), color=C_LLM).move_to([0.1, -0.7, 0])
+        up_text = txt("KHÔNG GỌI LLM  ·  GNN → đầu H → p_H  ·  lᴳ = CE(yᵥ, p_H)",
+                       size=SMALL_SIZE - 3, color=C_GNN).move_to(upper).scale_to_fit_width(6.4)
+        low_text = txt("ĐÃ GỌI LLM  ·  GNN + LLM → refiner ξ → p_ξ  ·  lᴸ = CE(yᵥ, p_ξ)",
+                        size=SMALL_SIZE - 3, color=C_LLM).move_to(lower).scale_to_fit_width(6.4)
         arrow_up = Arrow(node.get_right(), upper.get_left(), buff=0.1, color=C_GNN, stroke_width=3)
         arrow_down = Arrow(node.get_right(), lower.get_left(), buff=0.1, color=C_LLM, stroke_width=3)
+
+        # Bản sao mờ của v "bay" vào mỗi nhánh — cùng một node đi hai đường.
+        ghost_up = node.copy().scale(0.6).set_opacity(0.9)
+        ghost_down = node.copy().scale(0.6).set_opacity(0.9)
+
+        # Đồng hồ loss bên phải mỗi nhánh: số chạy sống + thanh dài dần tới giá trị thật.
+        gnn_value, llm_value = ValueTracker(0.0), ValueTracker(0.0)
+        gnn_num = DecimalNumber(0, num_decimal_places=2, color=C_GNN, font_size=BODY_SIZE - 4)
+        gnn_num.add_updater(lambda m: m.set_value(gnn_value.get_value())).move_to([5.9, 1.0, 0])
+        llm_num = DecimalNumber(0, num_decimal_places=2, color=C_LLM, font_size=BODY_SIZE - 4)
+        llm_num.add_updater(lambda m: m.set_value(llm_value.get_value())).move_to([5.9, -0.7, 0])
+        gnn_track = RoundedRectangle(width=1.5, height=0.20, corner_radius=0.05,
+                                      stroke_color=C_GNN, stroke_width=1.4, fill_opacity=0).move_to([4.55, 1.0, 0])
+        llm_track = RoundedRectangle(width=1.5, height=0.20, corner_radius=0.05,
+                                      stroke_color=C_LLM, stroke_width=1.4, fill_opacity=0).move_to([4.55, -0.7, 0])
+        gnn_fill = RoundedRectangle(width=1.5 * 2.30 / 2.50, height=0.20, corner_radius=0.05,
+                                     fill_color=C_GNN, fill_opacity=0.85, stroke_width=0)
+        gnn_fill.move_to(gnn_track.get_center()).align_to(gnn_track, LEFT)
+        llm_fill = RoundedRectangle(width=1.5 * 0.30 / 2.50, height=0.20, corner_radius=0.05,
+                                     fill_color=C_LLM, fill_opacity=0.85, stroke_width=0)
+        llm_fill.move_to(llm_track.get_center()).align_to(llm_track, LEFT)
 
         with self.voiceover(text=VO["cf_branch"]) as tracker:
             self.play(
                 Create(arrow_up), Create(arrow_down),
                 FadeIn(upper), FadeIn(lower),
+                ghost_up.animate.move_to(upper.get_left() + RIGHT * 0.35).set_opacity(0),
+                ghost_down.animate.move_to(lower.get_left() + RIGHT * 0.35).set_opacity(0),
                 run_time=1.4,
             )
-            self.play(FadeIn(up_text), FadeIn(low_text), run_time=min(1.6, tracker.duration))
+            self.remove(ghost_up, ghost_down)
+            self.play(
+                FadeIn(up_text), FadeIn(low_text), FadeIn(gnn_track), FadeIn(llm_track),
+                run_time=0.8,
+            )
+            self.play(
+                gnn_value.animate.set_value(2.30), GrowFromEdge(gnn_fill, LEFT), FadeIn(gnn_num),
+                llm_value.animate.set_value(0.30), GrowFromEdge(llm_fill, LEFT), FadeIn(llm_num),
+                run_time=min(1.8, tracker.duration),
+            )
 
         truth = txt("cùng nhãn thật  yᵥ", size=SMALL_SIZE - 3, color=C_GOOD, weight=BOLD)
-        truth.move_to([-5.1, -0.9, 0])
+        truth.move_to([-5.6, -0.9, 0])
         with self.voiceover(text=VO["cf_same_label"]) as tracker:
             self.play(FadeIn(truth, scale=0.95), run_time=0.9)
             self.play(Indicate(up_text, color=C_GNN), Indicate(low_text, color=C_LLM),
                       run_time=min(1.6, tracker.duration))
+        banner = txt(
+            "lᴸ LÀ LOSS CỦA CẢ NHÁNH GNN + LLM + REFINER — KHÔNG PHẢI LLM ĐỨNG MỘT MÌNH",
+            size=SMALL_SIZE - 4, color=C_LLM, weight=BOLD,
+        ).move_to([0.1, -2.1, 0]).scale_to_fit_width(11.5)
+        self.play(FadeIn(banner, shift=UP * 0.1), run_time=0.7)
         self.wait(0.6)
 
 
@@ -394,6 +462,11 @@ class S5_04_Reward(GlanceScene):
             size=SMALL_SIZE - 3, color=MUTED,
         ).move_to([0, -0.35, 0])
 
+        counter_row = txt(
+            "VD: gain 0.05 − β 0.10 = reward −0.05  →  vẫn âm dù có route",
+            size=SMALL_SIZE - 5, color=C_BAD,
+        ).move_to([0, -0.85, 0])
+
         with self.voiceover(text=VO["reward_beta"]) as tracker:
             self.play(TransformFromCopy(row1[4], row2[0]), run_time=0.7)
             self.play(
@@ -401,7 +474,8 @@ class S5_04_Reward(GlanceScene):
                 FadeIn(note),
                 run_time=1.2,
             )
-            self.play(FadeIn(beta_note, shift=UP * 0.08), run_time=min(1.4, tracker.duration))
+            self.play(FadeIn(beta_note, shift=UP * 0.08), run_time=0.8)
+            self.play(FadeIn(counter_row, shift=UP * 0.06), run_time=min(1.0, tracker.duration))
 
         skip_row = VGroup(
             txt("NẾU SKIP", size=SMALL_SIZE, color=MUTED, weight=BOLD),
@@ -429,11 +503,25 @@ class S5_05_JointObjective(GlanceScene):
 
         chain = pipeline(
             [("reward rᵥ", C_GOOD), ("log π(fᵥ)", C_ROUTER), ("router loss", C_BAD)],
-        ).scale(0.85).move_to([0, 1.5, 0])
+        ).scale(0.85).move_to([0, 1.75, 0])
+        good_rule = VGroup(
+            txt("rᵥ > 0", size=SMALL_SIZE - 2, color=C_GOOD, weight=BOLD),
+            txt("→", size=SMALL_SIZE - 2, color=MUTED),
+            txt("π(fᵥ) tăng", size=SMALL_SIZE - 2, color=C_GOOD, weight=BOLD),
+        ).arrange(RIGHT, buff=0.16)
+        bad_rule = VGroup(
+            txt("rᵥ < 0", size=SMALL_SIZE - 2, color=C_BAD, weight=BOLD),
+            txt("→", size=SMALL_SIZE - 2, color=MUTED),
+            txt("π(fᵥ) giảm", size=SMALL_SIZE - 2, color=C_BAD, weight=BOLD),
+        ).arrange(RIGHT, buff=0.16)
+        rules = VGroup(good_rule, bad_rule).arrange(RIGHT, buff=1.0).move_to([0, 1.0, 0])
+
         with self.voiceover(text=VO["obj_policy"]) as tracker:
             self.play(FadeIn(chain.boxes[0], scale=0.9), run_time=0.6)
             self.play(GrowArrow(chain.arrows[0]), FadeIn(chain.boxes[1]), run_time=0.7)
-            self.play(GrowArrow(chain.arrows[1]), FadeIn(chain.boxes[2]), run_time=min(1.2, tracker.duration))
+            self.play(GrowArrow(chain.arrows[1]), FadeIn(chain.boxes[2]), run_time=0.7)
+            self.play(FadeIn(rules, shift=UP * 0.08), run_time=min(1.2, tracker.duration))
+        self.play(FadeOut(rules), chain.animate.move_to([0, 1.5, 0]), run_time=0.5)
 
         formula = txt(
             "lʳᵒᵘᵗᵉ = −rᵥ · log π(fᵥ)  −  λₑₙₜ · H[π(fᵥ)]",
@@ -528,11 +616,19 @@ class S5_06_Setup(GlanceScene):
             self.play(FadeOut(datasets, shift=UP * 0.1), run_time=0.5)
             self.play(FadeIn(baselines, shift=UP * 0.1), run_time=min(2.0, tracker.duration))
 
-        budget = metric_card("NGÂN SÁCH GỌI LLM", "12 / 32", C_LLM, note="mỗi batch", width=3.6)
-        budget.move_to([0, -0.9, 0])
+        dots = VGroup(*[Dot(radius=0.075, color=MUTED, fill_opacity=0.4) for _ in range(32)])
+        dots.arrange_in_grid(rows=4, cols=8, buff=0.16).move_to([-3.1, -1.0, 0])
+        for i in range(12):
+            dots[i].set_color(C_LLM).set_fill(opacity=1)
+        budget = metric_card("NGÂN SÁCH GỌI LLM", "12 / 32", C_LLM, note="mỗi batch", width=3.4)
+        budget.move_to([2.6, -1.0, 0])
         with self.voiceover(text=VO["setup_budget"]) as tracker:
             self.play(FadeOut(baselines, shift=UP * 0.1), run_time=0.5)
-            self.play(FadeIn(budget, shift=UP * 0.1), run_time=min(1.6, tracker.duration))
+            self.play(
+                LaggedStart(*[FadeIn(d, scale=0.5) for d in dots], lag_ratio=0.02),
+                run_time=1.2,
+            )
+            self.play(FadeIn(budget, shift=LEFT * 0.1), run_time=min(1.4, tracker.duration))
         self.add(source("§6.1, tr.7"))
         self.wait(0.5)
 
@@ -568,13 +664,25 @@ class S5_07_BalancedResults(GlanceScene):
             y_range=(0, 50, 10), width=4.2, height=2.4, value_fmt="{:.1f}",
         ).move_to([-3.3, -2.0, 0])
         hard_title = txt("CORA · NHÓM KHÓ NHẤT (h_v < 0.25)", size=SMALL_SIZE - 5, color=C_BAD)
-        hard_title.next_to(hard_chart, UP, buff=0.12)
+        hard_title.next_to(hard_chart, UP, buff=0.45)
+        gain_arrow = DoubleArrow(
+            hard_chart.bars[0][0].get_top() + UP * 0.45,
+            hard_chart.bars[1][0].get_top() + UP * 0.45,
+            buff=0, color=C_GOOD, stroke_width=2.5, tip_length=0.12,
+        )
+        gain_label = txt("+13.0", size=SMALL_SIZE - 3, color=C_GOOD, weight=BOLD)
+        gain_label.next_to(gain_arrow, UP, buff=0.06)
+
         with self.voiceover(text=VO["res_hardbin"]) as tracker:
             self.play(FadeOut(VGroup(chart, margin)), run_time=0.5)
             self.play(FadeIn(hard_title), Create(hard_chart.axes), run_time=0.6)
             self.play(
                 LaggedStart(*[FadeIn(b, shift=UP * 0.1) for b in hard_chart.bars], lag_ratio=0.25),
-                run_time=min(1.6, tracker.duration),
+                run_time=1.0,
+            )
+            self.play(
+                Create(gain_arrow), FadeIn(gain_label),
+                run_time=min(1.2, tracker.duration),
             )
 
         rank = metric_card("AVERAGE RANK", "2.4", C_ROUTER, note="á quân: 4.7", width=3.4)
@@ -588,7 +696,7 @@ class S5_07_BalancedResults(GlanceScene):
         banner.move_to([0, -1.0, 0])
         with self.voiceover(text=VO["res_verdict"]) as tracker:
             self.play(
-                FadeOut(VGroup(hard_chart, hard_title, rank, easy), shift=UP * 0.15),
+                FadeOut(VGroup(hard_chart, hard_title, rank, easy, gain_arrow, gain_label), shift=UP * 0.15),
                 run_time=0.5,
             )
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
@@ -636,26 +744,44 @@ class S5_08_RouterLearned(GlanceScene):
             self.play(Create(ring), Flash(graph.nodes[9], color=C_LLM, flash_radius=0.35),
                       run_time=min(1.4, tracker.duration))
 
-        sens = txt(
-            "K = 8 → 16: bin h_v < 0.25 tăng rõ rệt  ·  bin h_v > 0.75 gần như không đổi",
-            size=SMALL_SIZE - 4, color=MUTED,
-        ).move_to([0, -2.5, 0])
+        sens = VGroup(
+            txt("K: 8→12 +3.4%  ·  12→16 thêm +3.0%  (Pubmed, Arxiv23)  ·  Cora +12.3% ở K=16",
+                size=SMALL_SIZE - 5, color=MUTED),
+            txt("vùng h_v > 0.75 hầu như không đổi (−0.06%)", size=SMALL_SIZE - 5, color=MUTED),
+        ).arrange(DOWN, buff=0.1).move_to([0, -2.5, 0])
         with self.voiceover(text=VO["router_budget"]) as tracker:
             self.play(FadeOut(VGroup(graph, ring)), run_time=0.4)
             self.play(FadeIn(sens, shift=UP * 0.08), run_time=min(1.6, tracker.duration))
 
-        abl_chart = bar_chart(
+        # Hai tầng ablation (§6.3, tr.9): trung bình mọi feature (nhỏ) và riêng
+        # bin homophily thấp khi bỏ đặc trưng homophily (lớn hơn hẳn) — không
+        # được gộp lẫn, kẻo trông như cùng một phép đo.
+        overall_chart = bar_chart(
+            [-0.38, -1.07, -0.65], ["Cora", "Pubmed", "Arxiv23"],
+            colors=[MUTED, MUTED, MUTED], y_range=(-8, 1, 2),
+            width=4.6, height=2.0, value_fmt="{:.2f}",
+        ).move_to([-3.9, -1.0, 0])
+        overall_title = txt("TẮT 1 FEATURE (TRUNG BÌNH)", size=SMALL_SIZE - 6, color=MUTED)
+        overall_title.next_to(overall_chart, UP, buff=0.35)
+        homophily_chart = bar_chart(
             [-6.5, -6.3, -2.0], ["Cora", "Pubmed", "Arxiv23"],
             colors=[C_BAD, C_BAD, C_BAD], y_range=(-8, 1, 2),
-            width=6.0, height=2.0, value_fmt="{:.1f}",
-        ).move_to([0, -1.0, 0])
-        abl_title = txt("BỎ ĐẶC TRƯNG HOMOPHILY → ACCURACY GIẢM", size=SMALL_SIZE - 5, color=C_BAD)
-        abl_title.next_to(abl_chart, UP, buff=0.15)
+            width=4.6, height=2.0, value_fmt="{:.1f}",
+        ).move_to([2.2, -1.0, 0])
+        homophily_title = txt("TẮT HOMOPHILY (BIN h_v < 0.5)", size=SMALL_SIZE - 6, color=C_BAD)
+        homophily_title.next_to(homophily_chart, UP, buff=0.35)
+        divider = DashedLine([-0.85, -0.2, 0], [-0.85, -2.2, 0], color=C_EDGE, stroke_width=1.5)
+
         with self.voiceover(text=VO["router_ablation"]) as tracker:
             self.play(FadeOut(VGroup(hist, hist_note, axis, sens)), run_time=0.5)
-            self.play(FadeIn(abl_title), Create(abl_chart.axes), run_time=0.6)
             self.play(
-                LaggedStart(*[FadeIn(b, shift=UP * 0.08) for b in abl_chart.bars], lag_ratio=0.25),
+                FadeIn(overall_title), FadeIn(homophily_title), Create(divider),
+                Create(overall_chart.axes), Create(homophily_chart.axes),
+                run_time=0.7,
+            )
+            self.play(
+                LaggedStart(*[FadeIn(b, shift=UP * 0.08) for b in overall_chart.bars], lag_ratio=0.2),
+                LaggedStart(*[FadeIn(b, shift=UP * 0.08) for b in homophily_chart.bars], lag_ratio=0.2),
                 run_time=min(1.8, tracker.duration),
             )
 
@@ -678,21 +804,23 @@ class S5_09_RoutingControls(GlanceScene):
         with self.voiceover(text=VO["ctrl_intro"]):
             self.play(Write(head), run_time=1.4)
 
-        left = panel(Rectangle(width=5.6, height=2.2), color=C_BAD).move_to([-3.2, 0.3, 0])
+        left = panel(Rectangle(width=5.6, height=2.7), color=C_BAD).move_to([-3.2, 0.3, 0])
         left_title = txt("ROUTE HẾT · PUBMED", size=SMALL_SIZE - 4, color=C_BAD, weight=BOLD)
         left_title.next_to(left, UP, buff=0.12)
         hard_row = VGroup(pill("+10.9", C_GOOD, width=1.4), pill("+13.3", C_GOOD, width=1.4)).arrange(RIGHT, buff=0.2)
         easy_row = VGroup(pill("−18.3", C_BAD, width=1.4), pill("−19.7", C_BAD, width=1.4)).arrange(RIGHT, buff=0.2)
+        overall_pill = pill("Δ TỔNG THỂ  +1.5  (bị che bởi nhóm dễ sụp)", C_LLM, width=5.0, size=SMALL_SIZE - 6)
         left_body = VGroup(
             txt("nhóm khó", size=SMALL_SIZE - 5, color=MUTED), hard_row,
             txt("nhóm dễ", size=SMALL_SIZE - 5, color=MUTED), easy_row,
+            overall_pill,
         ).arrange(DOWN, buff=0.12).move_to(left)
 
         with self.voiceover(text=VO["ctrl_all"]) as tracker:
             self.play(FadeIn(left), FadeIn(left_title), run_time=0.8)
             self.play(FadeIn(left_body, shift=UP * 0.1), run_time=min(1.8, tracker.duration))
 
-        right = panel(Rectangle(width=5.6, height=2.2), color=C_ROUTER).move_to([3.2, 0.3, 0])
+        right = panel(Rectangle(width=5.6, height=2.7), color=C_ROUTER).move_to([3.2, 0.3, 0])
         right_title = txt("ROUTE NGẪU NHIÊN · CORA", size=SMALL_SIZE - 4, color=C_ROUTER, weight=BOLD)
         right_title.next_to(right, UP, buff=0.12)
         ranking = VGroup(
@@ -726,7 +854,7 @@ class S5_09_RoutingControls(GlanceScene):
         banner.move_to([0, -1.6, 0])
         with self.voiceover(text=VO["ctrl_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
-        self.add(source("§6, tr.8"))
+        self.add(source("Bảng 10–12, Phụ lục F"))
         self.wait(0.4)
 
 
@@ -754,7 +882,8 @@ class S5_10_Scale(GlanceScene):
                 LaggedStart(*[FadeIn(d, scale=0.5) for d in dots], lag_ratio=0.01),
                 run_time=1.6,
             )
-            self.play(FadeIn(cloud_label), FadeIn(rate, shift=RIGHT * 0.1), run_time=min(1.6, tracker.duration))
+            self.play(FadeIn(cloud_label), FadeIn(rate, shift=RIGHT * 0.1), run_time=0.8)
+            self.play(Flash(dots[27], color=C_LLM, flash_radius=0.30), run_time=min(0.8, tracker.duration))
 
         result = metric_card("OGB-PRODUCTS", "82.3", C_GOOD, note="GCNII: 81.8", width=3.0)
         result.move_to([2.8, 0.9, 0])
@@ -790,7 +919,19 @@ class S5_11_Callout(GlanceScene):
             (VO["final_1"], C_GNN), (VO["final_2"], C_ROUTER), (VO["final_3"], C_LLM),
             (VO["final_4"], C_GOOD), (VO["final_5"], C_LLM),
         ]
-        rows = bullets([t for t, _ in items], size=SMALL_SIZE - 2, width=11.0, buff=0.32)
+
+        def numbered_row(index, text, color):
+            badge = VGroup(
+                Circle(radius=0.22, fill_color=color, fill_opacity=0.18, stroke_color=color, stroke_width=2),
+                txt(str(index), size=SMALL_SIZE - 2, color=color, weight=BOLD),
+            )
+            label = txt(text, size=SMALL_SIZE - 3, color=INK)
+            if label.width > 9.3:
+                label.scale_to_fit_width(9.3)
+            return VGroup(badge, label).arrange(RIGHT, buff=0.3)
+
+        rows = VGroup(*[numbered_row(i + 1, t, c) for i, (t, c) in enumerate(items)])
+        rows.arrange(DOWN, aligned_edge=LEFT, buff=0.26)
         rows.move_to([0, 0.1, 0])
 
         for i, (row, (_, color)) in enumerate(zip(rows, items)):
