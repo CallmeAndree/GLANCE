@@ -979,9 +979,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(FadeIn(keep_gnn), GrowArrow(a_up), FadeIn(query_llm), GrowArrow(a_dn), run_time=1.5)
 
         with self.narrated_caption([
-            "Vậy hiện nay, các phương pháp dùng những quy tắc heuristic nào",
-            "để quyết định gọi lờ lờ mờ?",
-            "Đó là nội dung của phần hai."
+            "Nếu phải chọn nót để gọi lờ lờ mờ,",
+            "người ta đã chọn bằng cách nào?"
         ]):
             circle_hl = Ellipse(width=query_llm.width + 0.4, height=query_llm.height + 0.4, color=gs.C_BAD, stroke_width=4)
             circle_hl.move_to(query_llm)
@@ -989,18 +988,10 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             
             self.play(Create(circle_hl), run_time=0.8)
             self.play(FadeIn(question_mark, shift=LEFT*0.2), run_time=0.6)
-            
-            self.wait(2.5)
+            self.wait(0.8)
             self.play(
                 FadeOut(q), FadeOut(router), FadeOut(r_arrows),
                 FadeOut(keep_gnn), FadeOut(query_llm), FadeOut(a_up), FadeOut(a_dn),
                 FadeOut(circle_hl), FadeOut(question_mark),
                 run_time=0.7
             )
-            task2_title = t("TASK 2", size=64, color=BRIGHT, weight=BOLD)
-            task2_sub = t("EXISTING ROUTING HEURISTICS", size=44, color=LIGHT)
-            task2_hint = t("Degree · Centrality · Uncertainty", size=28, color=MID)
-            t2_group = VGroup(task2_title, task2_sub, task2_hint).arrange(DOWN, buff=0.45)
-            self.play(FadeIn(t2_group, shift=UP * 0.2), run_time=1.0)
-            # Keep card on screen — DO NOT fade out
-            self.wait(2.0)
