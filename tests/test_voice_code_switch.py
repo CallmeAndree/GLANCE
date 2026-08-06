@@ -1,4 +1,5 @@
 import json
+import os
 import pathlib
 import sys
 import tempfile
@@ -12,12 +13,29 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 from glance_style import (  # noqa: E402
     TimedTTSService,
+    _load_env,
     _read_tts_key,
     azure_voice_supports_code_switch,
     ssml_mix,
     strip_ssml,
     validate_azure_voice,
 )
+
+
+class EnvironmentLoadingTest(unittest.TestCase):
+    def test_reads_dotenv_as_utf8(self):
+        with (
+            patch("glance_style.pathlib.Path.exists", return_value=True),
+            patch(
+                "glance_style.pathlib.Path.read_text",
+                return_value="GLANCE_TEST_UTF8=ok\n",
+            ) as read_text,
+            patch.dict(os.environ, {}, clear=False),
+        ):
+            _load_env()
+
+            read_text.assert_called_once_with(encoding="utf-8")
+            self.assertEqual(os.environ["GLANCE_TEST_UTF8"], "ok")
 
 
 class FakeResponse:

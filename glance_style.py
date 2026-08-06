@@ -262,7 +262,7 @@ def _load_env():
     env_path = pathlib.Path(__file__).resolve().parent / ".env"
     if not env_path.exists():
         return
-    for line in env_path.read_text().splitlines():
+    for line in env_path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
