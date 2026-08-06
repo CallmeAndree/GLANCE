@@ -697,14 +697,14 @@ class S5_07_BalancedResults(GlanceScene):
                 run_time=min(2.0, tracker.duration),
             )
 
-        margin = pill("KHOẢNG CÁCH TỔNG THỂ CHỈ DƯỚI 1 ĐIỂM", C_LLM, width=7.0).move_to([0, -0.9, 0])
+        margin = pill("KHOẢNG CÁCH TỔNG THỂ CHỈ DƯỚI 1 ĐIỂM", C_LLM, width=7.0).move_to([0, -1.15, 0])
         with self.voiceover(text=VO["res_margin"]) as tracker:
             self.play(FadeIn(margin, scale=0.96), run_time=min(1.2, tracker.duration))
 
         hard_chart = bar_chart(
             [33.4, 46.4], ["Á quân", "GLANCE"], colors=[MUTED, C_ROUTER],
             y_range=(0, 50, 10), width=4.2, height=2.4, value_fmt="{:.1f}",
-        ).move_to([-3.3, -2.0, 0])
+        ).move_to([-3.3, -1.45, 0])
         hard_title = txt("CORA · NHÓM KHÓ NHẤT (h_v < 0.25)", size=SMALL_SIZE - 5, color=C_BAD)
         hard_title.next_to(hard_chart, UP, buff=0.45)
         gain_arrow = DoubleArrow(
@@ -728,8 +728,8 @@ class S5_07_BalancedResults(GlanceScene):
             )
 
         rank = metric_card("AVERAGE RANK", "2.4", C_ROUTER, note="á quân: 4.7", width=3.4)
-        rank.move_to([2.9, -0.9, 0])
-        easy = pill("NHÓM DỄ VẪN GẦN TUYỆT ĐỐI", C_GNN, width=4.2).move_to([2.9, -2.0, 0])
+        rank.move_to([2.9, -0.55, 0])
+        easy = pill("NHÓM DỄ VẪN GẦN TUYỆT ĐỐI", C_GNN, width=4.2).move_to([2.9, -1.65, 0])
         with self.voiceover(text=VO["res_rank"]) as tracker:
             self.play(FadeIn(rank, shift=LEFT * 0.1), run_time=0.9)
             self.play(FadeIn(easy, shift=UP * 0.1), run_time=min(1.3, tracker.duration))
