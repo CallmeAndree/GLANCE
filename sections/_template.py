@@ -27,7 +27,7 @@ ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 # Lời thuyết minh gom một chỗ cho dễ sửa và dễ duyệt.
 # Viết theo cách ĐỌC LÊN, không theo cách viết công thức:
 #   "h_v"  ->  "h của v"        "3/4"  ->  "ba phần tư"
-#   "0.75" ->  "không phẩy bảy lăm"    "N(v)" -> "tập hàng xóm của v"
+#   "0.75" ->  "không chấm bảy năm"    "N(v)" -> "tập hàng xóm của v"
 VO = {
     "intro": "Câu thuyết minh mở đầu.",
     "point": "Câu thuyết minh cho nhịp thứ hai.",
@@ -81,8 +81,8 @@ class SX_02_Content(GlanceScene):
             # Cần một animation kéo dài đúng bằng câu nói thì dùng tracker:
             self.play(FadeIn(points, shift=LEFT * 0.2), run_time=min(1.0, tracker.duration))
 
-        # Mọi số liệu trích từ paper phải có stamp nguồn.
-        self.add(source("§X, tr.Y"))
+        # Scene khái niệm không hiện citation. Chỉ thêm source(...) khi trên hình
+        # có số liệu thực nghiệm trích từ paper.
         self.wait(1.0)
 
 

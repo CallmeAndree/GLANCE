@@ -6,6 +6,7 @@ build/
 *.png
 *.gif
 !docs/**/*.png
+!sections/s1_trucmai/assets/iclr_2026_poster.png
 
 # Python
 __pycache__/

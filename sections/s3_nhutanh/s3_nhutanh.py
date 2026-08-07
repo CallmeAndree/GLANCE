@@ -10,11 +10,17 @@ Cảnh 1 — Local homophily. Năm nhịp theo storyboard của nhóm:
     4. homophily cao  → message nhất quán → GNN đúng
     5. homophily thấp → neighborhood heterophilous → GNN sai
 
-Cảnh 6–12 — phần bổ sung: năm routing signals của Step 1 (§5.1.1, tr.5–6).
-Nối tiếp ngay sau cảnh cầu nối, giải thích từng signal mà router nhận vào:
-node embedding, uncertainty, soft homophily estimation, node features, degree.
-Lưu ý: signal thứ năm trong kiến trúc là **degree thô** d_v, không phải relative
-degree đã phân tích ở cảnh 2 — xem cảnh S3_11_Degree.
+Cảnh 6–19 — Step 1 của kiến trúc (§5.1.1, tr.5–6): năm routing signals.
+Section 3 dừng đúng ở f_v; phần router / top-k / refiner thuộc section 4.
+
+Cảnh 7–19 vốn là S4_03…S4_14 của section 4, đã chuyển nguyên sang đây theo
+thống nhất của nhóm để section 3 tự tạo đủ năm signal rồi mới bàn giao f_v.
+Vì vậy chúng dùng ngôn ngữ hình của section 4 (`step_header`, `equation_card`,
+`takeaway_chip`) chứ không dùng `heading()` như cảnh 1–5; cảnh 6 cũng đã đổi sang
+`step_header` để dãy số trên pill chạy liên tục 06→19. Hai đoạn độc đáo của
+bản cũ được giữ lại: bảng hard vs soft ở cuối S3_16, và cảnh báo d_v vs relative
+degree ở cuối S3_18 — signal thứ năm là **degree thô** d_v, không phải relative
+degree đã phân tích ở cảnh 2.
 
 Thời lượng do chính giọng đọc quyết định (manim-voiceover), không ép tay.
 Đoạn mở đầu 0:00–0:32 chưa có kịch bản nên chưa dựng.
@@ -48,7 +54,7 @@ U_POS = [
 SAME_LABEL = [True, True, True, False]
 
 # Lời thuyết minh. Viết theo cách ĐỌC LÊN, không theo cách viết công thức:
-# "h_v" đọc thành "h của v", "3/4" đọc thành "ba phần tư". Đổi text ở đây là
+# "h_v" đọc thành "hắc phẩy vê", "3/4" đọc thành "ba phần tư". Đổi text ở đây là
 # audio tự sinh lại; giữ nguyên text thì dùng bản đã cache, render nhanh.
 VO = {
     "intro": (
@@ -57,12 +63,12 @@ VO = {
     ),
     "check": (
         "Cụ thể, với mỗi hàng xóm u, ta kiểm tra liệu nhãn của u "
-        "có giống nhãn của v hay không. "
+        "có giống nhãn của vê hay không. "
         "Sau đó lấy tỷ lệ trên toàn bộ tập hàng xóm."
     ),
     "value": (
-        "Trong ví dụ này, ba trong bốn hàng xóm cùng nhãn với v, "
-        "vì vậy h của v bằng ba phần tư, tức không phẩy bảy lăm."
+        "Trong ví dụ này, ba trong bốn hàng xóm cùng nhãn với vê, "
+        "vì vậy hắc phẩy vê bằng ba phần tư, tức không chấm bảy năm."
     ),
     "high": (
         "Khi độ đồng nhất cục bộ cao, thông tin từ hàng xóm thường nhất quán với nót trung tâm. "
@@ -81,16 +87,16 @@ VO = {
         "Bậc tương đối đặt giá trị đó trong bối cảnh của chính tập hàng xóm."
     ),
     "rd_formula": (
-        "Với mỗi hàng xóm u, tác giả so sánh bậc của v với bậc của u, "
+        "Với mỗi hàng xóm u, tác giả so sánh bậc của vê với bậc của u, "
         "rồi lấy trung bình trên tất cả hàng xóm."
     ),
     "rd_scale": (
-        "Nếu bậc tương đối lớn hơn một, nót v có xu hướng kết nối nhiều hơn các hàng xóm. "
+        "Nếu bậc tương đối lớn hơn một, nót vê có xu hướng kết nối nhiều hơn các hàng xóm. "
         "Nếu nhỏ hơn một, nó kết nối ít hơn các nót xung quanh."
     ),
     "rd_value": (
-        "Trong ví dụ này, bậc của v thấp hơn cả hai hàng xóm, "
-        "nên bậc tương đối xấp xỉ không phẩy bảy chín, nhỏ hơn một."
+        "Trong ví dụ này, bậc của vê thấp hơn cả hai hàng xóm, "
+        "nên bậc tương đối xấp xỉ không chấm bảy chín, nhỏ hơn một."
     ),
     # --- Cảnh 3: GNN và LLM bổ sung nhau ---
     "cp_setup": (
@@ -103,13 +109,13 @@ VO = {
         "Nhưng khi độ đồng nhất hoặc bậc tương đối giảm, lợi thế của lờ lờ mờ tăng lên."
     ),
     "cp_gain": (
-        "Trên Cô-ra, ở nhóm nót khó, lờ lờ mờ đạt mức cải thiện tới hai mươi phẩy bốn phần trăm "
+        "Trên Cô-ra, ở nhóm nót khó, lờ lờ mờ đạt mức cải thiện tới hai mươi chấm bốn phần trăm "
         "so với mô hình tốt tiếp theo là gi xi en hai sử dụng đặc trưng được lờ lờ mờ tăng cường."
     ),
     "cp_interact": (
         "Hai tín hiệu này còn tương tác với nhau. "
         "Khi đồng thời phân nhóm theo cả độ đồng nhất và bậc, "
-        "chênh lệch hiệu năng giữa các nhóm cấu trúc có thể lên tới ba mươi phẩy một phần trăm."
+        "chênh lệch hiệu năng giữa các nhóm cấu trúc có thể lên tới ba mươi chấm một phần trăm."
     ),
     # --- Cảnh 4: true -> estimated homophily ---
     "eh_problem": (
@@ -145,131 +151,224 @@ VO = {
         "được học thích nghi cho từng nót."
     ),
     "end_next": (
-        "Cụ thể bộ định tuyến này hoạt động như thế nào sẽ được trình bày trong phần tiếp theo."
+        "Phần tiếp theo sẽ đi vào chính những tín hiệu mà bộ định tuyến này đọc từ mỗi nót."
     ),
     # ------------------------------------------------------------------
     # Phần bổ sung — năm routing signals của Step 1 (§5.1.1, tr.5–6).
     # ------------------------------------------------------------------
     "fs_open": (
-        "Phân tích trước đó cho thấy không một quy tắc kinh nghiệm đơn lẻ nào đủ ổn định "
-        "để quyết định nót nào cần lờ lờ mờ. Vì vậy, gờ lans không chỉ sử dụng độ đồng nhất, "
-        "mà mô tả mỗi nót bằng năm tín hiệu định tuyến bổ sung cho nhau."
+        "Vì vậy, thay vì chỉ dựa vào độ đồng nhất, gờ lans mô tả mỗi nót "
+        "bằng năm tín hiệu định tuyến bổ sung cho nhau."
     ),
     "fs_roles": (
         "Mỗi tín hiệu phản ánh một khía cạnh khác nhau: thông tin gờ nờ nờ đã học được, "
         "mức độ tin cậy của gờ nờ nờ, sự nhất quán với hàng xóm, "
-        "nội dung riêng của nót, và lượng thông tin cấu trúc sẵn có."
+        "nội dung riêng của nót, và lượng thông tin cấu trúc sẵn có. "
+        "Phần còn lại của mục này sẽ dựng lần lượt từng tín hiệu."
     ),
-    # --- Signal 1: node embedding ---
-    "ne_intro": (
-        "Tín hiệu đầu tiên là véc-tơ biểu diễn của nót, "
-        "do một gờ nờ nờ đã được huấn luyện trước tạo ra."
+    # --- Cảnh 7: ba nguồn thông tin của node ---
+    "ts_intro": (
+        "Năm tín hiệu này đến từ ba nguồn. Với nót a, gờ lans thu thập lần lượt "
+        "ba nhóm thông tin sau."
     ),
-    "ne_build": (
-        "Gi en en tổng hợp đặc trưng của nót v với thông tin từ vùng lân cận trong phạm vi ca bước, "
-        "tạo thành véc-tơ biểu diễn z của v. "
-        "Véc-tơ này mã hoá những gì gờ nờ nờ đã hiểu về cả nội dung "
-        "và vị trí cấu trúc của nót."
+    "ts_gnn": (
+        "Nhóm thứ nhất đến từ gờ nờ nờ, gồm véc-tơ biểu diễn của nót, "
+        "dự đoán ban đầu và độ bất định."
     ),
-    "ne_not_pred": (
-        "Đây không phải là nhãn dự đoán cuối cùng. "
-        "Nó là biểu diễn trung gian giàu thông tin, giúp bộ định tuyến nhận biết "
-        "những kiểu vùng lân cận mà gờ nờ nờ thường xử lý tốt hoặc gặp khó khăn."
+    "ts_mlp": (
+        "Nhóm thứ hai đến từ một mờ lờ bê riêng, được gọi là qui, chỉ sử dụng đặc trưng "
+        "của nót để hỗ trợ ước lượng độ đồng nhất."
     ),
-    # --- Signal 2: node uncertainty ---
-    "un_intro": (
-        "Tín hiệu thứ hai là độ bất định của nót: "
-        "mức độ không chắc chắn của gờ nờ nờ đối với nót đang xét."
+    "ts_direct": (
+        "Nhóm cuối cùng là thông tin trực tiếp, gồm đặc trưng gốc và bậc của nót."
     ),
-    "un_dropout": (
-        "Gờ lans sử dụng kỹ thuật loại bỏ ngẫu nhiên khi suy luận để tạo nhiều dự đoán. "
-        "Nếu các lần chạy đều đưa ra phân phối gần giống nhau, gờ nờ nờ tương đối chắc chắn. "
-        "Nếu kết quả thay đổi mạnh, độ bất định sẽ cao."
+    "ts_close": (
+        "Các nguồn thông tin này sẽ được kết hợp để bộ định tuyến quyết định "
+        "có nên sử dụng lờ lờ mờ cho nót a hay không. "
+        "Ta bắt đầu từ nhóm thứ nhất: những gì gờ nờ nờ tạo ra."
     ),
-    "un_caveat": (
-        "Độ bất định cao là một dấu hiệu nót có thể khó đối với gờ nờ nờ, "
-        "nhưng không tự động có nghĩa lờ lờ mờ sẽ tốt hơn. "
-        "Vì vậy, gờ lans chỉ dùng nó như một tín hiệu trong tổ hợp."
+    # --- Cảnh 8: trạng thái ban đầu của GNN ---
+    "is_layer0": (
+        "Đầu tiên, nót a được đưa vào mô hình nền gờ nờ nờ. Ở lớp số không, "
+        "trạng thái ẩn của nót a chính là đặc trưng ban đầu của nót. "
+        "Nói cách khác, hắc phẩy a mũ không bằng ích phẩy a."
     ),
-    # --- Signal 3: soft homophily estimation ---
-    "sh_intro": (
-        "Tín hiệu thứ ba xuất phát trực tiếp từ phân tích các tín hiệu cấu trúc: "
-        "độ đồng nhất cục bộ ước lượng. "
-        "Tuy nhiên, gờ lans sử dụng một phiên bản mềm giàu thông tin hơn."
+    "is_example": (
+        "Ví dụ, nếu đặc trưng của nót a là véc-tơ không chấm tám, âm không chấm một "
+        "và không chấm năm, thì trạng thái ẩn ban đầu cũng nhận đúng véc-tơ này."
     ),
-    "sh_dist": (
-        "Em eo pi khiu không chỉ trả về lớp dự đoán, "
-        "mà trả về toàn bộ phân phối xác suất trên các lớp, "
-        "cho nót v và cho từng hàng xóm."
+    "is_noneighbor": "Ở bước này chưa có thông tin từ các nót hàng xóm.",
+    # --- Cảnh 9: bước tổng hợp ---
+    "ag_open": "Tiếp theo là bước tổng hợp.",
+    "ag_collect": (
+        "Gờ nờ nờ thu thập trạng thái ẩn của các nót hàng xóm của a, "
+        "ví dụ như bê, xê, đê và e."
     ),
-    "sh_dot": (
-        "Gờ lans lấy tích vô hướng giữa phân phối của nót trung tâm "
-        "và phân phối trung bình của các hàng xóm. "
-        "Hai phân phối càng tương đồng, độ đồng nhất ước lượng càng cao."
+    "ag_combine": (
+        "Sau đó, các véc-tơ này được tổng hợp thành một thông điệp hàng xóm. "
+        "Trong hoạt cảnh, chúng ta sử dụng phép trung bình để minh họa."
     ),
-    "sh_example": (
-        "Trong ví dụ này, tích vô hướng cho giá trị không phẩy ba tám. "
-        "Giá trị tương đối thấp cho thấy lớp tiềm năng của nót v "
-        "không phù hợp với xu hướng chung của vùng lân cận."
+    "ag_math": (
+        "Bốn véc-tơ hàng xóm được cộng lại rồi chia cho bốn, tạo thành thông điệp mới "
+        "là không chấm năm, không chấm năm. Lưu ý rằng phép trung bình chỉ là một ví dụ; "
+        "tùy mô hình nền gờ nờ nờ, phép tổng hợp có thể được cài đặt theo cách khác."
+    ),
+    # --- Cảnh 10: bước cập nhật ---
+    "up_intro": (
+        "Sau khi có thông điệp hàng xóm, gờ nờ nờ thực hiện bước cập nhật. "
+        "Bước này kết hợp trạng thái trước đó của nót a với thông tin vừa tổng hợp từ hàng xóm."
+    ),
+    "up_example": (
+        "Trong ví dụ minh họa, trạng thái cũ của a là không chấm hai, không chấm tám, "
+        "còn thông điệp hàng xóm là không chấm sáu, không chấm bốn."
+    ),
+    "up_result": (
+        "Sau bước cập nhật, ta thu được một biểu diễn mới là không chấm bốn, không chấm sáu."
+    ),
+    "up_caveat": (
+        "Các con số này chỉ dùng để minh họa luồng xử lý. Trong mô hình thực tế, "
+        "giá trị được quyết định bởi các tham số đã học."
+    ),
+    # --- Cảnh 11: trước và sau khi cập nhật ---
+    "ba_identity": (
+        "Điểm cần lưu ý là nót a vẫn là cùng một bài báo. "
+        "Thứ thay đổi không phải danh tính của nót mà là biểu diễn của nó."
+    ),
+    "ba_before": "Trước bước cập nhật, véc-tơ chủ yếu chứa thông tin của chính nót a.",
+    "ba_after": "Sau bước cập nhật, véc-tơ đã tích hợp thêm bằng chứng từ vùng lân cận.",
+    "ba_repeat": (
+        "Quá trình tổng hợp và cập nhật có thể được lặp lại qua nhiều lớp gờ nờ nờ "
+        "để thu được biểu diễn cuối cùng."
+    ),
+    # --- Cảnh 12 — Signal 1: node embedding z_G(A) ---
+    "ep_graph": (
+        "Quay lại đồ thị quen thuộc của cả video. Nót a cùng vùng lân cận trong "
+        "phạm vi ca bước được đưa vào mô hình nền gờ nờ nờ."
+    ),
+    "ep_two": "Sau các lớp truyền thông điệp, gờ nờ nờ tạo ra hai đầu ra quan trọng.",
+    "ep_embedding": (
+        "Đầu ra thứ nhất là véc-tơ biểu diễn dét gờ a. Véc-tơ biểu diễn này tóm tắt "
+        "cả đặc trưng của nót a và thông tin cấu trúc mà gờ nờ nờ đã học được. "
+        "Đây chính là tín hiệu định tuyến đầu tiên."
+    ),
+    "ep_prediction": "Đầu ra thứ hai là dự đoán ban đầu bê hắc phẩy a.",
+    "ep_head": (
+        "Đầu dự đoán nhận véc-tơ biểu diễn, đi qua mờ lờ bê và sóp mác để tạo xác suất "
+        "trên các lớp. Đây cũng là dự đoán cuối cùng nếu nót a không được gửi sang lờ lờ mờ, "
+        "và nó được lưu lại chứ không phải một thành phần của véc-tơ định tuyến."
+    ),
+    # --- Cảnh 13 — Signal 2: uncertainty u_A ---
+    "uc_stable": (
+        "Gờ lans không chỉ quan tâm gờ nờ nờ dự đoán lớp nào "
+        "mà còn quan tâm dự đoán đó có ổn định hay không."
+    ),
+    "uc_dropout": (
+        "Hệ thống thực hiện nhiều lượt truyền xuôi với đờ-róp-ao cho cùng một nót. "
+        "Nếu các lần chạy tạo ra phân phối gần giống nhau, gờ nờ nờ tương đối chắc chắn."
+    ),
+    "uc_high": (
+        "Ngược lại, nếu kết quả thay đổi nhiều giữa các lần chạy, "
+        "độ bất định của nót sẽ cao."
+    ),
+    "uc_signal": (
+        "Độ bất định là một tín hiệu cho thấy nót a có thể là trường hợp khó, "
+        "nhưng nó không được sử dụng riêng lẻ để quyết định định tuyến."
+    ),
+    # --- Cảnh 14: MLP Q ---
+    "mq_intro": (
+        "Song song với gờ nờ nờ, gờ lans sử dụng một mờ lờ bê được ký hiệu là qui."
+    ),
+    "mq_nostructure": (
+        "Khác với gờ nờ nờ, mờ lờ bê này chỉ nhận đặc trưng ích phẩy vê của nót, "
+        "không sử dụng cạnh và không thực hiện truyền thông điệp."
+    ),
+    "mq_output": (
+        "Với mỗi nót, qui tạo ra một phân phối xác suất mềm bê qui phẩy vê."
+    ),
+    "mq_shared": (
+        "Cùng một mờ lờ bê được áp dụng cho nót a và các nót hàng xóm bê, xê, đê, e."
+    ),
+    "mq_purpose": (
+        "Mục đích của các phân phối này không phải để thay thế dự đoán của gờ nờ nờ, "
+        "mà để hỗ trợ ước lượng mức độ tương đồng giữa nót và vùng lân cận."
+    ),
+    # --- Cảnh 15: trung bình phân phối hàng xóm ---
+    "na_collect": (
+        "Để đánh giá vùng lân cận của a, gờ lans lấy một phân phối từ mỗi nót hàng xóm."
+    ),
+    "na_sum": "Các phân phối của bê, xê, đê và e được cộng lại thành ết phẩy a.",
+    "na_divide": "Sau đó, tổng này được chia cho số lượng hàng xóm.",
+    "na_average": (
+        "Trong ví dụ, nót a có bốn hàng xóm nên hệ thống chia cho bốn và thu được "
+        "phân phối trung bình không chấm hai bảy năm, không chấm bốn tám không, "
+        "không chấm hai bốn năm."
+    ),
+    "na_meaning": (
+        "Véc-tơ này đại diện cho xu hướng lớp chung trong vùng lân cận của nót a."
+    ),
+    # --- Cảnh 16 — Signal 3: soft homophily h mũ ---
+    "sh_compare": (
+        "Tiếp theo, gờ lans so sánh phân phối của chính nót a "
+        "với phân phối trung bình của các hàng xóm."
+    ),
+    "sh_dot": "Phép so sánh được thực hiện bằng tích vô hướng.",
+    "sh_meaning": (
+        "Nếu hai phân phối tương tự nhau, giá trị sẽ cao, cho thấy nót a có xu hướng "
+        "giống vùng lân cận. Nếu hai phân phối khác nhau, giá trị này sẽ thấp "
+        "và nót a có khả năng nằm trong vùng dị phối."
     ),
     "sh_soft": (
         "So với việc chỉ kiểm tra hai nhãn dự đoán có giống nhau hay không, "
         "phiên bản mềm còn giữ lại mức độ chắc chắn của mờ lờ bê."
     ),
-    # --- Signal 4: original node features ---
-    "nf_intro": (
-        "Tín hiệu thứ tư là đặc trưng ban đầu của nót, ký hiệu x của v. "
-        "Đây là biểu diễn nội dung vốn có của nót, "
-        "trước khi gờ nờ nờ tổng hợp thông tin từ hàng xóm."
+    "sh_prior": (
+        "Đây chỉ là một tín hiệu tiên nghiệm cho việc định tuyến, "
+        "nghĩa là một tín hiệu hỗ trợ bộ định tuyến, "
+        "chứ không trực tiếp quyết định việc gọi lờ lờ mờ."
     ),
-    "nf_compare": (
-        "Véc-tơ biểu diễn của nót cho biết gờ nờ nờ đã biến đổi thông tin như thế nào, "
-        "còn đặc trưng ban đầu giúp bộ định tuyến vẫn truy cập trực tiếp "
-        "vào tín hiệu nội tại của nót."
+    # --- Cảnh 17 — Signal 4: đặc trưng gốc x_A ---
+    "nf_keep": (
+        "Ngoài các biểu diễn đã được học, gờ lans vẫn giữ lại thông tin gốc của nót a."
     ),
-    "nf_conflict": (
-        "Điều này đặc biệt hữu ích khi đặc trưng nót nhiễu, mơ hồ, "
-        "hoặc xung đột với thông tin được tổng hợp từ vùng lân cận."
+    "nf_vector": (
+        "Thành phần đầu tiên là ích phẩy a, tức đặc trưng được trích xuất từ nội dung văn bản."
     ),
-    # --- Signal 5: degree ---
-    "dg_intro": (
-        "Tín hiệu cuối cùng là bậc, ký hiệu d của v: "
-        "số hàng xóm trực tiếp của nót v."
+    "nf_ego": (
+        "Đặc trưng này giữ nguyên nội dung riêng của nót trước khi gờ nờ nờ tổng hợp "
+        "thông tin từ hàng xóm, nên nó vẫn hữu ích khi véc-tơ biểu diễn của gờ nờ nờ "
+        "bị vùng lân cận làm nhiễu."
     ),
-    "dg_context": (
-        "Bậc cho biết gờ nờ nờ có bao nhiêu nguồn thông tin lân cận để tổng hợp. "
-        "Nót có bậc thấp thường nhận được ít ngữ cảnh cấu trúc hơn."
+    # --- Cảnh 18 — Signal 5: bậc d_A ---
+    "dg_degree": (
+        "Thành phần thứ hai là bậc đê phẩy a, thể hiện số lượng hàng xóm trực tiếp."
     ),
-    "dg_caveat": (
-        "Tuy nhiên, nhiều hàng xóm chưa chắc đã tốt nếu các hàng xóm không liên quan. "
-        "Vì vậy, bậc phải được xét cùng độ đồng nhất, độ bất định "
-        "và các tín hiệu còn lại."
+    "dg_count": "Trong ví dụ, a kết nối với bốn nót nên bậc bằng bốn.",
+    "dg_direct": (
+        "Hai thông tin này giúp bộ định tuyến quan sát trực tiếp cả đặc điểm ngữ nghĩa "
+        "ban đầu lẫn lượng thông tin cấu trúc mà gờ nờ nờ có thể khai thác."
     ),
     "dg_vs_rd": (
         "Cần phân biệt rõ với phần phân tích lúc nãy: ở đó ta dùng bậc tương đối "
         "để so sánh nót với hàng xóm, còn bộ định tuyến của gờ lans dùng bậc thô, "
         "tức trực tiếp số lượng hàng xóm."
     ),
-    # --- Cảnh kết: kết hợp năm signals ---
-    "cb_concat": (
-        "Năm tín hiệu sau đó được kết hợp thành véc-tơ đặc trưng định tuyến f của v. "
-        "Không tín hiệu nào tự mình quyết định nót có được gửi tới lờ lờ mờ hay không."
+    # --- Cảnh 19: ghép năm signal thành f_A ---
+    "rf_cards": (
+        "Đến đây, toàn bộ tín hiệu được ghép thành đặc trưng định tuyến ép phẩy a."
     ),
-    "cb_score": (
-        "Bộ định tuyến học trọng số cho các tín hiệu, tính điểm định tuyến a của v, "
-        "và đưa giá trị này qua một hàm kích hoạt dạng chữ ét. "
-        "Điểm càng cao, nót càng có khả năng hưởng lợi từ lờ lờ mờ."
+    "rf_five": (
+        "Véc-tơ này gồm năm thành phần: véc-tơ biểu diễn của gờ nờ nờ, độ bất định, "
+        "độ đồng nhất ước lượng, đặc trưng gốc và bậc. "
+        "Mỗi thành phần phản ánh một khía cạnh khác nhau của nót a."
     ),
-    "cb_topk": (
-        "Cuối cùng, gờ lans chọn ca nót có điểm cao nhất trong mỗi lô nhỏ. "
-        "Các nót còn lại tiếp tục sử dụng dự đoán gờ nờ nờ, "
-        "nhờ đó duy trì một ngân sách lờ lờ mờ cố định."
+    "rf_note": (
+        "Quan trọng là không có một tín hiệu riêng lẻ nào tự quyết định định tuyến. "
+        "Bộ định tuyến sẽ học cách xem xét tổ hợp của cả năm tín hiệu."
     ),
-    "cb_close": (
-        "Năm tín hiệu lần lượt cho bộ định tuyến biết gờ nờ nờ đã học được gì, tin tưởng đến đâu, "
-        "nót có phù hợp với vùng lân cận không, bản thân nót chứa gì, "
-        "và có bao nhiêu ngữ cảnh cấu trúc. "
-        "Bộ định tuyến học cách kết hợp chúng, thay vì phụ thuộc vào một quy tắc kinh nghiệm cố định."
+    "rf_close": (
+        "Đến đây, năm nguồn thông tin đã được nối thành một véc-tơ đặc trưng định tuyến. "
+        "Véc-tơ này mô tả trạng thái của nót, nhưng chưa phải là quyết định gọi lờ lờ mờ. "
+        "Đã có tín hiệu. Giờ ráp nó vào một kiến trúc chạy được."
     ),
 }
 
@@ -298,10 +397,9 @@ SIGNALS = [
     ("Degree", C_HIGHLIGHT, "Connectivity"),
 ]
 
-# Hai lớp trong ví dụ, cùng quy ước màu với demo_tag().
-CLS_A, CLS_B = C_GNN, C_LLM
-
-SRC_ARCH = "§5.1.1 & Hình 2, tr.5–6"
+# Provenance của phần kiến trúc (cảnh 6–19). Scene khái niệm không hiện stamp
+# nguồn trên hình, xem "Shared Elements" trong plan.md.
+SRC_ARCH = "§5.1.1 & Figure 2, pp.5–6"
 
 
 class S3_01_LocalHomophily(GlanceScene):
@@ -315,7 +413,7 @@ class S3_01_LocalHomophily(GlanceScene):
         # ------------------------------------------------------------------
         # Nhịp 1 — Giới thiệu tín hiệu. Node v và bốn hàng xóm.
         # ------------------------------------------------------------------
-        head = heading("Tín hiệu 1 — Local homophily", color=ACCENT).to_edge(UP, buff=0.75)
+        head = heading("Signal 1: Local homophily", color=ACCENT).to_edge(UP, buff=0.75)
         v_dot = Dot(V_POS, radius=0.24, color=C_GNN)
         v_lab = txt("v", size=22, color=INK).next_to(v_dot, DOWN, buff=0.18)
 
@@ -328,9 +426,9 @@ class S3_01_LocalHomophily(GlanceScene):
             edges.add(Line(V_POS, pos, stroke_width=2.4, color=C_EDGE, z_index=-1))
 
         legend = VGroup(
-            VGroup(Dot(radius=0.1, color=C_GNN), txt("cùng nhãn với v", size=17, color=INK)
+            VGroup(Dot(radius=0.1, color=C_GNN), txt("same label as v", size=17, color=INK)
                    ).arrange(RIGHT, buff=0.2),
-            VGroup(Dot(radius=0.1, color=C_BAD), txt("khác nhãn", size=17, color=INK)
+            VGroup(Dot(radius=0.1, color=C_BAD), txt("different label", size=17, color=INK)
                    ).arrange(RIGHT, buff=0.2),
         ).arrange(DOWN, aligned_edge=LEFT, buff=0.2)
         legend.next_to(edges, DOWN, buff=0.7)
@@ -438,7 +536,6 @@ class S3_01_LocalHomophily(GlanceScene):
             self.play(FadeIn(bad, scale=0.6), run_time=0.7)
             self.play(FadeIn(caption_lo, shift=UP * 0.2), run_time=0.9)
 
-        self.add(source("§4.2.1, tr.4"))
         self.wait(1.2)
 
     # ----------------------------------------------------------------------
@@ -477,7 +574,7 @@ class S3_02_RelativeDegree(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Tín hiệu 2 — Relative degree", color=ACCENT).to_edge(UP, buff=0.75)
+        head = heading("Signal 2: Relative degree", color=ACCENT).to_edge(UP, buff=0.75)
 
         # v có degree 2; hàng xóm u1 degree 5, u2 degree 3.
         v_pos = LEFT * 4.0 + DOWN * 0.2
@@ -498,7 +595,7 @@ class S3_02_RelativeDegree(GlanceScene):
         u1_deg = txt("d = 5", size=19, color=INK).next_to(u1_dot, UP, buff=0.55)
         u2_deg = txt("d = 3", size=19, color=INK).next_to(u2_dot, DOWN, buff=0.55)
 
-        note = txt("Không chỉ hỏi “node có bao nhiêu cạnh?”", size=21, color=MUTED)
+        note = txt("Not just: how many edges does this node have?", size=21, color=MUTED)
         note.to_edge(DOWN, buff=0.75)
 
         with self.voiceover(text=VO["rd_intro"]):
@@ -544,9 +641,9 @@ class S3_02_RelativeDegree(GlanceScene):
         scale_line.shift(RIGHT * 0.3)
         one_mark = Line(UP * 0.28, DOWN * 0.28, color=INK, stroke_width=3)
         one_mark.move_to(scale_line.n2p(1.0))
-        less = txt("kết nối ít hơn hàng xóm", size=16, color=C_BAD)
+        less = txt("less connected than its neighbors", size=16, color=C_BAD)
         less.next_to(scale_line.n2p(0.62), UP, buff=0.45)
-        more = txt("kết nối nhiều hơn", size=16, color=C_GOOD)
+        more = txt("more connected than its neighbors", size=16, color=C_GOOD)
         more.next_to(scale_line.n2p(1.38), UP, buff=0.45)
         marker = Dot(scale_line.n2p(1.0), radius=0.13, color=C_HIGHLIGHT)
 
@@ -570,7 +667,7 @@ class S3_02_RelativeDegree(GlanceScene):
         if numeric.width > 6.2:
             numeric.scale_to_fit_width(6.2)
 
-        caveat = txt("Relative degree thấp ≠ degree tuyệt đối thấp",
+        caveat = txt("Low relative degree ≠ low absolute degree",
                      size=19, color=MUTED).to_edge(DOWN, buff=0.75)
 
         with self.voiceover(text=VO["rd_value"]):
@@ -579,7 +676,6 @@ class S3_02_RelativeDegree(GlanceScene):
                       Indicate(numeric[4], color=C_BAD, scale_factor=1.2), run_time=1.2)
             self.play(FadeIn(caveat, shift=UP * 0.15), run_time=0.8)
 
-        self.add(source("§4.2.1, tr.4"))
         self.wait(1.0)
 
 
@@ -590,12 +686,12 @@ class S3_03_Complementary(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("GNN và LLM mạnh ở hai vùng khác nhau", color=ACCENT)
+        head = heading("GNN and LLM excel in different regions", color=ACCENT)
         head.to_edge(UP, buff=0.7)
 
         chart = line_chart(
             H_SERIES, H_BINS, y_range=(0.0, 1.0, 0.25),
-            width=7.4, height=3.5, bars=H_COUNTS, bar_label="Số node",
+            width=7.4, height=3.5, bars=H_COUNTS, bar_label="Node count",
             x_label="Local homophily bin",
         )
         chart.legend.next_to(chart.axes, RIGHT, buff=0.5).shift(DOWN * 0.55)
@@ -618,8 +714,8 @@ class S3_03_Complementary(GlanceScene):
             stroke_width=0, fill_color=INK, fill_opacity=0.10,
         )
         band.move_to([chart.axes.c2p(4.5, 0.5)[0], chart.axes.get_center()[1], 0])
-        tag_gnn = txt("GNN thắng", size=20, color=C_GNN)
-        tag_llm = txt("LLM thắng", size=20, color=C_LLM)
+        tag_gnn = txt("GNN wins", size=20, color=C_GNN)
+        tag_llm = txt("LLM wins", size=20, color=C_LLM)
 
         with self.voiceover(text=VO["cp_trend"]):
             self.play(FadeIn(band), run_time=0.5)
@@ -644,7 +740,7 @@ class S3_03_Complementary(GlanceScene):
         brace = BraceBetweenPoints(p_gnn, p_llm, direction=LEFT, color=C_GOOD)
         gain = txt("+20.4%", size=26, color=C_GOOD, weight=BOLD)
         gain.next_to(p_llm, UP, buff=0.2)
-        gain_note = txt("chỉ ở nhóm node khó trên Cora — không phải kết quả toàn dataset",
+        gain_note = txt("Cora hard-node group only, not the full dataset",
                         size=18, color=MUTED).to_edge(DOWN, buff=0.72)
 
         with self.voiceover(text=VO["cp_gain"]):
@@ -662,13 +758,13 @@ class S3_03_Complementary(GlanceScene):
             spread = txt("30.1% across structural subpopulations",
                          size=24, color=INK, weight=BOLD)
             spread.next_to(grid, RIGHT, buff=0.7)
-            caveat = txt("là chênh lệch GIỮA các nhóm cấu trúc,\nkhông phải LLM luôn hơn GNN 30.1%",
+            caveat = txt("difference BETWEEN structural groups,\nnot LLM always beating GNN by 30.1%",
                          size=17, color=MUTED, line_spacing=0.8)
             caveat.next_to(spread, DOWN, buff=0.35)
             self.play(FadeIn(spread), run_time=0.7)
             self.play(FadeIn(caveat), run_time=0.7)
 
-        self.add(source("Hình 1, tr.4 & Phụ lục E.5"))
+        self.add(source("Figure 1, p.4 & Appendix E.5"))
         self.wait(1.0)
 
     # ----------------------------------------------------------------------
@@ -691,9 +787,9 @@ class S3_03_Complementary(GlanceScene):
         x_lab.next_to(grid, DOWN, buff=0.25)
         y_lab = txt("Relative degree →", size=17, color=MUTED).rotate(PI / 2)
         y_lab.next_to(grid, LEFT, buff=0.25)
-        corner_lo = txt("khó cho GNN", size=15, color=C_BAD)
+        corner_lo = txt("hard for GNN", size=15, color=C_BAD)
         corner_lo.next_to(grid, DOWN, buff=0.25).align_to(grid, LEFT).shift(DOWN * 0.4)
-        corner_hi = txt("thuận lợi cho GNN", size=15, color=C_GOOD)
+        corner_hi = txt("favorable for GNN", size=15, color=C_GOOD)
         corner_hi.next_to(grid, UP, buff=0.2).align_to(grid, RIGHT)
         return grid, VGroup(x_lab, y_lab, corner_lo, corner_hi)
 
@@ -705,7 +801,7 @@ class S3_04_EstimatedHomophily(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Vấn đề: h_v cần nhãn thật", color=ACCENT).to_edge(UP, buff=0.75)
+        head = heading("Problem: h_v requires true labels", color=ACCENT).to_edge(UP, buff=0.75)
 
         true_h = MathTex(
             r"h_v = \frac{1}{|\mathcal{N}(v)|}\sum_{u \in \mathcal{N}(v)}"
@@ -750,7 +846,7 @@ class S3_04_EstimatedHomophily(GlanceScene):
             ring = Circle(radius=0.26, color=MUTED, stroke_width=2.5).move_to(dot)
             demo.add(VGroup(ring, dot))
         demo.arrange(RIGHT, buff=0.5).next_to(flow, DOWN, buff=0.7)
-        demo_note = txt("viền xám = node thật · ruột = nhãn dự đoán",
+        demo_note = txt("gray outline = true node · fill = predicted label",
                         size=17, color=MUTED).next_to(demo, DOWN, buff=0.3)
 
         with self.voiceover(text=VO["eh_mlp"]):
@@ -778,8 +874,8 @@ class S3_04_EstimatedHomophily(GlanceScene):
 
         # --- Bảng xếp hạng rút gọn ---
         rows = [
-            ("h_v", "1.03", "không dùng được khi inference", MUTED),
-            ("ĥ_v", "3.22", "tốt nhất trong nhóm label-free", C_GOOD),
+            ("h_v", "1.03", "unavailable at inference", MUTED),
+            ("ĥ_v", "3.22", "best label-free signal", C_GOOD),
             ("uncertainty", "3.28", "label-free", MUTED),
         ]
         # Ba cột căn theo mốc x cố định để thẳng hàng, thay vì ép bề rộng ô.
@@ -795,11 +891,11 @@ class S3_04_EstimatedHomophily(GlanceScene):
             table.add(row)
         table.arrange(DOWN, aligned_edge=LEFT, buff=0.4)
         table.move_to(DOWN * 0.35)
-        title_row = txt("Mean rank khi route bằng NCS (thấp = tốt)",
+        title_row = txt("Mean rank under NCS routing (lower is better)",
                         size=20, color=INK, weight=BOLD)
         title_row.next_to(table, UP, buff=0.55).align_to(table, LEFT)
         highlight = panel(table[1], color=C_GOOD, buff=0.18)
-        rank_head = heading("Xếp hạng tín hiệu routing", color=ACCENT).move_to(head)
+        rank_head = heading("Routing signal ranking", color=ACCENT).move_to(head)
 
         with self.voiceover(text=VO["eh_rank"]):
             self.play(FadeOut(VGroup(flow, demo, demo_note, est_h)), run_time=0.6)
@@ -809,7 +905,7 @@ class S3_04_EstimatedHomophily(GlanceScene):
                                   lag_ratio=0.3), run_time=1.6)
             self.play(Create(highlight), run_time=0.9)
 
-        self.add(source("§4.2.2 & Bảng 2, tr.5"))
+        self.add(source("§4.2.2 & Table 2, p.5"))
         self.wait(1.0)
 
 
@@ -847,7 +943,7 @@ class S3_05_Bridge(GlanceScene):
                   stroke_width=3, color=MUTED, max_tip_length_to_length_ratio=0.09)
             for box in models
         ])
-        note = txt("Không dự đoán nhãn — chỉ cho biết node nào khó với GNN",
+        note = txt("Does not predict labels: only identifies nodes hard for GNN",
                    size=20, color=MUTED).to_edge(DOWN, buff=0.75)
 
         with self.voiceover(text=VO["end_summary"]):
@@ -860,8 +956,8 @@ class S3_05_Bridge(GlanceScene):
 
         # --- Ngưỡng cố định bị gạch bỏ, tín hiệu đi vào router học được ---
         threshold = VGroup(
-            txt("Ngưỡng cố định", size=22, color=MUTED),
-            txt("if h_v < 0.5 → gọi LLM", size=19, color=MUTED),
+            txt("Fixed threshold", size=22, color=MUTED),
+            txt("if h_v < 0.5 → query LLM", size=19, color=MUTED),
         ).arrange(DOWN, buff=0.2)
         thr_frame = panel(threshold, color=MUTED, buff=0.3)
         thr_group = VGroup(thr_frame, threshold).move_to(difficulty)
@@ -884,19 +980,18 @@ class S3_05_Bridge(GlanceScene):
                       run_time=1.0)
             self.play(*self.pulses(signals, router), run_time=1.6)
 
-        # --- Chuyển sang Task 4 ---
-        next_card = VGroup(
-            txt("GLANCE Architecture", size=30, color=C_ROUTER, weight=BOLD),
-            txt("Task 4", size=22, color=MUTED),
-        ).arrange(DOWN, buff=0.25)
-        next_frame = panel(next_card, color=C_ROUTER, buff=0.45)
-        card = VGroup(next_frame, next_card).move_to(ORIGIN)
+        # --- Dẫn sang phần năm routing signals (vẫn trong section này) ---
+        next_line = txt("Next: the five signals the router reads from each node",
+                        size=22, color=C_ROUTER, weight=BOLD)
+        if next_line.width > 9.5:
+            next_line.scale_to_fit_width(9.5)
 
         with self.voiceover(text=VO["end_next"]):
             self.play(FadeOut(VGroup(signals, arrows_in)), run_time=0.5)
-            self.play(ReplacementTransform(router, card), run_time=1.0)
-            self.play(card.animate.scale(1.15), run_time=0.8)
-            self.play(FadeOut(card), run_time=0.8)
+            self.play(router.animate.move_to(UP * 0.6), run_time=0.8)
+            next_line.next_to(router, DOWN, buff=0.9)
+            self.play(FadeIn(next_line, shift=UP * 0.15), run_time=0.9)
+            self.play(FadeOut(VGroup(router, next_line)), run_time=0.8)
 
         self.wait(0.6)
 
@@ -933,92 +1028,15 @@ def signal_stack(width=3.5, height=0.62, buff=0.24, text_size=20):
     return stack
 
 
-def vector_row(n=10, color=C_GNN, cell=0.32):
-    """Vector biểu diễn: một hàng ô cùng màu, đậm nhạt khác nhau."""
-    cells = VGroup()
-    for i in range(n):
-        t = 0.25 + 0.65 * (((i * 7) % n) / max(n - 1, 1))
-        cells.add(Square(
-            side_length=cell, stroke_width=1.2, stroke_color=color,
-            fill_color=interpolate_color(BG, color, t), fill_opacity=1,
-        ))
-    cells.arrange(RIGHT, buff=0)
-    return cells
+def step_head(scene, number, title):
+    """Header đánh số cho các cảnh 6–19 (cùng ngôn ngữ hình với section 4).
 
-
-def prob_bars(values, colors=None, width=0.85, height=0.7):
-    """Biểu đồ cột nhỏ cho một phân phối xác suất trên các lớp."""
-    colors = colors or [CLS_A, CLS_B]
-    base = Line(LEFT * width / 2, RIGHT * width / 2, stroke_width=1.6, color=C_EDGE)
-    bars = VGroup()
-    n = len(values)
-    bar_w = width / n * 0.52
-    for i, (val, color) in enumerate(zip(values, colors)):
-        h = max(val * height, 0.02)
-        bar = Rectangle(width=bar_w, height=h, stroke_width=0,
-                        fill_color=color, fill_opacity=0.9)
-        bar.move_to(RIGHT * (-width / 2 + width * (i + 0.5) / n) + UP * h / 2)
-        bars.add(bar)
-    group = VGroup(base, bars)
-    group.bars = bars
-    return group
-
-
-def mlp_net(sizes=(3, 4, 3), x_gap=1.0, y_gap=0.5, color=C_GNN, radius=0.09):
-    """Mạng nhỏ để minh hoạ dropout. `.layers` là list các lớp neuron."""
-    layers = []
-    for i, count in enumerate(sizes):
-        col = VGroup(*[Dot(radius=radius, color=color) for _ in range(count)])
-        col.arrange(DOWN, buff=y_gap - 2 * radius)
-        col.move_to(RIGHT * (i - (len(sizes) - 1) / 2) * x_gap)
-        layers.append(col)
-    links = VGroup()
-    for a, b in zip(layers[:-1], layers[1:]):
-        for p in a:
-            for q in b:
-                links.add(Line(p.get_center(), q.get_center(),
-                               stroke_width=1.0, color=C_EDGE, z_index=-1))
-    net = VGroup(links, *layers)
-    net.layers = layers
-    net.links = links
-    return net
-
-
-def star(center, count, hub_color=C_HIGHLIGHT, leaf_color=MUTED,
-         length=0.95, radius=0.15, angle_offset=PI / 6):
-    """Node trung tâm + `count` hàng xóm toả đều quanh nó."""
-    center = np.array(center, dtype=float)
-    arms, leaves = VGroup(), VGroup()
-    for i in range(count):
-        angle = TAU * i / max(count, 1) + angle_offset
-        tip = center + np.array([np.cos(angle), np.sin(angle), 0.0]) * length
-        arms.add(Line(center, tip, stroke_width=2.2, color=C_EDGE, z_index=-1))
-        leaves.add(Dot(tip, radius=radius * 0.72, color=leaf_color))
-    hub = Dot(center, radius=radius, color=hub_color)
-    group = VGroup(arms, leaves, hub)
-    group.arms, group.leaves, group.hub = arms, leaves, hub
-    return group
-
-
-def punch(text, color=INK):
-    """Dòng “điểm cần nhấn” chốt mỗi cảnh signal.
-
-    Bề rộng và buff chọn sao cho không đụng stamp source ở góc dưới phải.
+    Không phải class: `build.sh` tìm scene bằng cách grep `^class`, nên mọi thứ
+    dùng chung phải là hàm thường.
     """
-    line = txt(text, size=22, color=color, weight=BOLD)
-    if line.width > 6.6:
-        line.scale_to_fit_width(6.6)
-    return line.to_edge(DOWN, buff=0.62)
-
-
-def flashes(starts, target, color=C_ROUTER, width=6):
-    """Xung tín hiệu chạy từ nhiều điểm về một đích."""
-    return [
-        ShowPassingFlash(
-            Line(start, target, stroke_width=width, color=color), time_width=0.5,
-        )
-        for start in starts
-    ]
+    head = step_header(number, title)
+    scene.play(FadeIn(head, shift=DOWN * 0.08), run_time=0.42)
+    return head
 
 
 class S3_06_FiveSignals(GlanceScene):
@@ -1028,8 +1046,6 @@ class S3_06_FiveSignals(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Step 1 — Năm routing signals", color=ACCENT)
-        head.to_edge(UP, buff=0.7)
 
         v_dot = Dot(LEFT * 4.9 + DOWN * 0.25, radius=0.26, color=INK)
         v_lab = txt("v", size=24, color=INK).next_to(v_dot, DOWN, buff=0.2)
@@ -1042,7 +1058,7 @@ class S3_06_FiveSignals(GlanceScene):
         ])
 
         with self.voiceover(text=VO["fs_open"]):
-            self.play(Write(head), run_time=1.3)
+            step_head(self, 6, "Step 1: five routing signals")
             self.play(GrowFromCenter(v_dot), FadeIn(v_lab), run_time=0.9)
             for box, link in zip(stack, links):
                 self.play(Create(link), FadeIn(box, shift=RIGHT * 0.15), run_time=0.62)
@@ -1064,676 +1080,816 @@ class S3_06_FiveSignals(GlanceScene):
                 for box, (_, color, _) in zip(stack, SIGNALS)
             ], run_time=1.2)
 
-        self.add(source(SRC_ARCH))
         self.wait(0.8)
 
 
-class S3_07_NodeEmbedding(GlanceScene):
-    """Cảnh 7 — Signal 1: node embedding z_G(v)."""
+class S3_07_ThreeSources(GlanceScene):
+    """Cảnh 7 — ba nguồn thông tin nuôi năm signal (nguyên S4_03)."""
 
     section, section_name = SECTION, SECTION_NAME
 
     def construct(self):
         self.banner()
-        head = heading("Signal 1 — Node embedding", color=C_GNN).to_edge(UP, buff=0.7)
+        step_head(self, 7, "Three information sources for Node A")
 
-        # Dùng lại đúng đồ thị demo của cả video; node 4 đóng vai node v.
-        graph = demo_tag(radius=0.13, scale=0.62)
-        graph.move_to(LEFT * 4.3 + DOWN * 0.4)
-        v_node = graph.nodes[4]
-        v_lab = txt("v", size=20, color=INK).next_to(v_node, DOWN, buff=0.14)
-        ring = ego_ring(graph, 4, [0, 1, 2, 3], color=C_GNN)
-        # Nhãn đặt phía trên vòng: bên dưới là node 10 của demo graph.
-        ring_lab = txt("k-hop neighborhood", size=16, color=C_GNN)
-        ring_lab.next_to(ring, UP, buff=0.15)
-
-        gnn_box = labeled_box("GNN", C_GNN, width=2.0, height=0.85)
-        gnn_box.move_to(RIGHT * 1.2 + UP * 1.9)
-        feed = Arrow(graph.get_right(), gnn_box.get_left(), buff=0.25,
-                     stroke_width=3, color=MUTED,
-                     max_tip_length_to_length_ratio=0.07)
-
-        hops = [graph.nodes[i].get_center() for i in (0, 1, 2, 3)]
-
-        with self.voiceover(text=VO["ne_intro"]):
-            self.play(Write(head), run_time=1.2)
-            self.play(FadeIn(graph), FadeIn(v_lab), run_time=1.0)
-            self.play(Create(ring), FadeIn(ring_lab), run_time=0.9)
-            self.play(FadeIn(gnn_box), GrowArrow(feed), run_time=0.9)
-
-        # --- Tổng hợp neighborhood thành một vector ---
-        mapping = MathTex(
-            r"\{\mathbf{x}_u : u \in \mathcal{N}_k(v)\}",
-            r"\;\xrightarrow{\;F\;}\;",
-            r"\mathbf{z}_G(v)",
-            font_size=32,
+        node_A = avatar_node("A", target=True, radius=0.38).move_to(LEFT * 5.30)
+        node_label = txt("NODE A", 21, MUTED, BOLD).next_to(node_A, DOWN, buff=0.20)
+        cards = VGroup(
+            equation_card(r"z_G(A),\ p_{H,A},\ u_A", "GNN: graph + node features", 5.75, 1.16, True),
+            equation_card(r"p_{Q,A}=Q(x_A)", "MLP Q: node feature only", 5.75, 1.16),
+            equation_card(r"\mathcal I_A^{\mathrm{direct}}=(x_A,d_A)", "direct information", 5.75, 1.16),
         )
-        mapping[2].set_color(C_GNN)
-        mapping.move_to(RIGHT * 3.0 + UP * 0.35)
-        if mapping.width > 6.4:
-            mapping.scale_to_fit_width(6.4)
-
-        vec = vector_row(10, color=C_GNN).move_to(RIGHT * 3.0 + DOWN * 1.3)
-        vec_lab = MathTex(r"\mathbf{z}_G(v)", font_size=28, color=C_GNN)
-        vec_lab.next_to(vec, DOWN, buff=0.25)
-
-        with self.voiceover(text=VO["ne_build"]):
-            self.play(*flashes(hops, v_node.get_center(), color=C_GNN, width=5),
-                      run_time=1.4)
-            self.play(Write(mapping), run_time=1.8)
-            self.play(LaggedStart(*[FadeIn(c, scale=0.6) for c in vec],
-                                  lag_ratio=0.06), run_time=1.3)
-            self.play(FadeIn(vec_lab), run_time=0.6)
-
-        # --- Không phải nhãn dự đoán: vector đi vào router, head là nhánh khác ---
-        pred_box = labeled_box("GNN prediction head", MUTED, width=3.6, height=0.8)
-        pred_box[1].set(font_size=19)
-        pred_box[1].move_to(pred_box[0])
-        pred_box.move_to(RIGHT * 2.7 + UP * 2.0)
-        y_hat = MathTex(r"\hat y_v", font_size=30, color=MUTED)
-        y_hat.next_to(pred_box, RIGHT, buff=0.45)
-
-        router_box = labeled_box("Router", C_ROUTER, width=2.6, height=0.85)
-        router_box.move_to(RIGHT * 2.7 + DOWN * 0.9)
-
-        neq = MathTex(r"\mathbf{z}_G(v) \neq \hat y_v", font_size=30)
-        neq[0][:7].set_color(C_GNN)
-
-        with self.voiceover(text=VO["ne_not_pred"]):
-            self.play(FadeOut(VGroup(graph, v_lab, ring, ring_lab, feed,
-                                     gnn_box, mapping)), run_time=0.7)
-            self.play(VGroup(vec, vec_lab).animate.move_to(LEFT * 3.6 + UP * 0.5),
-                      run_time=0.9)
-            neq.next_to(vec_lab, DOWN, buff=0.55)
-            self.play(FadeIn(router_box, scale=0.85),
-                      GrowArrow(Arrow(vec.get_right(), router_box.get_left(), buff=0.3,
-                                      stroke_width=3, color=C_ROUTER,
-                                      max_tip_length_to_length_ratio=0.09)),
-                      run_time=1.1)
-            self.play(FadeIn(pred_box),
-                      GrowArrow(Arrow(vec.get_right(), pred_box.get_left(), buff=0.3,
-                                      stroke_width=3, color=MUTED,
-                                      max_tip_length_to_length_ratio=0.09)),
-                      FadeIn(y_hat), run_time=1.1)
-            self.play(Write(neq), run_time=1.0)
-            self.play(FadeIn(punch(
-                "Node embedding = GNN đã nhìn thấy gì trong neighborhood?",
-                color=C_GNN)), run_time=0.8)
-
-        self.add(source(SRC_ARCH))
-        self.wait(1.0)
-
-
-class S3_08_Uncertainty(GlanceScene):
-    """Cảnh 8 — Signal 2: node uncertainty qua dropout."""
-
-    section, section_name = SECTION, SECTION_NAME
-
-    # Neuron bị tắt ở từng lần chạy (chỉ số trong lớp ẩn 4 neuron).
-    DROPOUT = [(1,), (0, 3), (2,), (1, 3), (0,)]
-    # Phân phối thu được: ổn định (uncertainty thấp) vs dao động (uncertainty cao).
-    STABLE = [[0.86, 0.14], [0.82, 0.18], [0.88, 0.12], [0.84, 0.16], [0.87, 0.13]]
-    UNSTABLE = [[0.75, 0.25], [0.30, 0.70], [0.55, 0.45], [0.25, 0.75], [0.65, 0.35]]
-
-    def construct(self):
-        self.banner()
-        head = heading("Signal 2 — Node uncertainty", color=C_BAD).to_edge(UP, buff=0.7)
-
-        v_dot = Dot(LEFT * 6.2 + UP * 0.4, radius=0.2, color=INK)
-        net = mlp_net().move_to(LEFT * 4.5 + UP * 0.4)
-        feed = Arrow(v_dot.get_right(), net.get_left(), buff=0.2, stroke_width=2.5,
-                     color=MUTED, max_tip_length_to_length_ratio=0.14)
-        drop_lab = txt("dropout khi suy luận", size=17, color=C_BAD)
-        drop_lab.next_to(net, DOWN, buff=0.4)
-
-        with self.voiceover(text=VO["un_intro"]):
-            self.play(Write(head), run_time=1.2)
-            self.play(GrowFromCenter(v_dot), GrowArrow(feed), run_time=0.7)
-            self.play(FadeIn(net), run_time=1.1)
-            self.play(FadeIn(drop_lab), run_time=0.6)
-
-        # --- Năm lần chạy: hai kịch bản phân phối ---
-        hidden = net.layers[1]
-        rows, labels = VGroup(), VGroup()
-        for values, y, color, name in (
-            (self.STABLE, 1.45, C_GOOD, "Low uncertainty"),
-            (self.UNSTABLE, -1.05, C_BAD, "High uncertainty"),
-        ):
-            row = VGroup(*[prob_bars(v) for v in values])
-            row.arrange(RIGHT, buff=0.4).move_to(RIGHT * 1.9 + UP * y)
-            rows.add(row)
-            lab = txt(name, size=22, color=color)
-            lab.next_to(row, DOWN, buff=0.35)
-            labels.add(lab)
-
-        legend = VGroup(
-            VGroup(Square(0.16, stroke_width=0, fill_color=CLS_A, fill_opacity=0.9),
-                   txt("lớp A", size=15, color=MUTED)).arrange(RIGHT, buff=0.15),
-            VGroup(Square(0.16, stroke_width=0, fill_color=CLS_B, fill_opacity=0.9),
-                   txt("lớp B", size=15, color=MUTED)).arrange(RIGHT, buff=0.15),
-        ).arrange(RIGHT, buff=0.5)
-        legend.next_to(rows[0], UP, buff=0.4)
-
-        with self.voiceover(text=VO["un_dropout"]):
-            self.play(FadeIn(legend), run_time=0.5)
-            for i, off in enumerate(self.DROPOUT):
-                dropped = VGroup(*[hidden[j] for j in off])
-                self.play(dropped.animate.set_opacity(0.15), run_time=0.28)
-                self.play(FadeIn(rows[0][i], scale=0.7),
-                          FadeIn(rows[1][i], scale=0.7), run_time=0.42)
-                self.play(dropped.animate.set_opacity(1.0), run_time=0.22)
-            self.play(FadeIn(labels[0], shift=UP * 0.15),
-                      FadeIn(labels[1], shift=UP * 0.15), run_time=0.9)
-
-        # --- Uncertainty cao chỉ là một signal, không phải lệnh gọi LLM ---
-        question = txt("?", size=40, color=C_BAD, weight=BOLD)
-        question.next_to(labels[1], RIGHT, buff=0.35)
-
-        chip = txt("unc_v cao", size=21, color=C_BAD)
-        chip_frame = panel(chip, color=C_BAD, buff=0.25)
-        chip_group = VGroup(chip_frame, chip).move_to(LEFT * 4.5 + UP * 1.7)
-        router_box = labeled_box("Router", C_ROUTER, width=2.4, height=0.8)
-        router_box.move_to(LEFT * 4.5 + UP * 0.1)
-        heads = VGroup(
-            labeled_box("GNN", C_GNN, width=1.5, height=0.65),
-            labeled_box("LLM", C_LLM, width=1.5, height=0.65),
-        ).arrange(RIGHT, buff=0.5).move_to(LEFT * 4.5 + DOWN * 1.6)
-        for box in heads:
-            box[1].set(font_size=20)
-            box[1].move_to(box[0])
-        wire_in = Arrow(chip_group.get_bottom(), router_box.get_top(), buff=0.12,
-                        stroke_width=3, color=C_ROUTER,
-                        max_tip_length_to_length_ratio=0.2)
-        wires_out = VGroup(*[
-            Arrow(router_box.get_bottom(), box.get_top(), buff=0.12, stroke_width=2.6,
-                  color=MUTED, max_tip_length_to_length_ratio=0.2)
-            for box in heads
+        cards.arrange(DOWN, buff=0.24).move_to(RIGHT * 2.25)
+        branch_x = -3.70
+        trunk_in = Line(node_A.get_right(), [branch_x, 0, 0], color=MUTED, stroke_width=2.1)
+        trunk = Line([branch_x, cards[2].get_center()[1], 0], [branch_x, cards[0].get_center()[1], 0],
+                     color=MUTED, stroke_width=2.0)
+        branches = VGroup(*[
+            small_arrow([branch_x, card.get_center()[1], 0], card.get_left(),
+                        color=MUTED, stroke_width=2.0, buff=0.08)
+            for card in cards
         ])
-        note = txt("không đi thẳng tới LLM", size=17, color=MUTED)
-        note.next_to(heads, DOWN, buff=0.3)
 
-        with self.voiceover(text=VO["un_caveat"]):
-            self.play(FadeIn(question, scale=0.6), run_time=0.6)
-            self.play(FadeOut(VGroup(v_dot, feed, net, drop_lab)), run_time=0.6)
-            self.play(FadeIn(chip_group), run_time=0.7)
-            self.play(GrowArrow(wire_in), FadeIn(router_box, scale=0.85), run_time=1.0)
-            self.play(*[GrowArrow(w) for w in wires_out], FadeIn(heads), run_time=1.0)
-            self.play(FadeIn(note), run_time=0.6)
-            self.play(FadeIn(punch(
-                "Uncertainty = GNN có ổn định với dự đoán của mình không?",
-                color=C_BAD)), run_time=0.8)
+        with self.voiceover(text=VO["ts_intro"]):
+            self.play(GrowFromCenter(node_A), run_time=0.4)
+            self.play(FadeIn(node_label), Create(trunk_in), Create(trunk), run_time=0.65)
 
-        self.add(source(SRC_ARCH))
-        self.wait(1.0)
+        for branch, card, key in zip(branches, cards, ("ts_gnn", "ts_mlp", "ts_direct")):
+            with self.voiceover(text=VO[key]):
+                self.play(GrowArrow(branch), FadeIn(card, shift=RIGHT * 0.08), run_time=0.52)
+
+        with self.voiceover(text=VO["ts_close"]):
+            pass
+        self.wait(0.6)
 
 
-class S3_09_SoftHomophily(GlanceScene):
-    """Cảnh 9 — Signal 3: soft homophily estimation (phương trình 1)."""
+class S3_08_InitialState(GlanceScene):
+    """Cảnh 8 — trạng thái ban đầu h_A^(0) = x_A (nguyên S4_04)."""
 
     section, section_name = SECTION, SECTION_NAME
 
-    P_V = [0.8, 0.2]
-    P_NB = [[0.2, 0.8], [0.4, 0.6], [0.3, 0.7]]   # trung bình = [0.3, 0.7]
-    P_MEAN = [0.3, 0.7]
+    def construct(self):
+        self.banner()
+        step_head(self, 8, "The initial state as a substitution")
+
+        equation = mt(r"h_A^{(0)}=x_A", 68).move_to(UP * 0.45)
+        step_label = txt("DEFINITION", 22, MUTED, BOLD).next_to(equation, DOWN, buff=0.35)
+        timeline_line = Line(LEFT * 1.25, RIGHT * 1.25, color=C_EDGE, stroke_width=2.0).move_to(DOWN * 1.15)
+        dots = VGroup(*[
+            Circle(radius=0.13, stroke_color=MUTED, stroke_width=1.7,
+                   fill_color=INK if i == 0 else BG, fill_opacity=1)
+            for i in range(3)
+        ]).arrange(RIGHT, buff=0.85).move_to(timeline_line)
+        step_numbers = VGroup(*[
+            txt(str(i), 17, BG if i == 1 else MUTED, BOLD).move_to(dot)
+            for i, dot in enumerate(dots, start=1)
+        ])
+
+        with self.voiceover(text=VO["is_layer0"]):
+            self.play(
+                Write(equation), FadeIn(step_label), Create(timeline_line),
+                FadeIn(dots), FadeIn(step_numbers),
+                run_time=0.85,
+            )
+
+        feature_example = mt(r"x_A=[0.8,-0.1,0.5]", 62).move_to(equation)
+        feature_label = txt("EXAMPLE FEATURE", 22, MUTED, BOLD).move_to(step_label)
+        with self.voiceover(text=VO["is_example"]):
+            self.play(
+                FadeOut(equation, shift=UP * 0.06),
+                Transform(step_label, feature_label),
+                dots[0].animate.set_fill(BG), dots[1].animate.set_fill(INK),
+                step_numbers[0].animate.set_color(MUTED), step_numbers[1].animate.set_color(BG),
+                run_time=0.45,
+            )
+            self.play(FadeIn(feature_example, shift=UP * 0.06), run_time=0.45)
+        equation = feature_example
+
+        substituted = mt(r"h_A^{(0)}=[0.8,-0.1,0.5]", 62).move_to(equation)
+        result_label = txt("INITIAL HIDDEN STATE", 22, INK, BOLD).move_to(step_label)
+        with self.voiceover(text=VO["is_noneighbor"]):
+            self.play(
+                FadeOut(equation, shift=UP * 0.06),
+                Transform(step_label, result_label),
+                dots[1].animate.set_fill(BG), dots[2].animate.set_fill(INK),
+                step_numbers[1].animate.set_color(MUTED), step_numbers[2].animate.set_color(BG),
+                run_time=0.48,
+            )
+            self.play(FadeIn(substituted, shift=UP * 0.06), run_time=0.47)
+
+        note = takeaway_chip("At layer 0, the hidden state equals the original text feature")
+        self.play(FadeIn(note, shift=UP * 0.08), run_time=0.42)
+        self.wait(0.9)
+
+
+class S3_09_Aggregate(GlanceScene):
+    """Cảnh 9 — AGGREGATE gộp hàng xóm (nguyên S4_05)."""
+
+    section, section_name = SECTION, SECTION_NAME
 
     def construct(self):
         self.banner()
-        head = heading("Signal 3 — Soft homophily estimation", color=C_GOOD)
-        head.to_edge(UP, buff=0.7)
+        step_head(self, 9, "AGGREGATE: combine the neighbors")
 
-        # --- Bản cứng của §4.2.2, để đối chiếu ---
-        hard = MathTex(
-            r"\hat h_v", r"=", r"\frac{1}{|\mathcal{N}(v)|}\sum_{u \in \mathcal{N}(v)}",
-            r"\mathbf{1}[\hat y_u = \hat y_v]",
-            font_size=32,
+        summary = fit_width(mt(
+            r"m_A^{(\ell)}=\operatorname{AGGREGATE}^{(\ell)}"
+            r"\!\left(\{h_u^{(\ell-1)}\mid u\in N(A)\}\right)",
+            46,
+        ), 11.8).move_to(UP * 0.20)
+        with self.voiceover(text=VO["ag_open"]):
+            self.play(Write(summary), run_time=1.0)
+        self.wait(0.35)
+        self.play(summary.animate.scale(0.76).move_to(DOWN * 2.35), run_time=0.65)
+
+        state_specs = [("B", r"[1,0]"), ("C", r"[0,1]"), ("D", r"[1,1]"), ("E", r"[0,0]")]
+        states = VGroup(*[
+            VGroup(
+                avatar_node(label, radius=0.21),
+                mt(rf"h_{{{label}}}^{{(\ell-1)}}={value}", 34),
+            ).arrange(RIGHT, buff=0.24)
+            for label, value in state_specs
+        ]).arrange(DOWN, aligned_edge=LEFT, buff=0.24).move_to(LEFT * 4.65 + UP * 0.35)
+        aggregate = module_box("AGGREGATE", "example: mean", width=2.65, height=1.12,
+                               emphasized=True).move_to(LEFT * 0.40 + UP * 0.30)
+        message = equation_card(r"m_A^{(\ell)}=[0.5,0.5]", "neighbor message", 3.35, 1.12,
+                                True).move_to(RIGHT * 4.35 + UP * 0.30)
+        in_arrows = VGroup(*[
+            small_arrow(state.get_right(), aggregate.get_left(), color=C_EDGE, stroke_width=1.5, buff=0.09)
+            for state in states
+        ])
+        out_arrow = small_arrow(aggregate.get_right(), message.get_left(), color=MUTED,
+                                stroke_width=2.1, buff=0.10)
+
+        with self.voiceover(text=VO["ag_collect"]):
+            self.play(LaggedStart(*[FadeIn(state, shift=RIGHT * 0.08) for state in states],
+                                  lag_ratio=0.10), run_time=0.75)
+        with self.voiceover(text=VO["ag_combine"]):
+            self.play(*[GrowArrow(arrow) for arrow in in_arrows], FadeIn(aggregate), run_time=0.72)
+            self.play(GrowArrow(out_arrow), FadeIn(message, shift=RIGHT * 0.08), run_time=0.58)
+
+        detailed = fit_width(mt(
+            r"m_A^{(\ell)}=\frac{[1,0]+[0,1]+[1,1]+[0,0]}{4}=[0.5,0.5]",
+            38,
+        ), 11.4).move_to(DOWN * 2.28)
+        with self.voiceover(text=VO["ag_math"]):
+            self.play(TransformMatchingTex(summary, detailed), run_time=1.0)
+        self.wait(0.9)
+
+
+class S3_10_Update(GlanceScene):
+    """Cảnh 10 — UPDATE gộp trạng thái cũ với thông điệp mới (nguyên S4_06)."""
+
+    section, section_name = SECTION, SECTION_NAME
+
+    def construct(self):
+        self.banner()
+        step_head(self, 10, "UPDATE: combine old state and new message")
+
+        old_state = equation_card(r"h_A^{(\ell-1)}=[0.2,0.8]", "state before update",
+                                  3.75, 1.10).move_to(LEFT * 4.55 + UP * 1.00)
+        message = equation_card(r"m_A^{(\ell)}=[0.6,0.4]", "neighbor message",
+                                3.75, 1.10).move_to(LEFT * 4.55 + DOWN * 0.95)
+        update = module_box("UPDATE", "combine two inputs", width=2.75, height=1.15,
+                            emphasized=True).move_to(LEFT * 0.25)
+        new_state = equation_card(r"h_A^{(\ell)}=[0.4,0.6]", "illustrative result",
+                                  3.65, 1.12, True).move_to(RIGHT * 4.25)
+        arrows = VGroup(
+            small_arrow(old_state.get_right(), update.get_left(), color=C_EDGE, buff=0.10),
+            small_arrow(message.get_right(), update.get_left(), color=C_EDGE, buff=0.10),
+            small_arrow(update.get_right(), new_state.get_left(), color=MUTED, stroke_width=2.2, buff=0.10),
         )
-        hard[0].set_color(C_GOOD)
-        hard.move_to(RIGHT * 2.6 + UP * 1.7)
-        if hard.width > 6.6:
-            hard.scale_to_fit_width(6.6)
-        hard_tag = txt("bản cứng — chỉ so hai nhãn", size=17, color=MUTED)
-        hard_tag.next_to(hard, DOWN, buff=0.3)
-        soft_tag = txt("bản mềm — dùng cả phân phối xác suất", size=17, color=C_GOOD)
-        soft_tag.move_to(hard_tag)
 
-        with self.voiceover(text=VO["sh_intro"]):
-            self.play(Write(head), run_time=1.3)
-            self.play(Write(hard), run_time=1.6)
-            self.play(FadeIn(hard_tag), run_time=0.6)
-            self.play(Indicate(hard[3], color=C_GOOD, scale_factor=1.15), run_time=0.9)
-            self.play(FadeTransform(hard_tag, soft_tag), run_time=0.8)
+        with self.voiceover(text=VO["up_intro"]):
+            self.play(FadeIn(old_state), FadeIn(message), run_time=0.55)
+        with self.voiceover(text=VO["up_example"]):
+            self.play(GrowArrow(arrows[0]), GrowArrow(arrows[1]), FadeIn(update), run_time=0.7)
+        with self.voiceover(text=VO["up_result"]):
+            self.play(GrowArrow(arrows[2]), FadeIn(new_state, shift=RIGHT * 0.08), run_time=0.6)
 
-        # --- MLP Q trả về phân phối cho v và cho từng hàng xóm ---
-        q_box = labeled_box("MLP Q", C_ROUTER, width=1.9, height=0.55)
-        q_box[1].set(font_size=19)
-        q_box[1].move_to(q_box[0])
-        q_box.move_to(LEFT * 4.3 + UP * 2.35)
+        update_eq = fit_width(mt(
+            r"h_A^{(\ell)}=\operatorname{UPDATE}^{(\ell)}"
+            r"\!\left(h_A^{(\ell-1)},m_A^{(\ell)}\right)",
+            42,
+        ), 10.8).move_to(DOWN * 2.05)
+        caveat = txt("The numeric output illustrates the role of UPDATE; "
+                     "learned parameters determine the real value.", 19, MUTED)
+        caveat.next_to(update_eq, DOWN, buff=0.20)
+        with self.voiceover(text=VO["up_caveat"]):
+            self.play(Write(update_eq), run_time=0.85)
+            self.play(FadeIn(caveat), run_time=0.45)
+        self.wait(0.9)
 
-        row_v = VGroup(
-            prob_bars(self.P_V),
-            MathTex(r"\mathbf{p}_{Q,v} = [0.8,\, 0.2]", font_size=26, color=INK),
-        ).arrange(RIGHT, buff=0.35).move_to(LEFT * 4.3 + UP * 1.5)
 
-        nbs = VGroup()
-        for i, p in enumerate(self.P_NB):
-            nbs.add(VGroup(
-                prob_bars(p),
-                MathTex(rf"\mathbf{{p}}_{{Q,u_{i + 1}}}", font_size=22, color=MUTED),
-            ).arrange(DOWN, buff=0.14))
-        nbs.arrange(RIGHT, buff=0.45).move_to(LEFT * 4.3 + DOWN * 0.3)
+class S3_11_BeforeAfter(GlanceScene):
+    """Cảnh 11 — biểu diễn của A trước và sau UPDATE (nguyên S4_07)."""
 
-        mean_row = VGroup(
-            prob_bars(self.P_MEAN),
-            MathTex(r"\overline{\mathbf{p}}_{Q,\mathcal{N}(v)} = [0.3,\, 0.7]",
-                    font_size=24, color=INK),
-        ).arrange(RIGHT, buff=0.35).move_to(LEFT * 4.3 + DOWN * 2.1)
-        mean_arrow = Arrow(nbs.get_bottom(), mean_row.get_top(), buff=0.15,
-                           stroke_width=2.6, color=MUTED,
-                           max_tip_length_to_length_ratio=0.22)
-        mean_lab = txt("trung bình", size=15, color=MUTED)
-        mean_lab.next_to(mean_arrow, RIGHT, buff=0.15)
+    section, section_name = SECTION, SECTION_NAME
 
-        with self.voiceover(text=VO["sh_dist"]):
-            self.play(FadeIn(q_box), run_time=0.6)
-            self.play(FadeIn(row_v, shift=UP * 0.15), run_time=0.9)
-            self.play(LaggedStart(*[FadeIn(n, shift=UP * 0.15) for n in nbs],
-                                  lag_ratio=0.25), run_time=1.4)
-            self.play(GrowArrow(mean_arrow), FadeIn(mean_lab), run_time=0.7)
-            self.play(FadeIn(mean_row, shift=UP * 0.15), run_time=0.9)
+    def construct(self):
+        self.banner()
+        step_head(self, 11, "How Node A changes after UPDATE")
 
-        # --- Phương trình 1 ---
-        eq = MathTex(
-            r"\hat h_v", r"=", r"\mathbf{p}_{Q,v}", r"\cdot",
-            r"\left(\frac{1}{|\mathcal{N}_1(v)|}"
-            r"\sum_{u \in \mathcal{N}_1(v)} \mathbf{p}_{Q,u}\right)",
-            font_size=34,
+        before_node = avatar_node("A", target=True, radius=0.38)
+        before = VGroup(
+            txt("BEFORE UPDATE", 22, MUTED, BOLD),
+            before_node,
+            mt(r"h_A^{(\ell-1)}=[0.2,0.8]", 39),
+            txt("current representation", 21, MUTED),
+        ).arrange(DOWN, buff=0.24).move_to(LEFT * 3.65 + DOWN * 0.05)
+        after_node = avatar_node("A", target=True, radius=0.38)
+        after = VGroup(
+            txt("AFTER UPDATE", 22, INK, BOLD),
+            after_node,
+            mt(r"h_A^{(\ell)}=[0.4,0.6]", 39),
+            txt("includes neighbor evidence", 21, MUTED),
+        ).arrange(DOWN, buff=0.24).move_to(RIGHT * 3.65 + DOWN * 0.05)
+        transition = small_arrow(LEFT * 1.55, RIGHT * 1.55, color=MUTED, stroke_width=2.4, buff=0.0)
+        update_label = txt("UPDATE", 24, INK, BOLD).next_to(transition, UP, buff=0.20)
+        message_label = mt(r"+\ m_A^{(\ell)}", 33, MUTED).next_to(transition, DOWN, buff=0.18)
+
+        with self.voiceover(text=VO["ba_identity"]):
+            self.play(FadeIn(before, shift=RIGHT * 0.08), run_time=0.65)
+        with self.voiceover(text=VO["ba_before"]):
+            self.play(GrowArrow(transition), FadeIn(update_label), Write(message_label), run_time=0.7)
+        with self.voiceover(text=VO["ba_after"]):
+            self.play(TransformFromCopy(before_node, after_node), FadeIn(after[0]),
+                      Write(after[2]), FadeIn(after[3]), run_time=0.85)
+
+        identity = takeaway_chip("The paper is still Node A; only its learned representation changes")
+        with self.voiceover(text=VO["ba_repeat"]):
+            self.play(FadeIn(identity, shift=UP * 0.08), run_time=0.45)
+        self.wait(0.9)
+
+
+class S3_12_NodeEmbedding(GlanceScene):
+    """Cảnh 12 — Signal 1: z_G(A), tách khỏi dự đoán p_H,A (nguyên S4_08).
+
+    p_{H,A} vẫn lên hình nhưng được ghi rõ là dự đoán được lưu lại, không phải
+    một thành phần của f_A. Mở cảnh bằng `demo_tag()` — đồ thị 12 node dùng
+    chung cả video (plan.md, "Shared Elements") — để section 3 vẫn giữ motif đó;
+    node 4 là hub homophily cao, ở đây đóng vai node A.
+    """
+
+    section, section_name = SECTION, SECTION_NAME
+
+    def construct(self):
+        self.banner()
+        step_head(self, 12, "Signal 1: the GNN node embedding")
+
+        graph = demo_tag(radius=0.13, scale=0.62).move_to(LEFT * 3.70 + DOWN * 0.35)
+        a_lab = txt("A", 19, INK, BOLD).next_to(graph.nodes[4], DOWN, buff=0.16)
+        ring = ego_ring(graph, 4, [0, 1, 2, 3], color=C_GNN)
+        # Nhãn đặt phía trên vòng: bên dưới vòng là node 10 của demo graph.
+        ring_lab = txt("k-hop neighborhood", 17, C_GNN).next_to(ring, UP, buff=0.18)
+
+        gnn = module_box("GNN", "backbone", width=2.5, height=1.35, emphasized=True)
+        gnn.move_to(RIGHT * 3.10)
+        feed = small_arrow(graph.get_right(), gnn.get_left(), color=MUTED,
+                           stroke_width=2.1, buff=0.30)
+
+        with self.voiceover(text=VO["ep_graph"]):
+            self.play(FadeIn(graph), FadeIn(a_lab), run_time=0.9)
+            self.play(Create(ring), FadeIn(ring_lab), run_time=0.7)
+            self.play(GrowArrow(feed), FadeIn(gnn), run_time=0.8)
+
+        embedding_title = txt("NODE EMBEDDING", 21, MUTED, BOLD).move_to(LEFT * 0.5 + UP * 1.35)
+        prediction_title = txt("INITIAL PREDICTION", 21, MUTED, BOLD).move_to(LEFT * 0.5 + DOWN * 1.10)
+        emb = feature_strip(r"z_G(A)", n=10, cell_size=0.31, math_label=True).move_to(RIGHT * 3.55 + UP * 1.35)
+        pred = probability_bars(r"p_{H,A}", [0.45, 0.40, 0.15], width=3.0,
+                                math_label=True).move_to(RIGHT * 3.45 + DOWN * 1.10)
+
+        with self.voiceover(text=VO["ep_two"]):
+            self.play(
+                FadeOut(VGroup(graph, a_lab, ring, ring_lab, feed)),
+                gnn.animate.move_to(LEFT * 4.75),
+                run_time=0.9,
+            )
+
+        # Dựng mũi tên sau khi khối GNN đã về chỗ, nếu không đầu mũi tên lệch.
+        arr1 = small_arrow(gnn.get_right(), embedding_title.get_left(), color=MUTED, stroke_width=2.1, buff=0.18)
+        arr2 = small_arrow(gnn.get_right(), prediction_title.get_left(), color=MUTED, stroke_width=2.1, buff=0.18)
+
+        router_tag = txt("ROUTER SIGNAL", 17, C_ROUTER, BOLD).next_to(emb, DOWN, buff=0.22)
+        with self.voiceover(text=VO["ep_embedding"]):
+            self.play(GrowArrow(arr1), FadeIn(embedding_title), run_time=0.6)
+            self.play(FadeIn(emb, shift=RIGHT * 0.10), run_time=0.65)
+            self.play(FadeIn(router_tag), run_time=0.4)
+
+        with self.voiceover(text=VO["ep_prediction"]):
+            self.play(GrowArrow(arr2), FadeIn(prediction_title), run_time=0.55)
+            self.play(FadeIn(pred, shift=RIGHT * 0.10), run_time=0.65)
+
+        stored_tag = txt("STORED GNN PREDICTION · NOT PART OF THE ROUTING FEATURE",
+                         17, MUTED, BOLD)
+        stored_tag = fit_width(stored_tag, 6.4).next_to(pred, DOWN, buff=0.22)
+        formula = mt(r"p_{H,A}=\operatorname{softmax}\!\left(H(z_G(A))\right)",
+                     34).move_to(DOWN * 2.62 + LEFT * 2.90)
+        with self.voiceover(text=VO["ep_head"]):
+            self.play(Write(formula), run_time=0.8)
+            self.play(FadeIn(stored_tag), run_time=0.45)
+        self.wait(0.8)
+
+
+class S3_13_Uncertainty(GlanceScene):
+    """Cảnh 13 — Signal 2: u_A ước lượng qua nhiều lượt dropout (nguyên S4_09)."""
+
+    section, section_name = SECTION, SECTION_NAME
+
+    def construct(self):
+        self.banner()
+        step_head(self, 13, "Signal 2: GNN uncertainty from dropout passes")
+
+        gnn = module_box("GNN + dropout", "same Node A", width=2.8, height=1.25,
+                         emphasized=True).move_to(LEFT * 4.60)
+        passes = VGroup(*[
+            probability_bars(f"pass {idx + 1}", values, width=2.1).scale(0.90)
+            for idx, values in enumerate([
+                [0.45, 0.40, 0.15],
+                [0.38, 0.47, 0.15],
+                [0.49, 0.36, 0.15],
+            ])
+        ]).arrange(DOWN, aligned_edge=LEFT, buff=0.28).move_to(LEFT * 0.30)
+        pass_arrows = VGroup(*[
+            small_arrow(gnn.get_right(), p.get_left(), color=C_EDGE, stroke_width=1.7, buff=0.10)
+            for p in passes
+        ])
+
+        with self.voiceover(text=VO["uc_stable"]):
+            self.play(FadeIn(gnn), run_time=0.45)
+        with self.voiceover(text=VO["uc_dropout"]):
+            self.play(
+                LaggedStart(*[AnimationGroup(GrowArrow(a), FadeIn(p))
+                              for a, p in zip(pass_arrows, passes)], lag_ratio=0.16),
+                run_time=1.0,
+            )
+
+        uncertainty = math_module_box(r"u_A", "variation across passes", width=3.0, height=1.10,
+                                      emphasized=True).move_to(RIGHT * 4.65)
+        with self.voiceover(text=VO["uc_high"]):
+            self.play(ReplacementTransform(VGroup(passes, pass_arrows), uncertainty), run_time=0.8)
+
+        note = txt("Larger variation means higher uncertainty", 25, MUTED, BOLD).move_to(DOWN * 2.10)
+        caveat = txt("The source does not define a unique closed-form equation for u_A",
+                     19, MUTED).next_to(note, DOWN, buff=0.16)
+        with self.voiceover(text=VO["uc_signal"]):
+            self.play(FadeIn(note), FadeIn(caveat), run_time=0.65)
+        self.wait(0.8)
+
+
+class S3_14_MLPQ(GlanceScene):
+    """Cảnh 14 — MLP Q chạy trên đặc trưng nót, không dùng cạnh (nguyên S4_10)."""
+
+    section, section_name = SECTION, SECTION_NAME
+
+    def construct(self):
+        self.banner()
+        step_head(self, 14, "MLP Q uses node features only")
+
+        mlp_frame = RoundedRectangle(
+            width=6.4, height=3.85, corner_radius=0.18,
+            stroke_color=MUTED, stroke_width=1.6, fill_color=BG, fill_opacity=1,
+        ).move_to(LEFT * 0.90 + UP * 0.25)
+        mlp_label = txt("MLP Q", 26, INK, BOLD).move_to(mlp_frame.get_top() + DOWN * 0.38)
+        with self.voiceover(text=VO["mq_intro"]):
+            self.play(Create(mlp_frame), FadeIn(mlp_label), run_time=0.5)
+
+        layer_xs = [-2.8, -1.0, 0.8]
+        counts = [4, 5, 3]
+        neuron_layers = VGroup()
+        for x, count in zip(layer_xs, counts):
+            layer = VGroup(*[
+                Circle(radius=0.12, stroke_color=MUTED, stroke_width=1.4, fill_color=BG, fill_opacity=1)
+                for _ in range(count)
+            ]).arrange(DOWN, buff=0.27).move_to(RIGHT * x + DOWN * 0.05)
+            neuron_layers.add(layer)
+        connections = VGroup()
+        for left_layer, right_layer in zip(neuron_layers[:-1], neuron_layers[1:]):
+            for left_n in left_layer:
+                for right_n in right_layer:
+                    connections.add(Line(left_n.get_center(), right_n.get_center(),
+                                         buff=0.12, color=C_EDGE, stroke_width=0.75))
+        with self.voiceover(text=VO["mq_nostructure"]):
+            self.play(Create(connections), FadeIn(neuron_layers), run_time=0.8)
+
+        input_y = neuron_layers[0].get_center()[1]
+        output_y = neuron_layers[-1].get_center()[1]
+        input_label = mt(r"x_A", 36).move_to([mlp_frame.get_left()[0] - 0.75, input_y, 0])
+        output_label = mt(r"p_{Q,A}", 36).move_to([mlp_frame.get_right()[0] + 0.90, output_y, 0])
+        input_arrow = small_arrow(
+            [input_label.get_right()[0], input_y, 0],
+            [neuron_layers[0].get_left()[0], input_y, 0],
+            color=MUTED, stroke_width=2.1, buff=0.08,
         )
-        eq[0].set_color(C_GOOD)
-        eq.move_to(RIGHT * 2.6 + UP * 1.7)
-        if eq.width > 6.8:
-            eq.scale_to_fit_width(6.8)
-        eq_note = txt("hai phân phối càng giống nhau → giá trị càng cao",
-                      size=17, color=MUTED)
-        eq_note.next_to(eq, DOWN, buff=0.32)
+        output_arrow = small_arrow(
+            [neuron_layers[-1].get_right()[0], output_y, 0],
+            [output_label.get_left()[0], output_y, 0],
+            color=MUTED, stroke_width=2.1, buff=0.08,
+        )
+        with self.voiceover(text=VO["mq_output"]):
+            self.play(Write(input_label), GrowArrow(input_arrow), run_time=0.5)
+            self.play(*[n.animate.set_fill(INK) for layer in neuron_layers for n in layer], run_time=0.55)
+            self.play(GrowArrow(output_arrow), Write(output_label), run_time=0.5)
 
+        outputs = VGroup(*[
+            probability_bars(rf"p_{{Q,{label}}}", vals, width=1.20, math_label=True).scale(0.76)
+            for label, vals in zip("ABCDE", [
+                [0.20, 0.55, 0.25], [0.28, 0.50, 0.22], [0.36, 0.45, 0.19],
+                [0.44, 0.40, 0.16], [0.52, 0.35, 0.13],
+            ])
+        ]).arrange(DOWN, aligned_edge=LEFT, buff=0.16).move_to(RIGHT * 5.25 + DOWN * 0.15)
+        with self.voiceover(text=VO["mq_shared"]):
+            self.play(ReplacementTransform(output_label.copy(), outputs[0]), run_time=0.42)
+            for idx, label in enumerate("BCDE", start=1):
+                new_input = mt(rf"x_{{{label}}}", 31, MUTED).move_to(input_label)
+                self.play(Transform(input_label, new_input),
+                          FadeIn(outputs[idx], shift=RIGHT * 0.08), run_time=0.35)
+
+        formula_q = mt(r"p_{Q,v}=Q(x_v)", 38).move_to(DOWN * 2.02 + LEFT * 0.85)
+        note_q = txt("No graph structure - No message passing", 20, MUTED, BOLD).next_to(
+            formula_q, DOWN, buff=0.14)
+        with self.voiceover(text=VO["mq_purpose"]):
+            self.play(Write(formula_q), FadeIn(note_q), run_time=0.7)
+        self.wait(0.8)
+
+
+class S3_15_NeighborAverage(GlanceScene):
+    """Cảnh 15 — trung bình phân phối của hàng xóm (nguyên S4_11)."""
+
+    section, section_name = SECTION, SECTION_NAME
+
+    def construct(self):
+        self.banner()
+        step_head(self, 15, "Average one prediction from each neighbor")
+
+        node_A = avatar_node("A", target=True, radius=0.32).move_to(UP * 0.55)
+        positions = {
+            "B": UP * 1.75,
+            "C": LEFT * 1.75 + UP * 0.55,
+            "D": RIGHT * 1.75 + UP * 0.55,
+            "E": DOWN * 0.65,
+        }
+        neighbors = {label: avatar_node(label, radius=0.22).move_to(pos) for label, pos in positions.items()}
+        edges = VGroup(*[
+            Line(node_A.get_center(), neighbors[label].get_center(), buff=0.28,
+                 color=C_EDGE, stroke_width=1.8)
+            for label in positions
+        ])
+        prediction_data = {
+            "B": r"p_{Q,B}=[.20,.55,.25]",
+            "C": r"p_{Q,C}=[.25,.50,.25]",
+            "D": r"p_{Q,D}=[.30,.47,.23]",
+            "E": r"p_{Q,E}=[.35,.40,.25]",
+        }
+        prediction_positions = {
+            "B": UP * 2.35,
+            "C": LEFT * 4.35 + UP * 0.55,
+            "D": RIGHT * 4.35 + UP * 0.55,
+            "E": DOWN * 1.18,
+        }
+        with self.voiceover(text=VO["na_collect"]):
+            self.play(Create(edges), FadeIn(node_A), FadeIn(VGroup(*neighbors.values())), run_time=0.7)
+            self.bring_to_front(node_A, *neighbors.values())
+            predictions = VGroup()
+            for label in "BCDE":
+                prediction = mt(prediction_data[label], 27, MUTED).move_to(prediction_positions[label])
+                predictions.add(prediction)
+                self.play(
+                    FadeIn(prediction,
+                           shift=0.08 * (prediction.get_center() - neighbors[label].get_center())),
+                    run_time=0.42,
+                )
+        graph_group = VGroup(edges, node_A, *neighbors.values())
+
+        sum_definition = MathTex(
+            r"S_A", r":=", r"\sum_{u\in N(A)}p_{Q,u}",
+            font_size=52, color=INK,
+        )
+        sum_definition[0].move_to(LEFT * 5.65 + UP * 0.55)
+        VGroup(sum_definition[1], sum_definition[2]).arrange(RIGHT, buff=0.12).next_to(
+            sum_definition[0], RIGHT, buff=0.16,
+        )
+        sum_symbol = sum_definition[0]
+        current_sum_rhs = VGroup(sum_definition[1], sum_definition[2])
+        with self.voiceover(text=VO["na_sum"]):
+            self.play(FadeOut(graph_group), FadeOut(predictions), run_time=0.72)
+            self.play(Write(sum_symbol), Write(current_sum_rhs), run_time=0.70)
+
+        sum_expansion = fit_width(
+            MathTex(
+                r"S_A", r"=",
+                r"[.20,.55,.25]", r"+", r"[.25,.50,.25]", r"+",
+                r"[.30,.47,.23]", r"+", r"[.35,.40,.25]",
+                font_size=42, color=INK,
+            ),
+            12.0,
+        )
+        expansion_rhs = VGroup(*sum_expansion[1:]).next_to(sum_symbol, RIGHT, buff=0.16)
+        with self.voiceover(text=VO["na_divide"]):
+            self.play(FadeOut(current_sum_rhs), run_time=0.24)
+            self.play(FadeIn(expansion_rhs, shift=UP * 0.04), run_time=0.52)
+            current_sum_rhs = expansion_rhs
+            self.wait(0.20)
+
+            sum_value = MathTex(
+                r"S_A", r"=", r"[1.10,1.92,0.98]",
+                font_size=55, color=INK,
+            )
+            value_rhs = VGroup(sum_value[1], sum_value[2])
+            value_symbol_guide = sum_symbol.copy()
+            VGroup(value_symbol_guide, value_rhs).arrange(RIGHT, buff=0.16).move_to(UP * 0.35)
+            symbol_value_target = value_symbol_guide.get_center().copy()
+            self.play(FadeOut(current_sum_rhs), run_time=0.24)
+            self.play(
+                sum_symbol.animate.move_to(symbol_value_target),
+                FadeIn(value_rhs),
+                run_time=0.55,
+            )
+
+        mean_prefix = MathTex(
+            r"\bar p_{Q,N(A)}", r"=", r"\frac{1}{|N(A)|}",
+            font_size=49, color=INK,
+        )
+        with self.voiceover(text=VO["na_average"]):
+            self.play(
+                FadeOut(value_rhs),
+                sum_symbol.animate.move_to(ORIGIN),
+                run_time=0.48,
+            )
+            mean_prefix.next_to(sum_symbol, LEFT, buff=0.14)
+            mean_prefix_target = mean_prefix.get_center().copy()
+            mean_prefix.move_to(mean_prefix_target + DOWN * 0.85).set_opacity(0)
+            self.add(mean_prefix)
+            self.play(
+                mean_prefix.animate.move_to(mean_prefix_target).set_opacity(1),
+                run_time=0.72,
+                rate_func=smooth,
+            )
+
+            substitution = MathTex(
+                r"=", r"\frac{1}{4}", r"[1.10,1.92,0.98]",
+                font_size=43, color=MUTED,
+            ).next_to(sum_symbol, RIGHT, buff=0.14)
+            self.play(FadeIn(substitution, shift=RIGHT * 0.12), run_time=0.58)
+            self.wait(0.2)
+
+            final_average = MathTex(
+                r"\bar p_{Q,N(A)}", r"=", r"[0.275,0.480,0.245]",
+                font_size=55, color=INK,
+            ).move_to(ORIGIN)
+            self.play(
+                FadeOut(VGroup(mean_prefix, sum_symbol, substitution), shift=UP * 0.04),
+                FadeIn(final_average, shift=UP * 0.04),
+                run_time=0.65,
+            )
+
+        result_note = takeaway_chip("Final average neighborhood distribution")
+        with self.voiceover(text=VO["na_meaning"]):
+            self.play(FadeIn(result_note, shift=UP * 0.08), run_time=0.42)
+        self.wait(0.9)
+
+
+class S3_16_SoftHomophily(GlanceScene):
+    """Cảnh 16 — Signal 3: h mũ A bằng tích vô hướng (nguyên S4_12).
+
+    Đoạn cuối giữ lại bảng hard vs soft của bản S3_09 cũ: phiên bản mềm còn giữ
+    được mức độ chắc chắn, thay vì chỉ 0 hoặc 1.
+    """
+
+    section, section_name = SECTION, SECTION_NAME
+
+    def construct(self):
+        self.banner()
+        step_head(self, 16, "Signal 3: compare Node A with its neighborhood")
+
+        p_a = probability_bars(r"p_{Q,A}", [0.56, 0.28, 0.16], width=2.45, math_label=True)
+        p_mean = probability_bars(r"\bar p_{Q,N(A)}", [0.28, 0.48, 0.24], width=2.45, math_label=True)
+        p_a.move_to(LEFT * 3.20 + UP * 1.40)
+        p_mean.move_to(RIGHT * 2.20 + UP * 1.40)
+        dot = mt(r"\cdot", 52).move_to((p_a.get_right() + p_mean.get_left()) / 2)
+        with self.voiceover(text=VO["sh_compare"]):
+            self.play(FadeIn(p_a, shift=UP * 0.08), FadeIn(p_mean, shift=UP * 0.08), run_time=0.65)
+            self.play(Write(dot), run_time=0.35)
+
+        formula_h = mt(
+            r"\hat h_A=p_{Q,A}\cdot\bar p_{Q,N(A)}"
+            r"=p_{Q,A}\cdot\left(\frac{1}{|N(A)|}\sum_{u\in N(A)}p_{Q,u}\right)",
+            38,
+        ).move_to(UP * 0.30)
         with self.voiceover(text=VO["sh_dot"]):
-            self.play(FadeOut(soft_tag), run_time=0.3)
-            self.play(TransformMatchingTex(hard, eq), run_time=1.6)
-            self.play(Indicate(eq[2], color=C_GOOD, scale_factor=1.2),
-                      Indicate(row_v[0], color=C_GOOD, scale_factor=1.15), run_time=1.1)
-            self.play(Indicate(eq[4], color=C_GOOD, scale_factor=1.05),
-                      Indicate(mean_row[0], color=C_GOOD, scale_factor=1.15),
-                      run_time=1.1)
-            self.play(FadeIn(eq_note), run_time=0.6)
+            self.play(Write(formula_h), run_time=1.0)
 
-        # --- Thay số cho chính ví dụ bên trái ---
-        numeric = MathTex(r"\hat h_v", r"=", r"0.8(0.3) + 0.2(0.7)", r"=", r"0.38",
-                          font_size=34)
-        numeric[0].set_color(C_GOOD)
-        numeric[4].set_color(C_BAD)
-        numeric.move_to(RIGHT * 2.6 + DOWN * 0.4)
-        if numeric.width > 6.6:
-            numeric.scale_to_fit_width(6.6)
-        low_note = txt("thấp → node không hợp xu hướng của neighborhood",
-                       size=17, color=C_BAD)
-        low_note.next_to(numeric, DOWN, buff=0.3)
+        result = VGroup(
+            math_module_box(r"\hat h_A", "estimated local homophily", width=3.2, height=1.05,
+                            emphasized=True),
+            mt(r"\hat h_A\in[0,1]", 38),
+        ).arrange(RIGHT, buff=0.65).move_to(DOWN * 1.35 + RIGHT * 0.35)
+        with self.voiceover(text=VO["sh_meaning"]):
+            self.play(TransformFromCopy(VGroup(p_a, p_mean), result[0]), Write(result[1]), run_time=0.8)
 
-        with self.voiceover(text=VO["sh_example"]):
-            self.play(Write(numeric), run_time=1.6)
-            self.play(Indicate(numeric[4], color=C_BAD, scale_factor=1.25), run_time=1.0)
-            self.play(FadeIn(low_note), run_time=0.7)
-
-        # --- Cứng chỉ có 0/1, mềm giữ được mức độ chắc chắn ---
+        # --- Bản cứng chỉ có 0/1, bản mềm giữ được mức độ chắc chắn (từ S3_09 cũ) ---
         compare = VGroup(
-            VGroup(txt("hard", size=19, color=MUTED),
-                   txt("0  hoặc  1", size=21, color=MUTED)).arrange(RIGHT, buff=0.45),
-            VGroup(txt("soft", size=19, color=C_GOOD),
-                   txt("0.82   0.56   0.31", size=21, color=C_GOOD)
-                   ).arrange(RIGHT, buff=0.45),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.3)
-        compare.move_to(RIGHT * 2.6 + DOWN * 2.3)
-        compare_frame = panel(compare, color=C_EDGE, buff=0.28)
+            VGroup(txt("hard", 20, MUTED, BOLD),
+                   txt("0  or  1", 22, MUTED)).arrange(RIGHT, buff=0.55),
+            VGroup(txt("soft", 20, C_HIGHLIGHT, BOLD),
+                   txt("0.82   0.56   0.31", 22, C_HIGHLIGHT)).arrange(RIGHT, buff=0.55),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.32)
+        compare_frame = panel(compare, color=C_EDGE, buff=0.32)
+        compare_group = VGroup(compare_frame, compare).move_to(DOWN * 1.30)
+        compare_head = txt("The soft version keeps how confident MLP Q is",
+                           20, INK, BOLD).next_to(compare_group, UP, buff=0.38)
 
         with self.voiceover(text=VO["sh_soft"]):
-            self.play(FadeIn(compare_frame), FadeIn(compare[0]), run_time=0.9)
-            self.play(FadeIn(compare[1], shift=RIGHT * 0.2), run_time=0.9)
-            self.play(FadeIn(punch(
-                "Homophily estimation = Node có phù hợp với neighborhood không?",
-                color=C_GOOD)), run_time=0.8)
+            self.play(FadeOut(VGroup(p_a, p_mean, dot, formula_h)), run_time=0.5)
+            self.play(result.animate.move_to(UP * 1.85), run_time=0.6)
+            self.play(FadeIn(compare_head), FadeIn(compare_frame), FadeIn(compare[0]), run_time=0.7)
+            self.play(FadeIn(compare[1], shift=RIGHT * 0.2), run_time=0.7)
 
-        self.add(source("§5.1.1, tr.5"))
-        self.wait(1.0)
+        prior = takeaway_chip("Estimated homophily is a routing prior")
+        with self.voiceover(text=VO["sh_prior"]):
+            self.play(FadeIn(prior, shift=UP * 0.08), run_time=0.42)
+        self.wait(0.8)
 
 
-class S3_10_NodeFeatures(GlanceScene):
-    """Cảnh 10 — Signal 4: original node features x_v."""
+class S3_17_NodeFeatures(GlanceScene):
+    """Cảnh 17 — Signal 4: đặc trưng gốc x_A (nửa trái của S4_13 cũ)."""
 
     section, section_name = SECTION, SECTION_NAME
 
     def construct(self):
         self.banner()
-        head = heading("Signal 4 — Original node features", color=C_LLM)
-        head.to_edge(UP, buff=0.7)
+        step_head(self, 17, "Signal 4: the original node feature")
 
-        v_dot = Dot(LEFT * 4.3 + UP * 2.0, radius=0.22, color=C_LLM)
-        v_lab = txt("v", size=20, color=INK).next_to(v_dot, LEFT, buff=0.2)
-        chip = text_chip("Attention Is All You Need\n"
-                         "We propose the Transformer, a new\n"
-                         "network architecture based solely...", width=4.2)
-        chip.move_to(LEFT * 4.3 + UP * 0.75)
-        open_arrow = Arrow(v_dot.get_bottom(), chip.get_top(), buff=0.12,
-                           stroke_width=2.4, color=MUTED,
-                           max_tip_length_to_length_ratio=0.25)
+        raw_tag = VGroup(txt("RAW TEXT", 20, MUTED, BOLD), mt(r"t_A", 29, MUTED)).arrange(RIGHT, buff=0.14)
+        raw_title = fit_width(
+            txt('"Improving Graph Neural Networks\nunder Heterophily"', 28, INK, BOLD), 6.0)
+        x_vector = feature_strip(r"x_A", n=9, cell_size=0.33, math_label=True)
+        # buff rộng để mũi tên "encode text" giữa tiêu đề và vector còn chỗ thở.
+        text_column = VGroup(raw_tag, raw_title, x_vector).arrange(DOWN, buff=0.62)
+        text_column.move_to(UP * 0.95)
+        text_arrow = small_arrow(raw_title.get_bottom(), x_vector.get_top(),
+                                 color=MUTED, stroke_width=2.1, buff=0.12)
+        encode_label = txt("encode text", 17, MUTED).next_to(text_arrow, RIGHT, buff=0.22)
 
-        x_vec = vector_row(8, color=C_LLM).move_to(RIGHT * 2.6 + UP * 0.75)
-        x_lab = MathTex(r"\mathbf{x}_v", font_size=30, color=C_LLM)
-        x_lab.next_to(x_vec, DOWN, buff=0.25)
-        encode = Arrow(chip.get_right(), x_vec.get_left(), buff=0.35, stroke_width=3,
-                       color=MUTED, max_tip_length_to_length_ratio=0.07)
-        encode_lab = txt("mã hoá text", size=16, color=MUTED)
-        encode_lab.next_to(encode, UP, buff=0.15)
+        with self.voiceover(text=VO["nf_keep"]):
+            self.play(FadeIn(raw_tag), Write(raw_title), run_time=0.7)
+        with self.voiceover(text=VO["nf_vector"]):
+            self.play(GrowArrow(text_arrow), FadeIn(encode_label), run_time=0.42)
+            self.play(TransformFromCopy(raw_title, x_vector), run_time=0.75)
 
-        with self.voiceover(text=VO["nf_intro"]):
-            self.play(Write(head), run_time=1.3)
-            self.play(GrowFromCenter(v_dot), FadeIn(v_lab), run_time=0.7)
-            self.play(GrowArrow(open_arrow), FadeIn(chip, shift=DOWN * 0.15),
-                      run_time=1.0)
-            self.play(GrowArrow(encode), FadeIn(encode_lab), run_time=0.8)
-            self.play(LaggedStart(*[FadeIn(c, scale=0.6) for c in x_vec],
-                                  lag_ratio=0.07), run_time=1.1)
-            self.play(FadeIn(x_lab), run_time=0.5)
+        cards = VGroup(
+            equation_card(r"x_A", "ego information only", 5.05, 1.12, True),
+            equation_card(r"z_G(A)", "ego + neighborhood aggregation", 5.05, 1.12),
+        ).arrange(RIGHT, buff=0.60, aligned_edge=UP).move_to(DOWN * 2.05)
+        with self.voiceover(text=VO["nf_ego"]):
+            self.play(FadeIn(cards[0], shift=UP * 0.08), run_time=0.6)
+            self.play(FadeIn(cards[1], shift=UP * 0.08), run_time=0.6)
+            self.play(Indicate(cards[0], color=C_LLM, scale_factor=1.04), run_time=0.8)
+        self.wait(0.8)
 
-        # --- x_v là ego, z_G(v) là ego + neighborhood ---
-        cards = VGroup()
-        for label, tag, color in (
-            (r"\mathbf{x}_v", "Ego information", C_LLM),
-            (r"\mathbf{z}_G(v)", "Ego + neighborhood aggregation", C_GNN),
-        ):
-            body = VGroup(
-                MathTex(label, font_size=30, color=color),
-                txt(tag, size=18, color=INK),
-            ).arrange(DOWN, buff=0.25)
-            if body.width > 4.4:
-                body.scale_to_fit_width(4.4)
-            cards.add(VGroup(panel(body, color=color, buff=0.3), body))
-        cards.arrange(RIGHT, buff=0.9, aligned_edge=UP).move_to(DOWN * 2.1)
 
-        with self.voiceover(text=VO["nf_compare"]):
-            self.play(FadeIn(cards[0], shift=UP * 0.2), run_time=1.0)
-            self.play(FadeIn(cards[1], shift=UP * 0.2), run_time=1.0)
-            self.play(Indicate(cards[0], color=C_LLM, scale_factor=1.04), run_time=0.9)
+class S3_18_Degree(GlanceScene):
+    """Cảnh 18 — Signal 5: bậc thô d_A (nửa phải của S4_13 cũ).
 
-        # --- Khi text của node xung đột với neighborhood ---
-        conflict = star(LEFT * 4.6 + DOWN * 0.2, 4, hub_color=C_LLM,
-                        leaf_color=C_HIGHLIGHT)
-        ego_note = txt("text của node → lớp A", size=17, color=C_LLM)
-        ego_note.next_to(conflict, UP, buff=0.3)
-        nb_note = txt("hàng xóm → lớp B", size=17, color=C_HIGHLIGHT)
-        nb_note.next_to(conflict, DOWN, buff=0.3)
+    Cuối cảnh giữ cảnh báo của S3_11 cũ: router dùng d_v, còn bậc tương đối
+    d ngang v chỉ xuất hiện trong phần phân tích thực nghiệm §4.2.1.
+    """
 
-        chips = VGroup(
-            VGroup(vector_row(6, color=C_LLM, cell=0.26),
-                   MathTex(r"\mathbf{x}_v", font_size=24, color=C_LLM)
-                   ).arrange(RIGHT, buff=0.3),
-            VGroup(vector_row(6, color=C_GNN, cell=0.26),
-                   MathTex(r"\mathbf{z}_G(v)", font_size=24, color=C_GNN)
-                   ).arrange(RIGHT, buff=0.3),
-        ).arrange(DOWN, buff=1.1).move_to(RIGHT * 0.5 + DOWN * 0.2)
+    section, section_name = SECTION, SECTION_NAME
 
-        router_box = labeled_box("Router", C_ROUTER, width=2.4, height=0.85)
-        router_box.move_to(RIGHT * 4.6 + DOWN * 0.2)
-        wires = VGroup(*[
-            Arrow(c.get_right(), router_box.get_left(), buff=0.25, stroke_width=2.6,
-                  color=MUTED, max_tip_length_to_length_ratio=0.1)
-            for c in chips
+    def construct(self):
+        self.banner()
+        step_head(self, 18, "Signal 5: the degree of Node A")
+
+        degree_A = avatar_node("A", target=True, radius=0.29)
+        degree_neighbors = VGroup(
+            avatar_node("B", radius=0.19).move_to(UP * 1.0),
+            avatar_node("C", radius=0.19).move_to(LEFT * 1.15),
+            avatar_node("D", radius=0.19).move_to(RIGHT * 1.15),
+            avatar_node("E", radius=0.19).move_to(DOWN * 1.0),
+        )
+        degree_edges = VGroup(*[
+            Line(degree_A.get_center(), n.get_center(), buff=0.25, color=C_EDGE, stroke_width=1.8)
+            for n in degree_neighbors
         ])
+        degree_graph = VGroup(degree_edges, degree_A, degree_neighbors)
+        degree_eq = mt(r"d_A=|N(A)|=4", 42)
+        degree_column = VGroup(
+            txt("CITATION NEIGHBORHOOD", 20, MUTED, BOLD), degree_graph, degree_eq,
+        ).arrange(DOWN, buff=0.30).move_to(LEFT * 3.55 + UP * 0.75)
 
-        with self.voiceover(text=VO["nf_conflict"]):
-            self.play(FadeOut(VGroup(v_dot, v_lab, chip, open_arrow, encode,
-                                     encode_lab, x_vec, x_lab, cards)), run_time=0.7)
-            self.play(FadeIn(conflict), FadeIn(ego_note), FadeIn(nb_note), run_time=1.1)
-            self.play(FadeIn(chips), run_time=0.8)
-            self.play(*[GrowArrow(w) for w in wires], FadeIn(router_box, scale=0.85),
-                      run_time=1.0)
-            self.play(FadeIn(punch("Node features = Bản thân node chứa thông tin gì?",
-                                   color=C_LLM)), run_time=0.8)
+        recall = VGroup(
+            txt("FROM THE PREVIOUS STEP", 20, MUTED, BOLD),
+            feature_strip(r"x_A", n=9, cell_size=0.30, math_label=True),
+        ).arrange(DOWN, buff=0.34).move_to(RIGHT * 3.55 + UP * 0.95)
 
-        self.add(source(SRC_ARCH))
-        self.wait(1.0)
+        with self.voiceover(text=VO["dg_degree"]):
+            self.play(FadeIn(degree_column[0]), FadeIn(degree_A), run_time=0.4)
+            self.play(FadeIn(degree_neighbors), Create(degree_edges), run_time=0.65)
+            self.bring_to_front(degree_A, degree_neighbors)
+        with self.voiceover(text=VO["dg_count"]):
+            self.play(Write(degree_eq), run_time=0.55)
 
+        direct_eq = equation_card(
+            r"\mathcal I_A^{\mathrm{direct}}=(x_A,d_A)",
+            "semantic feature + structural degree",
+            width=6.2, height=1.22, emphasized=True,
+        ).move_to(DOWN * 2.15)
+        with self.voiceover(text=VO["dg_direct"]):
+            self.play(FadeIn(recall, shift=LEFT * 0.08), run_time=0.6)
+            self.play(TransformFromCopy(VGroup(recall[1], degree_eq), direct_eq), run_time=0.8)
 
-class S3_11_Degree(GlanceScene):
-    """Cảnh 11 — Signal 5: degree thô d_v (không phải relative degree)."""
-
-    section, section_name = SECTION, SECTION_NAME
-
-    def construct(self):
-        self.banner()
-        head = heading("Signal 5 — Degree", color=C_HIGHLIGHT).to_edge(UP, buff=0.7)
-
-        # angle_offset = PI/2 để không cạnh nào chĩa thẳng xuống chỗ đặt nhãn "v".
-        node = star(LEFT * 4.4 + UP * 0.9, 3, hub_color=C_HIGHLIGHT,
-                    angle_offset=PI / 2)
-        v_lab = txt("v", size=20, color=INK).next_to(node.hub, DOWN, buff=0.22)
-        counter = MathTex(r"d_v = |\mathcal{N}(v)| = 3", font_size=34, color=C_HIGHLIGHT)
-        counter.move_to(LEFT * 4.4 + DOWN * 0.75)
-
-        with self.voiceover(text=VO["dg_intro"]):
-            self.play(Write(head), run_time=1.2)
-            self.play(GrowFromCenter(node.hub), FadeIn(v_lab), run_time=0.7)
-            for arm, leaf in zip(node.arms, node.leaves):
-                self.play(Create(arm), GrowFromCenter(leaf), run_time=0.45)
-            self.play(Write(counter), run_time=1.1)
-
-        # --- Ít hàng xóm = ít context để tổng hợp ---
-        low = star(RIGHT * 0.9 + UP * 0.3, 1, hub_color=C_HIGHLIGHT, length=0.85)
-        high = star(RIGHT * 4.6 + UP * 0.3, 6, hub_color=C_HIGHLIGHT, length=0.85)
-        low_lab = MathTex(r"d_v = 1", font_size=26, color=MUTED)
-        low_lab.next_to(low, UP, buff=0.25)
-        high_lab = MathTex(r"d_v = 6", font_size=26, color=MUTED)
-        high_lab.next_to(high, UP, buff=0.25)
-
-        # Hai thanh đo đặt cùng một cao độ (next_to sẽ lệch vì hai star cao khác nhau).
-        meters = VGroup()
-        for x, frac in ((0.9, 0.18), (4.6, 0.85)):
-            track = Rectangle(width=2.2, height=0.2, stroke_width=1.4,
-                              stroke_color=C_EDGE, fill_opacity=0)
-            track.move_to(RIGHT * x + DOWN * 1.35)
-            fill = Rectangle(width=2.2 * frac, height=0.2, stroke_width=0,
-                             fill_color=C_HIGHLIGHT, fill_opacity=0.85)
-            fill.align_to(track, LEFT).set_y(track.get_y())
-            meters.add(VGroup(track, fill))
-        meter_lab = txt("Neighborhood context", size=17, color=MUTED)
-        meter_lab.next_to(meters, DOWN, buff=0.3)
-
-        with self.voiceover(text=VO["dg_context"]):
-            self.play(FadeIn(VGroup(low, low_lab)), run_time=0.8)
-            self.play(FadeIn(VGroup(high, high_lab)), run_time=0.8)
-            self.play(Create(meters[0][0]), Create(meters[1][0]), run_time=0.6)
-            self.play(GrowFromEdge(meters[0][1], LEFT),
-                      GrowFromEdge(meters[1][1], LEFT), run_time=1.1)
-            self.play(FadeIn(meter_lab), run_time=0.6)
-
-        # --- Nhiều hàng xóm nhưng khác lớp thì không giúp được gì ---
-        warn = cross(color=C_BAD, size=0.34).next_to(high, RIGHT, buff=0.35)
-        warn_note = txt("degree cao nhưng hàng xóm khác lớp", size=17, color=C_BAD)
-        warn_note.next_to(meter_lab, DOWN, buff=0.35)
-
-        with self.voiceover(text=VO["dg_caveat"]):
-            self.play(*[leaf.animate.set_color(C_LLM) for leaf in high.leaves],
-                      run_time=1.0)
-            self.play(FadeIn(warn, scale=0.6), FadeIn(warn_note), run_time=0.9)
-            self.play(Indicate(meters[1][1], color=C_BAD, scale_factor=1.05),
-                      run_time=1.0)
-
-        # --- Đừng lẫn với relative degree của §4.2.1 ---
+        # --- d_v của router khác hẳn bậc tương đối ở §4.2.1 (giữ từ S3_11 cũ) ---
         rows = VGroup(
-            VGroup(MathTex(r"\bar d_v", font_size=28, color=C_LLM),
-                   txt("phân tích §4.2.1 — so v với hàng xóm", size=19, color=MUTED)
-                   ).arrange(RIGHT, buff=0.35),
-            VGroup(MathTex(r"d_v", font_size=28, color=C_HIGHLIGHT),
-                   txt("router GLANCE — đếm thẳng số hàng xóm", size=19, color=INK)
-                   ).arrange(RIGHT, buff=0.35),
-        ).arrange(DOWN, aligned_edge=LEFT, buff=0.35)
+            VGroup(mt(r"\bar d_v", 30, C_LLM),
+                   txt("4.2.1 analysis: compare v with its neighbors", 21, MUTED)
+                   ).arrange(RIGHT, buff=0.40),
+            VGroup(mt(r"d_v", 30, C_HIGHLIGHT),
+                   txt("GLANCE router: directly count the neighbors", 21, INK)
+                   ).arrange(RIGHT, buff=0.40),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.40)
         rows[1][0].align_to(rows[0][0], LEFT)
         rows[1][1].align_to(rows[0][1], LEFT)
-        rows.move_to(DOWN * 0.4)
-        rows_frame = panel(rows, color=C_EDGE, buff=0.35)
-        rows_head = txt("Hai đại lượng khác nhau", size=21, color=INK, weight=BOLD)
-        rows_head.next_to(rows_frame, UP, buff=0.35)
+        rows.move_to(DOWN * 0.35)
+        rows_frame = panel(rows, color=C_EDGE, buff=0.38)
+        rows_head = txt("Two distinct quantities", 24, INK, BOLD).next_to(rows_frame, UP, buff=0.45)
 
         with self.voiceover(text=VO["dg_vs_rd"]):
-            self.play(FadeOut(VGroup(node, v_lab, counter, low, low_lab, high,
-                                     high_lab, meters, meter_lab, warn, warn_note)),
-                      run_time=0.7)
-            self.play(FadeIn(rows_head), FadeIn(rows_frame), run_time=0.8)
-            self.play(FadeIn(rows[0], shift=RIGHT * 0.2), run_time=0.9)
-            self.play(FadeIn(rows[1], shift=RIGHT * 0.2), run_time=0.9)
-            self.play(FadeIn(punch(
-                "Degree = GNN có bao nhiêu thông tin lân cận để sử dụng?",
-                color=C_HIGHLIGHT)), run_time=0.8)
+            self.play(FadeOut(VGroup(degree_column, recall, direct_eq)), run_time=0.6)
+            self.play(FadeIn(rows_head), FadeIn(rows_frame), run_time=0.7)
+            self.play(FadeIn(rows[0], shift=RIGHT * 0.2), run_time=0.8)
+            self.play(FadeIn(rows[1], shift=RIGHT * 0.2), run_time=0.8)
 
-        self.add(source(SRC_ARCH))
-        self.wait(1.0)
+        note = takeaway_chip("Degree: how much neighborhood information can the GNN use?")
+        self.play(FadeIn(note, shift=UP * 0.08), run_time=0.42)
+        self.wait(0.9)
 
 
-class S3_12_Combine(GlanceScene):
-    """Cảnh 12 — router ghép năm signals, tính score và chọn top-k."""
+class S3_19_RoutingFeature(GlanceScene):
+    """Cảnh 19 — ghép năm signal thành f_A rồi bàn giao sang section 4.
+
+    Section 3 dừng tại đây: không tính routing score, không xếp hạng, không
+    top-k — toàn bộ phần đó thuộc section 4.
+    """
 
     section, section_name = SECTION, SECTION_NAME
 
-    SCORES = [0.12, 0.78, 0.31, 0.91, 0.22, 0.64, 0.08, 0.85]
-    K = 3
-
     def construct(self):
         self.banner()
-        head = heading("Router: kết hợp năm signals", color=C_ROUTER)
-        head.to_edge(UP, buff=0.7)
+        step_head(self, 19, "Build the routing feature")
 
-        stack = signal_stack(width=3.1, height=0.55, buff=0.2, text_size=18)
-        stack.move_to(LEFT * 4.4 + DOWN * 0.2)
-
-        # f_v ghép nối: mỗi đoạn giữ màu của signal tương ứng.
-        segs = VGroup()
-        for (_, color, _), count in zip(SIGNALS, (6, 1, 1, 6, 1)):
-            seg = VGroup(*[
-                Square(side_length=0.28, stroke_width=1.1, stroke_color=BG,
-                       fill_color=color, fill_opacity=0.85)
-                for _ in range(count)
-            ]).arrange(RIGHT, buff=0)
-            segs.add(seg)
-        segs.arrange(RIGHT, buff=0.09).move_to(RIGHT * 2.3 + UP * 1.1)
-
-        concat = MathTex(
-            r"\mathbf{f}_v", r"=",
-            r"[\,\mathbf{z}_G(v)\,\|\,\mathrm{unc}_v\,\|\,\hat h_v"
-            r"\,\|\,\mathbf{x}_v\,\|\,d_v\,]",
-            font_size=30,
-        )
-        concat[0].set_color(C_ROUTER)
-        concat.next_to(segs, DOWN, buff=0.45)
-        if concat.width > 6.8:
-            concat.scale_to_fit_width(6.8)
-
-        with self.voiceover(text=VO["cb_concat"]):
-            self.play(Write(head), run_time=1.2)
-            self.play(FadeIn(stack, shift=RIGHT * 0.15), run_time=1.0)
-            for box, seg in zip(stack, segs):
-                self.play(*flashes([box[0].get_right()], seg.get_center(),
-                                   color=box[0].get_stroke_color(), width=4),
-                          FadeIn(seg, scale=0.7), run_time=0.4)
-            self.play(Write(concat), run_time=1.4)
-
-        # --- Routing score qua sigmoid ---
-        score_eq = MathTex(r"a_v", r"=", r"\pi(\mathbf{f}_v)", r"=",
-                           r"\sigma(\mathbf{w}^\top \mathbf{f}_v)", font_size=34)
-        score_eq[0].set_color(C_ROUTER)
-        score_eq.move_to(RIGHT * 2.3 + DOWN * 1.1)
-
-        gauge = NumberLine(x_range=[0, 1, 0.25], length=4.6, include_numbers=True,
-                           font_size=18, color=C_EDGE,
-                           decimal_number_config={"num_decimal_places": 2})
-        gauge.next_to(score_eq, DOWN, buff=0.8)
-        marker = Dot(gauge.n2p(0.0), radius=0.12, color=C_ROUTER)
-        gauge_lab = txt("score cao → nhiều khả năng hưởng lợi từ LLM",
-                        size=17, color=MUTED)
-        gauge_lab.next_to(gauge, DOWN, buff=0.3)
-
-        with self.voiceover(text=VO["cb_score"]):
-            self.play(Write(score_eq), run_time=1.5)
-            self.play(Create(gauge), FadeIn(marker), run_time=0.9)
-            self.play(marker.animate.move_to(gauge.n2p(0.88)), run_time=1.2)
-            self.play(FadeIn(gauge_lab), run_time=0.7)
-
-        # --- Top-k trong mini-batch ---
-        order = sorted(range(len(self.SCORES)), key=lambda i: -self.SCORES[i])
-        routed = set(order[:self.K])
-
-        batch = VGroup()
-        for i, s in enumerate(self.SCORES):
-            dot = Dot(radius=0.17, color=MUTED)
-            lab = txt(f"{s:.2f}", size=16, color=MUTED).next_to(dot, DOWN, buff=0.18)
-            batch.add(VGroup(dot, lab))
-        batch.arrange(RIGHT, buff=0.62).move_to(UP * 1.5)
-        batch_lab = txt("một mini-batch", size=18, color=MUTED)
-        batch_lab.next_to(batch, UP, buff=0.35)
-
-        llm_box = labeled_box("LLM", C_LLM, width=2.2, height=0.85)
-        llm_box.move_to(RIGHT * 3.4 + DOWN * 1.6)
-        gnn_box = labeled_box("GNN", C_GNN, width=2.2, height=0.85)
-        gnn_box.move_to(LEFT * 3.4 + DOWN * 1.6)
-        budget = txt("top-k cố định mỗi batch → ngân sách LLM không đổi",
-                     size=18, color=MUTED)
-        budget.next_to(VGroup(gnn_box, llm_box), DOWN, buff=0.5)
-
-        with self.voiceover(text=VO["cb_topk"]):
-            self.play(FadeOut(VGroup(stack, segs, concat, score_eq, gauge, marker,
-                                     gauge_lab)), run_time=0.7)
-            self.play(FadeIn(batch), FadeIn(batch_lab), run_time=0.8)
-            self.play(FadeIn(llm_box), FadeIn(gnn_box), run_time=0.6)
-            self.play(*[
-                batch[i][0].animate.set_color(C_LLM if i in routed else C_GNN)
-                for i in range(len(self.SCORES))
-            ], *[
-                batch[i][1].animate.set_color(C_LLM if i in routed else MUTED)
-                for i in range(len(self.SCORES))
-            ], run_time=1.0)
+        cards = VGroup(
+            equation_card(r"z_G(A)", "GNN embedding", 2.15, 0.90, True),
+            equation_card(r"u_A", "uncertainty", 2.15, 0.90),
+            equation_card(r"\hat h_A", "homophily", 2.15, 0.90),
+            equation_card(r"x_A", "original feature", 2.15, 0.90),
+            equation_card(r"d_A", "degree", 2.15, 0.90),
+        ).arrange(RIGHT, buff=0.17)
+        cards.scale_to_fit_width(12.0).move_to(UP * 1.35)
+        with self.voiceover(text=VO["rf_cards"]):
             self.play(
-                *flashes([batch[i][0].get_center() for i in routed],
-                         llm_box.get_top(), color=C_LLM, width=5),
-                *flashes([batch[i][0].get_center() for i in range(len(self.SCORES))
-                          if i not in routed],
-                         gnn_box.get_top(), color=C_GNN, width=4),
-                run_time=1.6,
+                LaggedStart(*[FadeIn(card, shift=DOWN * 0.08) for card in cards], lag_ratio=0.10),
+                run_time=0.95,
             )
-            self.play(FadeIn(budget), run_time=0.7)
 
-        # --- Câu chốt: năm câu hỏi mà router nhận được câu trả lời ---
-        questions = VGroup()
-        for (name, color, _), question in zip(SIGNALS, (
-            "GNN đã học được gì?",
-            "GNN tin tưởng đến đâu?",
-            "Node có hợp với neighborhood không?",
-            "Bản thân node chứa gì?",
-            "Có bao nhiêu context cấu trúc?",
-        )):
-            row = VGroup(
-                txt(name, size=19, color=color),
-                txt(question, size=19, color=INK),
-            )
-            row[1].move_to(row[0], aligned_edge=LEFT).shift(RIGHT * 4.3)
-            questions.add(row)
-        questions.arrange(DOWN, aligned_edge=LEFT, buff=0.32).move_to(UP * 0.55)
-        closing = txt("Router học cách kết hợp — không dùng heuristic cố định.",
-                      size=22, color=C_ROUTER, weight=BOLD)
-        closing.next_to(questions, DOWN, buff=0.75)
+        formulas = [
+            r"f_A=[z_G(A)]",
+            r"f_A=[z_G(A),u_A]",
+            r"f_A=[z_G(A),u_A,\hat h_A]",
+            r"f_A=[z_G(A),u_A,\hat h_A,x_A]",
+            r"f_A=[z_G(A),u_A,\hat h_A,x_A,d_A]",
+        ]
+        with self.voiceover(text=VO["rf_five"]):
+            current_formula = mt(formulas[0], 46).move_to(DOWN * 0.25)
+            self.play(TransformFromCopy(cards[0], current_formula), run_time=0.58)
+            for index, formula in enumerate(formulas[1:], start=1):
+                next_formula = mt(formula, 46).move_to(current_formula)
+                self.play(
+                    cards[index][0].animate.set_stroke(INK),
+                    TransformMatchingTex(current_formula, next_formula),
+                    run_time=0.55,
+                )
+                current_formula = next_formula
 
-        with self.voiceover(text=VO["cb_close"]):
-            self.play(FadeOut(VGroup(batch, batch_lab, llm_box, gnn_box, budget)),
-                      run_time=0.7)
-            self.play(LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in questions],
-                                  lag_ratio=0.3), run_time=3.2)
-            self.play(FadeIn(closing, shift=UP * 0.15), run_time=1.2)
+        note = VGroup(
+            txt("FIVE COMPLEMENTARY SIGNALS", 22, INK, BOLD),
+            txt("No single signal decides routing", 21, MUTED),
+        ).arrange(DOWN, buff=0.12).move_to(DOWN * 1.55)
+        with self.voiceover(text=VO["rf_note"]):
+            self.play(FadeIn(note, shift=UP * 0.08), run_time=0.48)
 
-        self.add(source(SRC_ARCH))
-        self.wait(1.2)
+        # --- Bàn giao sang section 4: f_A đã xong, quyết định thì chưa ---
+        next_card = VGroup(
+            txt("GLANCE Architecture", 30, C_ROUTER, BOLD),
+            txt("Section 4", 22, MUTED),
+        ).arrange(DOWN, buff=0.25)
+        next_frame = panel(next_card, color=C_ROUTER, buff=0.45)
+        handoff = VGroup(next_frame, next_card).move_to(DOWN * 1.35)
+
+        with self.voiceover(text=VO["rf_close"]):
+            self.play(FadeOut(VGroup(cards, note)), run_time=0.6)
+            self.play(current_formula.animate.move_to(UP * 1.35), run_time=0.7)
+            self.play(FadeIn(handoff, scale=0.9), run_time=0.9)
+            self.play(handoff.animate.scale(1.08), run_time=0.7)
+            self.play(FadeOut(VGroup(current_formula, handoff)), run_time=0.8)
+
+        self.wait(0.8)

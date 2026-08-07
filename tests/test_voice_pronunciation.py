@@ -25,18 +25,36 @@ FORBIDDEN_ENGLISH = re.compile(
     r"mini batch|average rank|query rate|low[- ]shot|fine[- ]tune|"
     r"Qwen3(?:-Embed)?-8B|Cora|Pubmed|Arxiv23|Top-3|"
     r"node|neighborhood|routing|router|route(?:d)?|signals?|embedding|"
-    r"uncertainty|dropout|estimated (?:local )?homophily|true homophily|"
-    r"heuristics?|degree|original features?|score|sigmoid|layer|representation|"
+    r"dropout|estimated (?:local )?homophily|true homophily|"
+    r"degree|original features?|score|sigmoid|layer|representation|"
     r"backbone|prediction|pipeline|heterophily|heterophilous|context|paper|graph|class|text|"
     r"density|label|proxy|abstract|rewiring|accuracy|freeze|frozen|baseline|"
     r"features?|enhanced|random|correction|WC|CW|datasets?|loss|prior|ego|"
     r"Refiner|vectors?|softmax|prompts?|batch|encoder|shared|semantic|fused|"
-    r"reward|entropy|skip|models?|video|tokens?|Year|Products|overall|heatmap|"
+    r"reward|entropy|skip|models?|tokens?|Year|Products|overall|heatmap|"
     r"difficulty|advantage|OOM|scale|Update|Aggregate|animation|linear|ReLU|"
     r"output|head|message|Task|Enhancer|Predictor|compute|budget|policy|Gain|"
     r"refine(?:d)?|hop|K"
     r")(?![\w-])",
     re.IGNORECASE,
+)
+
+# Tên bài báo được nhóm chốt đọc code-switch nguyên cụm này. Chỉ miễn đúng cụm,
+# còn từ ``context`` đứng ở nơi khác vẫn bị gác như trước.
+ALLOWED_SPOKEN_ENGLISH = (
+    re.compile(r"\bgờ lans for context\b", re.IGNORECASE),
+)
+
+RAW_DECIMAL = re.compile(r"(?<!\w)[+-]?\d+\.\d+(?!\w)")
+NUMBER_WORD = r"(?:không|một|hai|ba|bốn|năm|sáu|bảy|tám|chín|mười|mươi)"
+DECIMAL_WITH_PHAY = re.compile(
+    rf"\b{NUMBER_WORD}\s+phẩy\s+{NUMBER_WORD}\b",
+    re.IGNORECASE,
+)
+RAW_UPPERCASE_SYMBOL = re.compile(r"\b[A-Z]\b")
+RAW_SYMBOL_EXPRESSION = re.compile(
+    r"\b(?:p|z|h|x|d|f)\s+(?:[A-Za-z]|\d)\b|"
+    r"\b(?:z|h|x|d|f)\s+của\s+v\b"
 )
 
 # Hàm nhận lời thoại ở đối số đầu tiên.
@@ -127,7 +145,10 @@ def violations_by_file():
     """{đường dẫn tương đối: [mô tả vi phạm, ...]}"""
     found = {}
     for path, label, text in voiceover_texts():
-        matches = sorted({m.group(0) for m in FORBIDDEN_ENGLISH.finditer(text)})
+        guarded_text = text
+        for allowed in ALLOWED_SPOKEN_ENGLISH:
+            guarded_text = allowed.sub("", guarded_text)
+        matches = sorted({m.group(0) for m in FORBIDDEN_ENGLISH.finditer(guarded_text)})
         if matches:
             rel = path.relative_to(REPO_ROOT).as_posix()
             found.setdefault(rel, []).append(f"{label}: {', '.join(matches)}")
@@ -160,6 +181,42 @@ class VoicePronunciationTest(unittest.TestCase):
             with self.subTest(pronunciation=pronunciation):
                 self.assertIn(pronunciation, script)
         self.assertNotIn("nút", script)
+
+    def test_decimal_pronunciation_uses_cham(self):
+        """Số thập phân phải viết thành lời với “chấm” để TTS đọc đúng."""
+        problems = []
+        for path, label, text in voiceover_texts():
+            if RAW_DECIMAL.search(text) or DECIMAL_WITH_PHAY.search(text):
+                rel = path.relative_to(REPO_ROOT).as_posix()
+                problems.append(f"{rel}: {label}: {text}")
+        self.assertEqual(
+            problems,
+            [],
+            "Số thập phân trong lời thoại phải đọc bằng ‘chấm’, ví dụ "
+            "0.08 → ‘không chấm không tám’.\n" + "\n".join(problems),
+        )
+
+    def test_symbol_letters_are_written_as_spoken_vietnamese(self):
+        """Ký hiệu toán trong lời thoại không được để chữ cái thô cho TTS tự đoán."""
+        problems = []
+        script_parts = []
+        for path, label, text in voiceover_texts():
+            script_parts.append(text.casefold())
+            if RAW_UPPERCASE_SYMBOL.search(text) or RAW_SYMBOL_EXPRESSION.search(text):
+                rel = path.relative_to(REPO_ROOT).as_posix()
+                problems.append(f"{rel}: {label}: {text}")
+        self.assertEqual(
+            problems,
+            [],
+            "Chữ cái trong ký hiệu phải viết theo âm đọc ở plan.md.\n"
+            + "\n".join(problems),
+        )
+        script = " ".join(script_parts)
+        self.assertIn("bê hắc phẩy a", script)
+        self.assertTrue(
+            "dét gờ vê" in script or "dét gờ a" in script,
+            "z_G(v) phải đọc là ‘dét gờ vê’; z_G(A) phải đọc là ‘dét gờ a’.",
+        )
 
 
 if __name__ == "__main__":

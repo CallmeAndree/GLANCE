@@ -2,9 +2,16 @@
 
 Nguồn: paper §5.1 và Hình 2 (tr.5-6); chi tiết prompt ở Phụ lục B.3 (tr.15-16).
 Dựng lại đúng 3 bước trong Hình 2: routing features -> LLM đọc neighborhood
-được route -> refiner hợp nhất embedding. 27 beat (bỏ 3 bản nháp prompt cũ,
-đã gộp vào S4_19) nối tiếp nhau, mỗi beat là một Scene riêng để build.sh render
-và ghép theo thứ tự khai báo.
+được route -> refiner hợp nhất embedding. Mỗi beat là một Scene riêng để
+build.sh render và ghép theo thứ tự khai báo.
+
+Điểm cắt với section 3: section 3 dựng đủ năm signal và dừng ở f_v; section 4
+NHẬN f_v rồi mới bắt đầu (f_v -> a_v -> top-k -> LLM -> refiner). Các beat
+S4_03…S4_14 cũ (ba nguồn thông tin, message passing, MLP Q, soft homophily,
+feature gốc, degree, ghép f_A) đã chuyển nguyên sang s3_nhutanh.py thành
+S3_07…S3_19; ở đây S4_02 chỉ nhắc lại f_v thành một bundle. Số trên pill header
+đã dồn liên tục 1…13 sau khi chuyển; tên class giữ nguyên để không mất cache
+media và thứ tự ghép.
 """
 import pathlib
 import sys
@@ -19,16 +26,9 @@ ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 
 CLASS_NAMES = ["Machine Learning", "Graph Mining", "Data Management"]
 
-# Embedding swatch colors, matched to the reference render in
-# video_GM/glance_30_scenes_clean/script.py (Z_G_COLOR / Z_L0/1/2_COLOR).
-# Scoped to this file only -- every EMB_Z_G/EMB_Z_L1*/EMB_Z_L0/EMB_Z_L2 use
-# below is embedding-related (checked: the "GNN"/"Qwen3-Embed-8B" module
-# boxes use neutral INK/MUTED, not these constants), so swapping them here
-# does not touch the teal/amber meaning those names carry in other sections.
-EMB_Z_G = ManimColor("#4F8CFF")
-EMB_Z_L0 = ManimColor("#9B7BFF")
-EMB_Z_L1 = ManimColor("#56C596")
-EMB_Z_L2 = ManimColor("#F2A65A")
+# S4 dùng chung bảng màu "Deep Graph" của glance_style (GNN xanh dương, LLM cam,
+# Router tím, tín hiệu cyan...). Trước đây file này tự ghi đè màu cục bộ (kể cả
+# LLM = xanh lá, lệch quy ước); đã bỏ để mọi section đồng nhất một bảng màu.
 
 
 # mt() dùng chung từ glance_style, mặc định y như bản cục bộ trước đây
@@ -64,25 +64,20 @@ def _banner(self):
 # Private layout helpers, used only by S4_02's full-pipeline overview.
 # --------------------------------------------------------------------------
 
-INPUT_X = -5.85
-STEP1_BOX = (5.20, 2.70, np.array([-2.40, 1.58, 0.0]))
-STEP2_BOX = (5.20, 2.46, np.array([3.69, 1.60, 0.0]))
-STEP3_BOX = (11.20, 2.21, np.array([0.80, -1.84, 0.0]))
-CORRIDOR_Y = -0.32
+INPUT_X = -6.15
+STEP1_BOX = (5.20, 2.80, np.array([-2.80, 1.45, 0.0]))
+STEP2_BOX = (5.20, 2.80, np.array([3.00, 1.45, 0.0]))
+STEP3_BOX = (11.20, 2.45, np.array([0.10, -2.00, 0.0]))
+CORRIDOR_Y = -0.50
 TEXT_LINE_Y = -0.60
-# Node text feeds step 2 from directly underneath instead of travelling the
-# whole width of the frame from the input column.
-NODE_TEXT_POS = np.array([2.66, -0.04, 0.0])
 # Left compartment of the step 3 frame, reserved for the un-routed branch.
-NO_LLM_X = -4.21
-NO_LLM_PREDICTION_POS = np.array([-3.51, -1.80, 0.0])
+NO_LLM_X = -4.55
+NO_LLM_PREDICTION_POS = np.array([-3.75, -1.90, 0.0])
 # The divider only draws the split; it deliberately does NOT drive the sizes
 # below, so nudging it leaves both compartments' contents where they are.
-NO_LLM_DIVIDER_X = -2.16
-STEP3_CONTENT_W = 7.70
-STEP3_CONTENT_X = 1.88
-# Nudged off the router's centre line so it clears the route arrow above it.
-SKIP_LABEL_X = -1.52
+NO_LLM_DIVIDER_X = -2.45
+STEP3_CONTENT_W = 8.10
+STEP3_CONTENT_X = 1.85
 REFINER_SHRINK = 0.92
 # Straight drop from the step 2 strips into Z_L(A): nudged right of Z_L(A)'s
 # axis, and held clear of both embeddings so it reads as a link, not a stem.
@@ -145,29 +140,29 @@ def _emb_below(label_tex, colors, cells_per_segment, cell_size=0.17):
 
 _LLM_STAGE_CONFIGS = {
     0: dict(
-        number=23, title="Shared LLM encoder: ego embedding",
+        number=6, title="Shared LLM encoder: ego embedding",
         equation=r"z_{L,0}(A)=L(P_0(A))", prompt=r"P_0(A)", subtitle="ego prompt",
-        prompt_width=3.00, color=EMB_Z_L0, output=r"z_{L,0}(A)",
+        prompt_width=3.00, color=C_LLM_LIGHT, output=r"z_{L,0}(A)",
         panel_title="Prompt v0",
         lines=[
             "EGO ONLY",
             "Title: Improving graph neural networks under heterophily",
             "Question: what is the paper category?",
         ],
-        legend="PURPLE · EGO CONTEXT EMBEDDING",
+        legend="LIGHT AMBER · EGO CONTEXT EMBEDDING",
         panel_width=5.75, panel_height=2.55,
     ),
     1: dict(
-        number=24, title="Shared LLM encoder: 1-hop embedding",
+        number=7, title="Shared LLM encoder: 1-hop embedding",
         equation=r"z_{L,1}(A)=L(P_1(A))", prompt=r"P_1(A)", subtitle="ego + direct neighbors",
-        prompt_width=3.35, color=EMB_Z_L1, output=r"z_{L,1}(A)",
+        prompt_width=3.35, color=C_LLM, output=r"z_{L,1}(A)",
         panel_title="Prompt v1",
         lines=[
             "EGO + 1-HOP",
             "Title: Improving graph neural networks under heterophily",
             "Direct citations: graph LLMs; heterophily-aware GNNs",
         ],
-        legend="GREEN · 1-HOP CONTEXT EMBEDDING",
+        legend="BASE AMBER · 1-HOP CONTEXT EMBEDDING",
         panel_width=5.55, panel_height=2.65,
     ),
 }
@@ -225,10 +220,10 @@ def _router_overview(self):
 def _merged_llm_embedding(self):
     """Instantly-buildable end state of S4_26: the merged Z_L(A) strip, the
     starting point for S4_27."""
-    header26 = step_header(26, "Merge the three LLM embeddings")
-    z0 = named_embedding_strip(r"z_{L,0}(A)", EMB_Z_L0, n=7, cell_size=0.25)
-    z1 = named_embedding_strip(r"z_{L,1}(A)", EMB_Z_L1, n=7, cell_size=0.25)
-    z2 = named_embedding_strip(r"z_{L,2}(A)", EMB_Z_L2, n=7, cell_size=0.25)
+    header26 = step_header(9, "Merge the three LLM embeddings")
+    z0 = named_embedding_strip(r"z_{L,0}(A)", C_LLM_LIGHT, n=7, cell_size=0.25)
+    z1 = named_embedding_strip(r"z_{L,1}(A)", C_LLM, n=7, cell_size=0.25)
+    z2 = named_embedding_strip(r"z_{L,2}(A)", C_LLM_DEEP, n=7, cell_size=0.25)
     VGroup(z0, z1, z2).arrange(RIGHT, buff=0.90).move_to(UP * 0.25)
     z0_cells, z1_cells, z2_cells = z0[1], z1[1], z2[1]
     guides = VGroup(
@@ -264,27 +259,26 @@ class S4_01_TAG(GlanceMovingScene):
         with self.voiceover(
             text="Đầu vào của bài toán là một đồ thị có thuộc tính văn bản, được ký hiệu là gờ bằng vê, e và tê."
         ) as tracker:
-            self.play(FadeIn(statement), Write(graph_eq), run_time=max(0.85, tracker.duration))
+            self.play(FadeIn(statement), Write(graph_eq), run_time=0.85)
 
         with self.voiceover(
             text="Trong ví dụ đồ thị trích dẫn này, mỗi nót đại diện cho một bài báo khoa học."
         ) as tracker:
-            self.play(FadeIn(node_def, shift=UP * 0.08), run_time=max(0.5, tracker.duration))
+            self.play(FadeIn(node_def, shift=UP * 0.08), run_time=0.5)
 
         with self.voiceover(text="Các cạnh thể hiện quan hệ trích dẫn giữa các bài báo.") as tracker:
-            self.play(FadeIn(edge_def, shift=UP * 0.08), run_time=max(0.5, tracker.duration))
+            self.play(FadeIn(edge_def, shift=UP * 0.08), run_time=0.5)
 
         with self.voiceover(
             text="Ngoài cấu trúc đồ thị, mỗi nót còn có nội dung văn bản, chẳng hạn như tiêu đề hoặc phần tóm tắt."
         ) as tracker:
-            self.play(FadeIn(text_def, shift=UP * 0.08), run_time=max(0.5, tracker.duration))
+            self.play(FadeIn(text_def, shift=UP * 0.08), run_time=0.5)
 
-        self.say(
-            "Như vậy, mỗi nót đồng thời có hai nguồn thông tin: nội dung của chính nó và mối quan hệ với các nót khác."
-        )
-        # Back to the default bottom-right corner: without the takeaway chip
-        # spanning the frame's bottom edge there is nothing left to collide with.
-        self.add(source("§5.1 và Hình 2, tr.5-6"))
+        takeaway = takeaway_chip("Every paper has graph connections and a text attribute")
+        with self.voiceover(
+            text="Như vậy, mỗi nót đồng thời có hai nguồn thông tin: nội dung của chính nó và mối quan hệ với các nót khác."
+        ) as tracker:
+            self.play(FadeIn(takeaway, shift=UP * 0.08), run_time=0.45)
         self.wait(0.4)
 
 
@@ -298,10 +292,10 @@ class S4_02_EndToEnd(GlanceMovingScene):
 
         positions = [
             ORIGIN,
-            LEFT * 5.2 + UP * 1.85, LEFT * 4.5 + UP * 0.45, LEFT * 5.0 + DOWN * 1.45,
-            LEFT * 3.0 + UP * 2.10, LEFT * 2.8 + UP * 0.80, LEFT * 3.2 + DOWN * 0.75,
-            LEFT * 3.3 + DOWN * 1.85, LEFT * 0.9 + UP * 1.75, LEFT * 0.8 + DOWN * 1.45,
-            RIGHT * 1.2 + UP * 1.85, RIGHT * 1.5 + UP * 0.55, RIGHT * 1.2 + DOWN * 1.60,
+            LEFT * 5.35 + UP * 2.05, LEFT * 4.15 + UP * 0.15, LEFT * 5.15 + DOWN * 1.60,
+            LEFT * 2.75 + UP * 2.15, LEFT * 2.9 + UP * 0.95, LEFT * 3.3 + DOWN * 0.95,
+            LEFT * 3.3 + DOWN * 1.85, LEFT * 1.05 + UP * 1.55, LEFT * 0.95 + DOWN * 1.30,
+            RIGHT * 1.35 + UP * 1.65, RIGHT * 1.7 + UP * 0.55, RIGHT * 1.2 + DOWN * 1.60,
             RIGHT * 3.2 + UP * 2.00, RIGHT * 3.1 + UP * 0.45, RIGHT * 3.4 + DOWN * 1.20,
             RIGHT * 5.1 + UP * 1.35, RIGHT * 4.8 + DOWN * 0.25, RIGHT * 5.25 + DOWN * 1.85,
         ]
@@ -322,13 +316,10 @@ class S4_02_EndToEnd(GlanceMovingScene):
             Line(all_centers[i], all_centers[j], buff=0.17 if i and j else 0.27, color=C_EDGE, stroke_width=1.55)
             for i, j in edge_pairs
         ])
-        # move_to() centres on the bounding box, so nudging any single node
-        # drags the whole graph. Compensated here to keep the other nodes where
-        # they were when node 7 moved left.
-        graph_group = VGroup(dense_edges, other_nodes, target_A).move_to(UP * 0.026)
+        graph_group = VGroup(dense_edges, other_nodes, target_A).move_to(DOWN * 0.05)
         graph_label = VGroup(
-            txt("COMPLEX TEXT-ATTRIBUTED GRAPH", 22, MUTED, BOLD),
-            txt("target: Node A", 23, INK, BOLD),
+            txt("COMPLEX TEXT-ATTRIBUTED GRAPH", 18, MUTED, BOLD),
+            txt("target: node A", 19, INK, BOLD),
         ).arrange(DOWN, buff=0.15).next_to(graph_group, DOWN, buff=0.20)
 
         with self.voiceover(
@@ -337,12 +328,15 @@ class S4_02_EndToEnd(GlanceMovingScene):
             self.play(
                 Create(dense_edges),
                 LaggedStart(*[GrowFromCenter(n) for n in other_nodes], lag_ratio=0.025),
-                run_time=max(1.25, tracker.duration),
+                run_time=1.25,
             )
-        with self.voiceover(text="Ở đây, chúng ta tập trung vào nót A.") as tracker:
-            self.play(GrowFromCenter(target_A), FadeIn(graph_label), run_time=max(0.55, tracker.duration))
+        with self.voiceover(text="Ở đây, chúng ta tập trung vào nót a.") as tracker:
+            self.play(GrowFromCenter(target_A), FadeIn(graph_label), run_time=0.55)
         self.wait(0.3)
 
+        # Input -> GLANCE -> output, narrated fully before the pipeline
+        # detour: talk about the input, then the GLANCE box, then the
+        # output, in that order.
         glance = module_box("GLANCE", "graph + text evidence", width=2.65, height=1.25, emphasized=True).move_to(UP * 0.15)
         probability = probability_bars(r"p_A", [0.12, 0.73, 0.15], width=2.9, math_label=True)
         # Center GLANCE at true horizontal center and give both connecting
@@ -359,7 +353,7 @@ class S4_02_EndToEnd(GlanceMovingScene):
             self.play(
                 FadeOut(graph_label),
                 graph_group.animate.scale(0.38).move_to(LEFT * Xg + UP * 0.15),
-                run_time=max(0.85, tracker.duration),
+                run_time=0.85,
             )
         graph_to_glance = small_arrow(graph_group.get_right(), glance.get_left(), color=MUTED, stroke_width=2.1, buff=0.14)
         glance_to_p = small_arrow(glance.get_right(), probability.get_left(), color=MUTED, stroke_width=2.1, buff=0.14)
@@ -368,11 +362,11 @@ class S4_02_EndToEnd(GlanceMovingScene):
         self.add(pulse)
         self.play(MoveAlongPath(pulse, graph_to_glance), run_time=0.55, rate_func=linear)
         with self.voiceover(
-            text="Ví dụ, xác suất của nót A lần lượt là 0.12, 0.73 và 0.15."
+            text="Ví dụ, xác suất của nót a lần lượt là không chấm một hai, không chấm bảy ba và không chấm một năm."
         ) as tracker:
             self.play(
                 FadeOut(pulse), GrowArrow(glance_to_p), FadeIn(probability, shift=RIGHT * 0.10),
-                run_time=max(0.7, tracker.duration),
+                run_time=0.7,
             )
         self.wait(0.3)
 
@@ -400,14 +394,13 @@ class S4_02_EndToEnd(GlanceMovingScene):
             )
             self.play(Write(decision), run_time=0.9)
 
-        self.say("Do đó, trong ví dụ này, nót A được dự đoán thuộc lớp thứ hai.")
+        self.say("Do đó, trong ví dụ này, nót a được dự đoán thuộc lớp thứ hai.")
         self.wait(0.6)
 
         # ----------------------------------------------------------------
-        # Middle beat: pull back slightly, then cut straight into the full
-        # pipeline. The intro graph is never morphed mid-scene; the pipeline
-        # gets its own fresh copy for the TAG input. This detour is bonus
-        # visual content beyond the presentation script's Cảnh 2 text.
+        # Now pull back and cut into the full pipeline. The intro graph is
+        # never morphed mid-scene; the pipeline gets its own fresh copy for
+        # the TAG input.
         # ----------------------------------------------------------------
         self.camera.frame.save_state()
         with self.voiceover(
@@ -416,24 +409,23 @@ class S4_02_EndToEnd(GlanceMovingScene):
             self.play(
                 self.camera.frame.animate.scale(1.08),
                 FadeOut(p_equation), FadeOut(decision),
-                run_time=max(0.75, tracker.duration),
+                run_time=0.75,
             )
         self.camera.frame.restore()
 
-        tag_icon = graph_group.copy().scale_to_fit_width(1.10).move_to([INPUT_X, 1.58, 0.0])
-        graph_caption = txt("TAG", 16, MUTED, BOLD).move_to([INPUT_X, 1.06, 0.0])
+        tag_icon = graph_group.copy().scale_to_fit_width(1.10).move_to([INPUT_X, 1.95, 0.0])
+        graph_caption = txt("TAG", 16, MUTED, BOLD).move_to([INPUT_X, 1.42, 0.0])
         raw_text = VGroup(*[doc_icon(0.75) for _ in range(3)]).arrange(RIGHT, buff=0.08)
-        raw_text.move_to(NODE_TEXT_POS)
-        raw_text_caption = txt("NODE TEXT", 13, MUTED, BOLD).next_to(raw_text, DOWN, buff=0.14)
+        raw_text.move_to([INPUT_X, 0.62, 0.0])
+        raw_text_caption = txt("NODE TEXT", 13, MUTED, BOLD).move_to([INPUT_X, 0.14, 0.0])
         self.play(
             FadeIn(tag_icon), FadeIn(graph_caption), FadeIn(raw_text, shift=UP * 0.06), FadeIn(raw_text_caption),
             run_time=0.50,
         )
 
         # --- Step 1: the routing feature handed over by section 3 ---------
-        # Section 3 (S3_07..S3_19) now builds all five signals and ends at
-        # f_v, so this step no longer re-derives them -- it just recaps the
-        # bundle and hands it to the router.
+        # Năm signal đã được dựng đủ ở section 3 (S3_07…S3_19), nên ở đây chỉ
+        # nhắc lại f_v thành một bundle rồi đi thẳng sang router.
         step1_w, step1_h, step1_c = STEP1_BOX
         step1_box = _dashed_box(step1_w, step1_h).move_to(step1_c)
         step1_title = txt("STEP 1 · ROUTING FEATURES", 16, MUTED, BOLD)
@@ -453,16 +445,18 @@ class S4_02_EndToEnd(GlanceMovingScene):
 
         merge_arrow = small_arrow(bundle.get_right(), router.get_left(), color=MUTED, stroke_width=1.7, buff=0.12)
 
-        # Only the graph icon feeds this bundle; the node text runs straight
-        # up into step 2 from below, so it no longer shares this connector.
-        tag_to_bundle = _corner_arrow(
-            [
-                (tag_icon.get_right()[0] + 0.10, tag_icon.get_center()[1], 0.0),
-                (bundle.get_left()[0] - 0.45, tag_icon.get_center()[1], 0.0),
-                (bundle.get_left()[0] - 0.45, bundle.get_center()[1], 0.0),
-                bundle.get_left(),
-            ],
+        input_right_x = max(tag_icon.get_right()[0], raw_text.get_right()[0])
+        input_mid_y = (tag_icon.get_center()[1] + raw_text_caption.get_center()[1]) / 2
+        branch_x = input_right_x + 0.55
+        tag_trunk_in = Line([input_right_x + 0.12, input_mid_y, 0.0], [branch_x, input_mid_y, 0.0], color=MUTED, stroke_width=1.9)
+        tag_trunk = Line(
+            [branch_x, input_mid_y, 0.0],
+            [branch_x, bundle.get_center()[1], 0.0],
             color=MUTED, stroke_width=1.9,
+        )
+        tag_branches = VGroup(
+            small_arrow([branch_x, bundle.get_center()[1], 0.0], bundle.get_left(),
+                        color=MUTED, stroke_width=1.6, buff=0.08),
         )
 
         with self.voiceover(
@@ -471,7 +465,12 @@ class S4_02_EndToEnd(GlanceMovingScene):
             "của việc gọi lờ lờ mờ."
         ) as tracker:
             self.play(Create(step1_box), FadeIn(step1_title), run_time=0.55)
-            self.play(Create(tag_to_bundle), FadeIn(bundle, shift=RIGHT * 0.06), run_time=0.80)
+            self.play(Create(tag_trunk_in), Create(tag_trunk), run_time=0.40)
+            self.play(
+                LaggedStart(*[GrowArrow(b) for b in tag_branches], lag_ratio=0.16),
+                FadeIn(bundle, shift=RIGHT * 0.06),
+                run_time=0.80,
+            )
             self.play(GrowArrow(merge_arrow), FadeIn(router, scale=0.85), run_time=0.50)
             self.play(Write(router_score), run_time=0.42)
 
@@ -480,21 +479,19 @@ class S4_02_EndToEnd(GlanceMovingScene):
         step2_box = _dashed_box(step2_w, step2_h).move_to(step2_c)
         step2_title = txt("STEP 2 · LLM READS THE NEIGHBORHOOD", 16, MUTED, BOLD)
         prompts = VGroup(
-            mt(r"P_0(A)", 20, EMB_Z_L0),
-            mt(r"P_1(A)", 20, EMB_Z_L1),
-            mt(r"P_2(A)", 20, EMB_Z_L2),
+            mt(r"P_0(A)", 20, C_LLM_LIGHT),
+            mt(r"P_1(A)", 20, C_LLM),
+            mt(r"P_2(A)", 20, C_LLM_DEEP),
         ).arrange(DOWN, buff=0.28)
         llm = module_box("Qwen3-Embed-8B", "frozen · shared", width=1.70, height=1.35, emphasized=True)
         strips = VGroup(
-            _mini_strip(EMB_Z_L0),
-            _mini_strip(EMB_Z_L1),
-            _mini_strip(EMB_Z_L2),
+            _mini_strip(C_LLM_LIGHT),
+            _mini_strip(C_LLM),
+            _mini_strip(C_LLM_DEEP),
         ).arrange(DOWN, buff=0.28)
-        strips_label = txt("LLM EMBEDDINGS", 12, MUTED, BOLD)
-        strips_column = VGroup(strips_label, strips).arrange(DOWN, buff=0.14)
-        step2_body = VGroup(prompts, llm, strips_column).arrange(RIGHT, buff=0.50)
+        step2_body = VGroup(prompts, llm, strips).arrange(RIGHT, buff=0.56)
         step2_equation = mt(r"Z_L(A)=[z_{L,0}\Vert z_{L,1}\Vert z_{L,2}]", 19)
-        step2_content = VGroup(step2_title, step2_body, step2_equation).arrange(DOWN, buff=0.18)
+        step2_content = VGroup(step2_title, step2_body, step2_equation).arrange(DOWN, buff=0.24)
         _fit_into(step2_content, step2_w - 0.40, step2_h - 0.40).move_to(step2_c)
         step2_inner_arrows = VGroup(
             small_arrow(prompts.get_right(), llm.get_left(), color=MUTED, stroke_width=1.7, buff=0.12),
@@ -510,12 +507,13 @@ class S4_02_EndToEnd(GlanceMovingScene):
         )
         # Just `v ∈ R`: the word ROUTE sat on top of the router glyph.
         route_label = mt(r"v\in R", 18).next_to(route_arrow, UP, buff=0.14)
-        # Short hop straight up from the node text, now parked under step 2.
         text_to_llm = _corner_arrow(
             [
-                (raw_text.get_right()[0] + 0.10, raw_text.get_center()[1], 0.0),
-                (NODE_TEXT_POS[0] + 1.05, raw_text.get_center()[1], 0.0),
-                (NODE_TEXT_POS[0] + 1.05, step2_c[1] - step2_h / 2, 0.0),
+                (raw_text.get_right()[0], raw_text.get_center()[1], 0.0),
+                (input_right_x + 0.85, raw_text.get_center()[1], 0.0),
+                (input_right_x + 0.85, TEXT_LINE_Y, 0.0),
+                (2.10, TEXT_LINE_Y, 0.0),
+                (2.10, step2_c[1] - step2_h / 2, 0.0),
             ],
             color=C_EDGE,
             stroke_width=1.5,
@@ -536,7 +534,6 @@ class S4_02_EndToEnd(GlanceMovingScene):
             self.play(GrowArrow(step2_inner_arrows[0]), FadeIn(llm), run_time=0.50)
             self.play(
                 GrowArrow(step2_inner_arrows[1]),
-                FadeIn(strips_label),
                 LaggedStart(*[FadeIn(strip, shift=RIGHT * 0.06) for strip in strips], lag_ratio=0.14),
                 run_time=0.60,
             )
@@ -548,14 +545,14 @@ class S4_02_EndToEnd(GlanceMovingScene):
         step3_w, step3_h, step3_c = STEP3_BOX
         step3_box = _dashed_box(step3_w, step3_h).move_to(step3_c)
         step3_title = txt("STEP 3 · REFINE THE GNN PREDICTION", 16, MUTED, BOLD)
-        gnn_side = _emb_below(r"z_G(A)", [EMB_Z_G], 4, cell_size=0.17)
-        llm_side = _emb_below(r"Z_L(A)", [EMB_Z_L0, EMB_Z_L1, EMB_Z_L2], 2, cell_size=0.17)
-        fusion_inputs = VGroup(gnn_side, llm_side).arrange(RIGHT, buff=0.45)
+        gnn_side = _emb_below(r"z_G(A)", [C_GNN], 4, cell_size=0.17)
+        llm_side = _emb_below(r"Z_L(A)", [C_LLM_LIGHT, C_LLM, C_LLM_DEEP], 2, cell_size=0.17)
+        fusion_inputs = VGroup(gnn_side, llm_side).arrange(RIGHT, buff=0.50)
         refiner = module_box("Refiner MLP", "late fusion", width=2.35, height=0.95, emphasized=True)
         refined = probability_bars(r"p_{C,A}", [0.12, 0.73, 0.15], width=1.35, math_label=True)
-        step3_row = VGroup(refined, refiner, fusion_inputs).arrange(RIGHT, buff=0.85)
+        step3_row = VGroup(refined, refiner, fusion_inputs).arrange(RIGHT, buff=0.92)
         step3_equation = mt(r"p_{C,A}=\operatorname{softmax}\!\left(C([z_G(A)\Vert Z_L(A)])\right)", 23)
-        step3_content = VGroup(step3_title, step3_row, step3_equation).arrange(DOWN, buff=0.18)
+        step3_content = VGroup(step3_title, step3_row, step3_equation).arrange(DOWN, buff=0.24)
         # The frame is split: a left compartment for the un-routed branch, and
         # the refiner pipeline in the wider right one.
         _fit_into(step3_content, STEP3_CONTENT_W, step3_h - 0.40)
@@ -600,10 +597,10 @@ class S4_02_EndToEnd(GlanceMovingScene):
         )
         skip_label = VGroup(
             txt("KEEP GNN", 12, MUTED, BOLD), mt(r"v\notin R", 16, MUTED),
-        ).arrange(RIGHT, buff=0.10).move_to([SKIP_LABEL_X, CORRIDOR_Y + 0.30, 0.0])
+        ).arrange(RIGHT, buff=0.10).move_to([router.get_center()[0], CORRIDOR_Y + 0.30, 0.0])
 
-        # One straight drop, not a dog-leg: the strips sit 0.17 right of Z_L(A),
-        # so the line runs just right of Z_L(A)'s axis and still starts well
+        # One straight drop, not a dog-leg: the strips sit right of Z_L(A)'s
+        # axis, so the line runs just right of it and still starts well
         # inside the strips' own width.
         llm_arrow_x = llm_side.get_center()[0] + LLM_ARROW_DX
         llm_arrow = _corner_arrow(
@@ -615,7 +612,7 @@ class S4_02_EndToEnd(GlanceMovingScene):
         )
 
         with self.voiceover(
-            text="Bước ba: bộ bộ tinh chỉnh kết hợp véc-tơ biểu diễn của gờ nờ nờ với véc-tơ biểu diễn của lờ lờ mờ để tạo ra "
+            text="Bước ba: bộ tinh chỉnh kết hợp véc-tơ biểu diễn của gờ nờ nờ với véc-tơ biểu diễn của lờ lờ mờ để tạo ra "
             "một dự đoán đã được tinh chỉnh."
         ) as tracker:
             self.play(
@@ -648,7 +645,7 @@ class S4_15_RouterScore(GlanceMovingScene):
     def construct(self):
         _clear_except(self)
         _banner(self)
-        _show_header(self, 15, "Router: from feature vector to routing score")
+        _show_header(self, 3, "Router: from feature vector to routing score")
 
         feature = mt(r"f_A", 50).move_to(LEFT * 4.75)
         router = router_glyph(radius=0.74).move_to(ORIGIN)
@@ -658,28 +655,31 @@ class S4_15_RouterScore(GlanceMovingScene):
             small_arrow(feature.get_right(), router.get_left(), stroke_width=2.4),
             small_arrow(router.get_right(), score.get_left(), stroke_width=2.4),
         )
-        with self.voiceover(text="Đặc trưng định tuyến được đưa vào một bộ định tuyến rất nhẹ.") as tracker:
-            self.play(Write(feature), run_time=max(0.32, tracker.duration))
+        with self.voiceover(
+            text="Bây giờ ta đi vào chi tiết bước một. Đặc trưng định tuyến ép phẩy a "
+            "được đưa vào một bộ định tuyến rất nhẹ."
+        ) as tracker:
+            self.play(Write(feature), run_time=0.32)
 
         equation = mt(r"a_A=\pi(f_A)=\sigma(w^\top f_A)", 47).move_to(DOWN * 1.25)
         with self.voiceover(
-            text="Bộ định tuyến gồm một lớp tuyến tính và hàm xích-moi, tạo ra điểm định tuyến a A nằm trong "
+            text="Bộ định tuyến gồm một lớp tuyến tính và hàm xích-moi, tạo ra điểm định tuyến a phẩy a nằm trong "
             "khoảng từ không đến một."
         ) as tracker:
-            self.play(GrowArrow(arrows[0]), FadeIn(router), FadeIn(router_name), run_time=max(0.58, tracker.duration * 0.35))
-            self.play(GrowArrow(arrows[1]), Write(score), run_time=max(0.52, tracker.duration * 0.3))
-            self.play(TransformFromCopy(VGroup(feature, router, score), equation), run_time=max(0.78, tracker.duration * 0.35))
+            self.play(GrowArrow(arrows[0]), FadeIn(router), FadeIn(router_name), run_time=0.58)
+            self.play(GrowArrow(arrows[1]), Write(score), run_time=0.52)
+            self.play(TransformFromCopy(VGroup(feature, router, score), equation), run_time=0.78)
 
         score_states = [r"a_D=0.25", r"a_E=0.81", r"a_B=0.12", r"a_A=0.86"]
         with self.voiceover(
-            text="điểm cao cho thấy nót A có khả năng nhận được lợi ích khi sử dụng lờ lờ mờ. điểm thấp "
+            text="điểm cao cho thấy nót a có khả năng nhận được lợi ích khi sử dụng lờ lờ mờ. điểm thấp "
             "cho thấy dự đoán hiện tại của gờ nờ nờ có thể đã đủ tốt."
         ) as tracker:
             current_score = mt(score_states[0], 37).move_to(DOWN * 2.05)
-            self.play(Write(current_score), run_time=max(0.32, tracker.duration * 0.25))
+            self.play(Write(current_score), run_time=0.32)
             for state in score_states[1:]:
                 next_score = mt(state, 37).move_to(current_score)
-                self.play(TransformMatchingTex(current_score, next_score), run_time=max(0.36, tracker.duration * 0.25))
+                self.play(TransformMatchingTex(current_score, next_score), run_time=0.36)
                 current_score = next_score
 
         warning = txt(
@@ -689,7 +689,7 @@ class S4_15_RouterScore(GlanceMovingScene):
             text="Cần phân biệt rằng đây không phải xác suất lớp. Nó chỉ biểu diễn mức độ nên gửi nót "
             "sang nhánh lờ lờ mờ."
         ) as tracker:
-            self.play(FadeIn(warning, shift=UP * 0.08), run_time=max(0.40, tracker.duration))
+            self.play(FadeIn(warning, shift=UP * 0.08), run_time=0.40)
         self.wait(0.8)
 
 
@@ -699,15 +699,15 @@ class S4_16_TopK(GlanceMovingScene):
     def construct(self):
         _clear_except(self)
         _banner(self)
-        _show_header(self, 16, "Rank routing scores and select Top-K")
+        _show_header(self, 4, "Rank routing scores and select Top-K")
 
         data = [("D", 0.25), ("A", 0.86), ("B", 0.12), ("E", 0.81), ("C", 0.74)]
         rows = {label: score_row(label, value) for label, value in data}
         initial_rows = VGroup(*rows.values()).arrange(DOWN, buff=0.17).move_to(LEFT * 2.35)
-        with self.voiceover(text="gờ lans không sử dụng một ngưỡng cố định cho từng nót.") as tracker:
+        with self.voiceover(text="Gờ lans không sử dụng một ngưỡng cố định cho từng nót.") as tracker:
             self.play(
                 LaggedStart(*[FadeIn(row, shift=RIGHT * 0.08) for row in initial_rows], lag_ratio=0.10),
-                run_time=max(0.85, tracker.duration),
+                run_time=0.85,
             )
         sorted_data = sorted(data, key=lambda item: item[1], reverse=True)
         targets = [LEFT * 2.35 + UP * (1.35 - 0.77 * index) for index in range(len(sorted_data))]
@@ -716,7 +716,7 @@ class S4_16_TopK(GlanceMovingScene):
         ) as tracker:
             self.play(
                 *[rows[label].animate.move_to(target) for (label, _), target in zip(sorted_data, targets)],
-                run_time=max(1.0, tracker.duration),
+                run_time=1.0,
             )
 
         third_bottom = rows[sorted_data[2][0]].get_bottom()[1]
@@ -726,18 +726,18 @@ class S4_16_TopK(GlanceMovingScene):
         top_line.set_y(cutoff_y)
         top_label = txt("TOP-3", 20, INK, BOLD).next_to(top_line, RIGHT, buff=0.22)
         with self.voiceover(
-            text="Ví dụ, các nót A, E và C có ba điểm cao nhất nên được chọn vào tốp ba."
+            text="Ví dụ, các nót a, e và xê có ba điểm cao nhất nên được chọn vào tốp ba."
         ) as tracker:
-            self.play(Create(top_line), FadeIn(top_label), run_time=max(0.48, tracker.duration * 0.5))
+            self.play(Create(top_line), FadeIn(top_label), run_time=0.48)
             for label, _ in sorted_data[3:]:
-                self.play(rows[label].animate.set_opacity(0.38), run_time=max(0.20, tracker.duration * 0.25))
+                self.play(rows[label].animate.set_opacity(0.38), run_time=0.20)
 
         topk_equation = fit_width(
             mt(r"R=\operatorname{TopK}\!\left(\{a_v:v\in B\}\right)", 41),
             6.2,
         ).move_to(RIGHT * 3.25 + UP * 0.80)
         with self.voiceover(text="Chỉ đúng ca nót được gửi sang lờ lờ mờ.") as tracker:
-            self.play(Write(topk_equation), run_time=max(0.62, tracker.duration))
+            self.play(Write(topk_equation), run_time=0.62)
         selected = mt(r"A\in R\Longrightarrow r_A=1", 39).move_to(RIGHT * 3.25 + DOWN * 0.45)
         budget = VGroup(
             txt("SELECT EXACTLY K NODES", 22, INK, BOLD),
@@ -747,10 +747,10 @@ class S4_16_TopK(GlanceMovingScene):
             text="Nhờ vậy, gờ lans kiểm soát chính xác ngân sách tính toán và tránh tình trạng số lần gọi "
             "lờ lờ mờ tăng ngoài dự kiến."
         ) as tracker:
-            self.play(Write(selected), FadeIn(budget), run_time=max(0.62, tracker.duration * 0.6))
+            self.play(Write(selected), FadeIn(budget), run_time=0.62)
             self.play(
                 Create(SurroundingRectangle(rows["A"], color=INK, buff=0.07, stroke_width=2)),
-                run_time=max(0.40, tracker.duration * 0.4),
+                run_time=0.40,
             )
         self.wait(0.8)
 
@@ -760,21 +760,21 @@ class S4_17_TwoFlows(GlanceMovingScene):
 
     def construct(self):
         _banner(self)
-        header17 = _show_header(self, 17, "Router branches into two inference flows")
+        header17 = _show_header(self, 5, "Router branches into two inference flows")
         (router, router_label, with_node, without_node,
          with_title, without_title, branch_arrows, overview) = _router_overview(self)
 
         with self.voiceover(text="Sau bước tốp ca, quy trình được chia thành hai nhánh rõ ràng.") as tracker:
-            self.play(FadeIn(router), FadeIn(router_label), run_time=max(0.45, tracker.duration))
+            self.play(FadeIn(router), FadeIn(router_label), run_time=0.45)
         with self.voiceover(
-            text="Nhánh thứ nhất dành cho những nót thuộc tập định tuyến R, tức là các nót được sử dụng "
-            "lờ lờ mờ. Nhánh thứ hai dành cho những nót không thuộc R."
+            text="Nhánh thứ nhất dành cho những nót thuộc tập định tuyến rời, tức là các nót được sử dụng "
+            "lờ lờ mờ. Nhánh thứ hai dành cho những nót không thuộc rời."
         ) as tracker:
             self.play(
                 LaggedStart(*[GrowArrow(arrow) for arrow in branch_arrows], lag_ratio=0.16),
                 FadeIn(with_node), FadeIn(without_node),
                 FadeIn(with_title), FadeIn(without_title),
-                run_time=max(0.82, tracker.duration),
+                run_time=0.82,
             )
         with self.voiceover(
             text="Việc tách hai nhánh này là cơ sở giúp gờ lans vừa tận dụng sức mạnh ngữ nghĩa của lờ lờ mờ, "
@@ -789,7 +789,7 @@ class S4_18_WithoutLLM(GlanceMovingScene):
 
     def construct(self):
         _banner(self)
-        header17 = step_header(17, "Router branches into two inference flows")
+        header17 = step_header(5, "Router branches into two inference flows")
         (router, router_label, with_node, without_node,
          with_title, without_title, branch_arrows, overview) = _router_overview(self)
         self.add(header17, overview)
@@ -810,14 +810,19 @@ class S4_18_WithoutLLM(GlanceMovingScene):
             detail_node, detail_title, gnn_prediction, decision,
         ).arrange(RIGHT, buff=0.64).move_to(flow_center)
 
+        highlight_ring = Circle(
+            radius=without_node.width / 2 + 0.14, stroke_color=INK, stroke_width=2.6,
+        ).move_to(without_node)
         with self.voiceover(text="Trước tiên là nhánh đơn giản hơn.") as tracker:
-            self.play(FadeOut(header17), run_time=max(0.25, tracker.duration * 0.2))
+            self.play(Create(highlight_ring), run_time=0.35)
+            self.play(FadeOut(header17), run_time=0.25)
             self.play(
                 self.camera.frame.animate.move_to(flow_center).set(width=12.0),
                 overview.animate.set_opacity(0.0),
-                run_time=max(0.90, tracker.duration * 0.5),
+                FadeOut(highlight_ring),
+                run_time=0.90,
             )
-            self.play(FadeIn(detail_node), FadeIn(detail_title), run_time=max(0.32, tracker.duration * 0.3))
+            self.play(FadeIn(detail_node), FadeIn(detail_title), run_time=0.32)
 
         flow_y = flow_center[1]
         direct_arrows = VGroup(
@@ -835,11 +840,11 @@ class S4_18_WithoutLLM(GlanceMovingScene):
         without_detail = VGroup(detail_node, detail_title, gnn_prediction, decision, direct_arrows)
         with self.voiceover(
             text="Nếu một nót không được định tuyến, gờ lans bỏ qua toàn bộ bước tạo câu lệnh, gọi lờ lờ mờ và "
-            "bộ tinh chỉnh. Phân phối cuối cùng của nót được giữ nguyên bằng p H phẩy v, tức dự đoán "
+            "bộ tinh chỉnh. Phân phối cuối cùng của nót được giữ nguyên bằng bê hắc phẩy vê, tức dự đoán "
             "ban đầu của gờ nờ nờ."
         ) as tracker:
-            self.play(GrowArrow(direct_arrows[0]), FadeIn(gnn_prediction), run_time=max(0.55, tracker.duration * 0.5))
-            self.play(GrowArrow(direct_arrows[1]), Write(decision), run_time=max(0.58, tracker.duration * 0.5))
+            self.play(GrowArrow(direct_arrows[0]), FadeIn(gnn_prediction), run_time=0.55)
+            self.play(GrowArrow(direct_arrows[1]), Write(decision), run_time=0.58)
         with self.voiceover(
             text="Sau đó, hệ thống lấy lớp có xác suất lớn nhất. Nhờ vậy, các nót dễ không phải chịu "
             "thêm chi phí và cũng không bị lờ lờ mờ làm thay đổi một dự đoán vốn đã chính xác."
@@ -862,7 +867,7 @@ class S4_19_WithLLMContext(GlanceMovingScene):
 
     def construct(self):
         _banner(self)
-        header17 = step_header(17, "Router branches into two inference flows")
+        header17 = step_header(5, "Router branches into two inference flows")
         (router, router_label, with_node, without_node,
          with_title, without_title, branch_arrows, overview) = _router_overview(self)
         self.add(header17, overview)
@@ -905,18 +910,23 @@ class S4_19_WithLLMContext(GlanceMovingScene):
             for parent_index, neighbor in zip(hop2_parent_indices, hop2_nodes)
         ])
 
+        highlight_ring = Circle(
+            radius=with_node.width / 2 + 0.14, stroke_color=INK, stroke_width=2.6,
+        ).move_to(with_node)
         with self.voiceover(
-            text="Với nót A được định tuyến, gờ lans khai thác văn bản ở ba mức ngữ cảnh."
+            text="Với nót a được định tuyến, gờ lans khai thác văn bản ở ba mức ngữ cảnh."
         ) as tracker:
-            self.play(FadeOut(header17), run_time=max(0.25, tracker.duration * 0.25))
+            self.play(Create(highlight_ring), run_time=0.35)
+            self.play(FadeOut(header17), run_time=0.25)
             self.play(
                 self.camera.frame.animate.move_to(with_node).set(width=9.2),
                 overview.animate.set_opacity(0.0),
-                run_time=max(0.90, tracker.duration * 0.75),
+                FadeOut(highlight_ring),
+                run_time=0.90,
             )
 
-        with self.voiceover(text="Mức đầu tiên là văn bản của nót trung tâm, chỉ chứa nội dung của chính nót A.") as tracker:
-            self.play(GrowFromCenter(center_A), run_time=max(0.38, tracker.duration))
+        with self.voiceover(text="Mức đầu tiên là văn bản của nót trung tâm, chỉ chứa nội dung của chính nót a.") as tracker:
+            self.play(GrowFromCenter(center_A), run_time=0.38)
 
         with self.voiceover(
             text="Mức thứ hai là 1-hop ngữ cảnh, bổ sung nội dung từ các nót trích dẫn trực tiếp."
@@ -924,17 +934,17 @@ class S4_19_WithLLMContext(GlanceMovingScene):
             self.play(
                 Create(ring_1), Create(hop1_edges),
                 LaggedStart(*[FadeIn(neighbor) for neighbor in hop1_nodes], lag_ratio=0.10),
-                run_time=max(0.72, tracker.duration),
+                run_time=0.72,
             )
             self.bring_to_front(center_A, hop1_nodes)
 
         with self.voiceover(
-            text="Mức cuối cùng là 2-hop ngữ cảnh, cung cấp ngữ cảnh rộng hơn từ các nót cách A hai cạnh."
+            text="Mức cuối cùng là ngữ cảnh hai bước, cung cấp ngữ cảnh rộng hơn từ các nót cách a hai cạnh."
         ) as tracker:
             self.play(
                 Create(ring_2), Create(hop2_edges),
                 LaggedStart(*[FadeIn(neighbor) for neighbor in hop2_nodes], lag_ratio=0.10),
-                run_time=max(0.82, tracker.duration),
+                run_time=0.82,
             )
             self.bring_to_front(center_A, hop1_nodes, hop2_nodes)
 
@@ -946,7 +956,7 @@ class S4_19_WithLLMContext(GlanceMovingScene):
         with self.voiceover(text="Ba mức được xử lý riêng thay vì gộp tất cả thành một câu lệnh rất dài.") as tracker:
             self.play(
                 LaggedStart(*[FadeIn(card, shift=LEFT * 0.08) for card in context_cards], lag_ratio=0.18),
-                run_time=max(0.92, tracker.duration),
+                run_time=0.92,
             )
         self.wait(0.5)
 
@@ -963,9 +973,9 @@ class S4_23_EgoEmbedding(GlanceMovingScene):
 
     def construct(self):
         _banner(self)
-        header = _show_header(self, 23, "Shared LLM encoder: ego embedding")
+        header = _show_header(self, 6, "Shared LLM encoder: ego embedding")
 
-        equation = mt(r"z_{L,0}(A)=L(P_0(A))", 40, EMB_Z_L0).move_to(UP * 2.25)
+        equation = mt(r"z_{L,0}(A)=L(P_0(A))", 40, C_LLM_LIGHT).move_to(UP * 2.25)
         prompt = equation_card(
             r"P_0(A)", "ego prompt", width=3.00, height=0.95, emphasized=True,
         ).move_to(LEFT * 3.85 + UP * 1.15)
@@ -973,7 +983,7 @@ class S4_23_EgoEmbedding(GlanceMovingScene):
             "Qwen3-Embed-8B", "shared embedding encoder", width=3.85, height=1.12, emphasized=True,
         ).move_to(LEFT * 3.85 + DOWN * 0.48)
         output = embedding_strip(
-            r"z_{L,0}(A)", EMB_Z_L0, n=9, cell_size=0.27, emphasized=True,
+            r"z_{L,0}(A)", C_LLM_LIGHT, n=9, cell_size=0.27, emphasized=True,
         ).move_to(LEFT * 3.85 + DOWN * 2.15)
         details = prompt_panel(
             "Prompt v0",
@@ -986,27 +996,26 @@ class S4_23_EgoEmbedding(GlanceMovingScene):
         ).move_to(RIGHT * 3.70 + DOWN * 0.36)
 
         prompt_arrow = small_arrow(prompt.get_bottom(), llm.get_top(), color=MUTED, buff=0.10)
-        output_arrow = small_arrow(llm.get_bottom(), output.get_top(), color=EMB_Z_L0, buff=0.10)
+        output_arrow = small_arrow(llm.get_bottom(), output.get_top(), color=C_LLM_LIGHT, buff=0.10)
 
-        with self.voiceover(text="câu lệnh đầu tiên chỉ chứa văn bản của nót trung tâm của nót A.") as tracker:
-            self.play(Write(equation), run_time=max(0.50, tracker.duration * 0.55))
-            self.play(FadeIn(prompt, shift=DOWN * 0.08), run_time=max(0.42, tracker.duration * 0.45))
+        with self.voiceover(text="câu lệnh đầu tiên chỉ chứa văn bản của nót trung tâm của nót a.") as tracker:
+            self.play(Write(equation), run_time=0.50)
+            self.play(FadeIn(prompt, shift=DOWN * 0.08), run_time=0.42)
         with self.voiceover(
             text="câu lệnh này được đưa vào quy en ba em-bét tám bi, đóng vai trò dùng chung véc-tơ biểu diễn bộ mã hóa."
         ) as tracker:
-            self.play(GrowArrow(prompt_arrow), FadeIn(llm, shift=DOWN * 0.08), run_time=max(0.55, tracker.duration * 0.55))
-            self.play(FadeIn(details, shift=LEFT * 0.08), run_time=max(0.48, tracker.duration * 0.45))
+            self.play(GrowArrow(prompt_arrow), FadeIn(llm, shift=DOWN * 0.08), run_time=0.55)
+            self.play(FadeIn(details, shift=LEFT * 0.08), run_time=0.48)
         with self.voiceover(
-            text="Đầu ra không phải là một câu trả lời hay nhãn lớp, mà là véc-tơ biểu diễn z L phẩy 0 của A."
+            text="Đầu ra không phải là một câu trả lời hay nhãn lớp, mà là véc-tơ biểu diễn dét lờ phẩy không của a."
         ) as tracker:
-            self.play(GrowArrow(output_arrow), FadeIn(output, shift=DOWN * 0.08), run_time=max(0.66, tracker.duration))
+            self.play(GrowArrow(output_arrow), FadeIn(output, shift=DOWN * 0.08), run_time=0.66)
 
-        legend = txt("PURPLE · EGO CONTEXT EMBEDDING", 19, EMB_Z_L0, BOLD).next_to(output, DOWN, buff=0.20)
+        legend = txt("LIGHT AMBER · EGO CONTEXT EMBEDDING", 19, C_LLM_LIGHT, BOLD).next_to(output, DOWN, buff=0.20)
         with self.voiceover(
-            text="véc-tơ biểu diễn này biểu diễn thông tin ngữ nghĩa từ chính nội dung của nót A."
+            text="véc-tơ biểu diễn này biểu diễn thông tin ngữ nghĩa từ chính nội dung của nót a."
         ) as tracker:
-            self.play(FadeIn(legend), run_time=max(0.34, tracker.duration))
-        self.add(source("Phụ lục B.3, tr.15-16"))
+            self.play(FadeIn(legend), run_time=0.34)
         self.wait(0.5)
 
 
@@ -1018,12 +1027,12 @@ class S4_24_OneHopEmbedding(GlanceMovingScene):
         header, equation, prompt, llm, output, details, prompt_arrow, output_arrow, legend = _llm_stage(self, 0)
         self.add(header, equation, prompt, llm, output, details, prompt_arrow, output_arrow, legend)
 
-        header_1 = step_header(24, "Shared LLM encoder: 1-hop embedding")
-        equation_1 = mt(r"z_{L,1}(A)=L(P_1(A))", 40, EMB_Z_L1).move_to(equation)
+        header_1 = step_header(7, "Shared LLM encoder: 1-hop embedding")
+        equation_1 = mt(r"z_{L,1}(A)=L(P_1(A))", 40, C_LLM).move_to(equation)
         prompt_1 = equation_card(
             r"P_1(A)", "ego + direct neighbors", width=3.35, height=0.95, emphasized=True,
         ).move_to(prompt)
-        output_1 = embedding_strip(r"z_{L,1}(A)", EMB_Z_L1, n=9, cell_size=0.27, emphasized=True).move_to(output)
+        output_1 = embedding_strip(r"z_{L,1}(A)", C_LLM, n=9, cell_size=0.27, emphasized=True).move_to(output)
         details_1 = prompt_panel(
             "Prompt v1",
             [
@@ -1033,12 +1042,12 @@ class S4_24_OneHopEmbedding(GlanceMovingScene):
             ],
             width=5.55, height=2.65,
         ).move_to(details)
-        legend_1 = txt("GREEN · 1-HOP CONTEXT EMBEDDING", 19, EMB_Z_L1, BOLD).move_to(legend)
+        legend_1 = txt("BASE AMBER · 1-HOP CONTEXT EMBEDDING", 19, C_LLM, BOLD).move_to(legend)
         with self.voiceover(
             text="Ở bước tiếp theo, câu lệnh được mở rộng bằng nội dung của các nót hàng xóm trực tiếp. "
             "Câu lệnh mới vẫn đi qua cùng một bộ mã hóa lờ lờ mờ, chứ không phải một mô hình khác. Đầu ra là "
-            "z L phẩy 1 của A. véc-tơ biểu diễn này bổ sung bối cảnh từ các bài báo có quan hệ trực tiếp "
-            "với nót A."
+            "dét lờ phẩy một của a. véc-tơ biểu diễn này bổ sung bối cảnh từ các bài báo có quan hệ trực tiếp "
+            "với nót a."
         ) as tracker:
             self.play(
                 Transform(header, header_1),
@@ -1047,8 +1056,8 @@ class S4_24_OneHopEmbedding(GlanceMovingScene):
                 Transform(output, output_1),
                 ReplacementTransform(details, details_1),
                 Transform(legend, legend_1),
-                output_arrow.animate.set_color(EMB_Z_L1),
-                run_time=max(0.88, tracker.duration),
+                output_arrow.animate.set_color(C_LLM),
+                run_time=0.88,
             )
         self.wait(0.5)
 
@@ -1061,12 +1070,12 @@ class S4_25_TwoHopEmbedding(GlanceMovingScene):
         header, equation, prompt, llm, output, details, prompt_arrow, output_arrow, legend = _llm_stage(self, 1)
         self.add(header, equation, prompt, llm, output, details, prompt_arrow, output_arrow, legend)
 
-        header_2 = step_header(25, "Shared LLM encoder: 2-hop embedding")
-        equation_2 = mt(r"z_{L,2}(A)=L(P_2(A))", 40, EMB_Z_L2).move_to(equation)
+        header_2 = step_header(8, "Shared LLM encoder: 2-hop embedding")
+        equation_2 = mt(r"z_{L,2}(A)=L(P_2(A))", 40, C_LLM_DEEP).move_to(equation)
         prompt_2 = equation_card(
             r"P_2(A)", "ego + distance-two context", width=3.55, height=0.95, emphasized=True,
         ).move_to(prompt)
-        output_2 = embedding_strip(r"z_{L,2}(A)", EMB_Z_L2, n=9, cell_size=0.27, emphasized=True).move_to(output)
+        output_2 = embedding_strip(r"z_{L,2}(A)", C_LLM_DEEP, n=9, cell_size=0.27, emphasized=True).move_to(output)
         details_2 = prompt_panel(
             "Prompt v2",
             [
@@ -1076,11 +1085,11 @@ class S4_25_TwoHopEmbedding(GlanceMovingScene):
             ],
             width=5.55, height=2.72,
         ).move_to(details)
-        legend_2 = txt("ORANGE · 2-HOP CONTEXT EMBEDDING", 19, EMB_Z_L2, BOLD).move_to(legend)
+        legend_2 = txt("DEEP AMBER · 2-HOP CONTEXT EMBEDDING", 19, C_LLM_DEEP, BOLD).move_to(legend)
         with self.voiceover(
             text="Tương tự, câu lệnh thứ ba đưa thêm ngữ cảnh ở khoảng cách hai bước. Nó giúp mô hình quan "
-            "sát một vùng rộng hơn của đồ thị trích dẫn và nhận biết chủ đề tổng quát xung quanh nót A. "
-            "câu lệnh tiếp tục sử dụng bộ mã hóa lờ lờ mờ dùng chung và tạo véc-tơ biểu diễn z L phẩy 2 của A. Như vậy, "
+            "sát một vùng rộng hơn của đồ thị trích dẫn và nhận biết chủ đề tổng quát xung quanh nót a. "
+            "câu lệnh tiếp tục sử dụng bộ mã hóa lờ lờ mờ dùng chung và tạo véc-tơ biểu diễn dét lờ phẩy hai của a. Như vậy, "
             "một bộ mã hóa được tái sử dụng cho ba phiên bản câu lệnh khác nhau."
         ) as tracker:
             self.play(
@@ -1090,8 +1099,8 @@ class S4_25_TwoHopEmbedding(GlanceMovingScene):
                 Transform(output, output_2),
                 ReplacementTransform(details, details_2),
                 Transform(legend, legend_2),
-                output_arrow.animate.set_color(EMB_Z_L2),
-                run_time=max(0.88, tracker.duration),
+                output_arrow.animate.set_color(C_LLM_DEEP),
+                run_time=0.88,
             )
         self.wait(0.5)
 
@@ -1101,16 +1110,16 @@ class S4_26_MergeEmbeddings(GlanceMovingScene):
 
     def construct(self):
         _banner(self)
-        header26 = _show_header(self, 26, "Merge the three LLM embeddings")
+        header26 = _show_header(self, 9, "Merge the three LLM embeddings")
 
-        z0 = named_embedding_strip(r"z_{L,0}(A)", EMB_Z_L0, n=7, cell_size=0.25)
-        z1 = named_embedding_strip(r"z_{L,1}(A)", EMB_Z_L1, n=7, cell_size=0.25)
-        z2 = named_embedding_strip(r"z_{L,2}(A)", EMB_Z_L2, n=7, cell_size=0.25)
+        z0 = named_embedding_strip(r"z_{L,0}(A)", C_LLM_LIGHT, n=7, cell_size=0.25)
+        z1 = named_embedding_strip(r"z_{L,1}(A)", C_LLM, n=7, cell_size=0.25)
+        z2 = named_embedding_strip(r"z_{L,2}(A)", C_LLM_DEEP, n=7, cell_size=0.25)
         source_row = VGroup(z0, z1, z2).arrange(RIGHT, buff=0.90).move_to(UP * 0.25)
         with self.voiceover(text="Ba véc-tơ biểu diễn vừa tạo được nối lại với nhau.") as tracker:
             self.play(
                 LaggedStart(*[FadeIn(item, shift=UP * 0.08) for item in source_row], lag_ratio=0.12),
-                run_time=max(0.82, tracker.duration),
+                run_time=0.82,
             )
 
         z0_cells, z1_cells, z2_cells = z0[1], z1[1], z2[1]
@@ -1120,7 +1129,7 @@ class S4_26_MergeEmbeddings(GlanceMovingScene):
         ).arrange(RIGHT, buff=0.055).scale(1.18).move_to(UP * 0.25)
         moving_parts = [z0_cells, z1_cells, z2_cells]
         with self.voiceover(
-            text="Kết quả là Z L của A, đại diện cho toàn bộ thông tin ngữ nghĩa mà lờ lờ mờ thu được."
+            text="Kết quả là dét lờ a, đại diện cho toàn bộ thông tin ngữ nghĩa mà lờ lờ mờ thu được."
         ) as tracker:
             self.play(
                 FadeOut(individual_labels, shift=UP * 0.06),
@@ -1128,7 +1137,7 @@ class S4_26_MergeEmbeddings(GlanceMovingScene):
                     part.animate.move_to(guide.get_center()).scale(1.18)
                     for part, guide in zip(moving_parts, close_guides)
                 ],
-                run_time=max(0.92, tracker.duration),
+                run_time=0.92,
             )
 
         z_l_row = VGroup(z0_cells, z1_cells, z2_cells)
@@ -1137,7 +1146,7 @@ class S4_26_MergeEmbeddings(GlanceMovingScene):
             text="véc-tơ này giữ riêng ba thành phần: nội dung của chính nót, ngữ cảnh trực tiếp và "
             "ngữ cảnh xa hơn."
         ) as tracker:
-            self.play(FadeIn(merged_label, shift=UP * 0.08), run_time=max(0.42, tracker.duration))
+            self.play(FadeIn(merged_label, shift=UP * 0.08), run_time=0.42)
         z_l_visual = VGroup(merged_label, z_l_row)
 
         merge_equation = fit_width(
@@ -1147,7 +1156,7 @@ class S4_26_MergeEmbeddings(GlanceMovingScene):
             text="lờ lờ mờ biểu diễn vẫn chưa phải là kết quả phân loại cuối cùng. Nó sẽ được kết hợp "
             "tiếp với biểu diễn đồ thị từ gờ nờ nờ."
         ) as tracker:
-            self.play(Write(merge_equation), run_time=max(0.68, tracker.duration))
+            self.play(Write(merge_equation), run_time=0.68)
         self.wait(0.78)
 
 
@@ -1160,22 +1169,22 @@ class S4_27_FusedRepresentation(GlanceMovingScene):
          merged_label, z_l_visual, merge_equation) = _merged_llm_embedding(self)
         self.add(header26, z_l_visual, merge_equation)
 
-        header27 = step_header(27, "The fused representation combines structure and semantics")
-        z_g = named_embedding_strip(r"z_G(A)", EMB_Z_G, n=8, cell_size=0.26).scale(0.85)
+        header27 = step_header(10, "The fused representation combines structure and semantics")
+        z_g = named_embedding_strip(r"z_G(A)", C_GNN, n=8, cell_size=0.26).scale(0.85)
         z_g.move_to(LEFT * 3.25 + UP * 0.22)
         with self.voiceover(
-            text="véc-tơ biểu diễn z G của A từ gờ nờ nờ chứa thông tin về đặc trưng và cấu trúc đồ thị."
+            text="véc-tơ biểu diễn dét gờ a từ gờ nờ nờ chứa thông tin về đặc trưng và cấu trúc đồ thị."
         ) as tracker:
-            self.play(Transform(header26, header27), FadeOut(merge_equation), run_time=max(0.58, tracker.duration * 0.3))
-            self.play(z_l_visual.animate.scale(0.72).move_to(RIGHT * 3.25 + UP * 0.22), run_time=max(0.72, tracker.duration * 0.4))
-            self.play(FadeIn(z_g, shift=RIGHT * 0.35), run_time=max(0.52, tracker.duration * 0.3))
+            self.play(Transform(header26, header27), FadeOut(merge_equation), run_time=0.58)
+            self.play(z_l_visual.animate.scale(0.72).move_to(RIGHT * 3.25 + UP * 0.22), run_time=0.72)
+            self.play(FadeIn(z_g, shift=RIGHT * 0.35), run_time=0.52)
 
         fusion_parts = [z_g[1], z0_cells, z1_cells, z2_cells]
         fusion_guides = VGroup(*[part.copy() for part in fusion_parts])
         fusion_guides.arrange(RIGHT, buff=0.055).scale(1.16).move_to(UP * 0.20)
         fusion_label = mt(r"[z_G(A)\Vert Z_L(A)]", 39).next_to(fusion_guides, UP, buff=0.28)
         with self.voiceover(
-            text="Trong khi đó, Z L của A chứa thông tin ngữ nghĩa được trích từ ba mức câu lệnh. gờ lans "
+            text="Trong khi đó, dét lờ a chứa thông tin ngữ nghĩa được trích từ ba mức câu lệnh. gờ lans "
             "gờ lans nối hai véc-tơ này thành một biểu diễn hợp nhất."
         ) as tracker:
             self.play(
@@ -1185,23 +1194,23 @@ class S4_27_FusedRepresentation(GlanceMovingScene):
                     for part, guide in zip(fusion_parts, fusion_guides)
                 ],
                 FadeIn(fusion_label, shift=UP * 0.08),
-                run_time=max(0.94, tracker.duration),
+                run_time=0.94,
             )
 
         left_note = VGroup(
-            txt("BLUE", 20, EMB_Z_G, BOLD),
+            txt("TEAL", 20, C_GNN, BOLD),
             txt("GNN structure", 20, MUTED),
         ).arrange(DOWN, buff=0.08).move_to(LEFT * 3.85 + DOWN * 1.75)
 
         right_note = VGroup(
-            txt("PURPLE / GREEN / ORANGE", 20, MUTED, BOLD),
+            txt("LIGHT / BASE / DEEP AMBER", 20, MUTED, BOLD),
             txt("LLM semantic context", 20, MUTED),
         ).arrange(DOWN, buff=0.08).move_to(RIGHT * 3.85 + DOWN * 1.75)
         with self.voiceover(
             text="Có thể hiểu phần bên trái đại diện cho thông tin cấu trúc từ gờ nờ nờ, còn ba phần "
             "bên phải đại diện cho ngữ nghĩa ngữ cảnh từ lờ lờ mờ."
         ) as tracker:
-            self.play(FadeIn(left_note), FadeIn(right_note), run_time=max(0.50, tracker.duration))
+            self.play(FadeIn(left_note), FadeIn(right_note), run_time=0.50)
 
         with self.voiceover(text="véc-tơ kết hợp này là đầu vào trực tiếp của bộ tinh chỉnh."):
             pass
@@ -1214,7 +1223,7 @@ class S4_28_RefinerMLP(GlanceMovingScene):
     def construct(self):
         _clear_except(self)
         _banner(self)
-        _show_header(self, 28, "Refiner MLP: structure and output")
+        _show_header(self, 11, "Refiner MLP: structure and output")
 
         equation = fit_width(
             mt(
@@ -1227,7 +1236,7 @@ class S4_28_RefinerMLP(GlanceMovingScene):
 
         fusion_input = segmented_embedding(
             r"[z_G(A)\Vert Z_L(A)]",
-            [EMB_Z_G, EMB_Z_L0, EMB_Z_L1, EMB_Z_L2],
+            [C_GNN, C_LLM_LIGHT, C_LLM, C_LLM_DEEP],
             cells_per_segment=3,
             cell_size=0.24,
         ).move_to(UP * 1.28)
@@ -1252,8 +1261,8 @@ class S4_28_RefinerMLP(GlanceMovingScene):
         with self.voiceover(
             text="bộ tinh chỉnh là một mờ lờ bê có nhiệm vụ kết hợp hai nguồn bằng chứng."
         ) as tracker:
-            self.play(Write(equation), run_time=max(0.60, tracker.duration * 0.6))
-            self.play(FadeIn(fusion_input, shift=DOWN * 0.06), run_time=max(0.42, tracker.duration * 0.4))
+            self.play(Write(equation), run_time=0.60)
+            self.play(FadeIn(fusion_input, shift=DOWN * 0.06), run_time=0.42)
 
         with self.voiceover(
             text="Biểu diễn hợp nhất lần lượt đi qua các lớp tuyến tính, ri-lu, đờ-róp-ao và lớp đầu ra."
@@ -1266,21 +1275,21 @@ class S4_28_RefinerMLP(GlanceMovingScene):
                         buff=0.12,
                     )
                 ),
-                run_time=max(0.40, tracker.duration * 0.14),
+                run_time=0.40,
             )
             self.play(
                 LaggedStart(
                     *[FadeIn(layer, scale=0.85) for layer in layers],
                     lag_ratio=0.12,
                 ),
-                run_time=max(0.75, tracker.duration * 0.2),
+                run_time=0.75,
             )
             self.play(
                 LaggedStart(
                     *[Create(edge) for edge in edges],
                     lag_ratio=0.01,
                 ),
-                run_time=max(0.60, tracker.duration * 0.2),
+                run_time=0.60,
             )
             self.bring_to_front(*layers)
 
@@ -1288,7 +1297,7 @@ class S4_28_RefinerMLP(GlanceMovingScene):
             self.play(
                 FadeIn(stage_label),
                 layers[0].animate.set_stroke(INK).set_fill(INK, opacity=1.0),
-                run_time=max(0.36, tracker.duration * 0.11),
+                run_time=0.36,
             )
             for index, stage in enumerate(stage_names[1:], start=1):
                 next_label = txt(
@@ -1301,10 +1310,10 @@ class S4_28_RefinerMLP(GlanceMovingScene):
                     layers[index - 1].animate.set_stroke(C_EDGE).set_fill(BG, opacity=1.0),
                     layers[index].animate.set_stroke(INK).set_fill(INK, opacity=1.0),
                     Transform(stage_label, next_label),
-                    run_time=max(0.42, tracker.duration * 0.117),
+                    run_time=0.42,
                 )
 
-        with self.voiceover(text="Cuối cùng, sóp mác tạo ra phân phối lớp mới p C phẩy A.") as tracker:
+        with self.voiceover(text="Cuối cùng, sóp mác tạo ra phân phối lớp mới bê xê phẩy a.") as tracker:
             self.play(
                 GrowArrow(
                     small_arrow(
@@ -1314,13 +1323,15 @@ class S4_28_RefinerMLP(GlanceMovingScene):
                     )
                 ),
                 Write(output_symbol),
-                run_time=max(0.55, tracker.duration),
+                run_time=0.55,
             )
 
-        self.say(
-            "bộ tinh chỉnh không thay thế gờ nờ nờ hoặc lờ lờ mờ. Nó học cách cân bằng thông tin cấu trúc từ gờ nờ nờ "
+        note = takeaway_chip("The Refiner MLP outputs the refined class distribution")
+        with self.voiceover(
+            text="bộ tinh chỉnh không thay thế gờ nờ nờ hoặc lờ lờ mờ. Nó học cách cân bằng thông tin cấu trúc từ gờ nờ nờ "
             "với thông tin ngữ nghĩa từ lờ lờ mờ để tạo ra dự đoán phù hợp hơn cho được định tuyến nót."
-        )
+        ) as tracker:
+            self.play(FadeIn(note, shift=UP * 0.08), run_time=0.38)
         self.wait(0.8)
 
 
@@ -1330,20 +1341,20 @@ class S4_29_RefinedDistribution(GlanceMovingScene):
     def construct(self):
         _clear_except(self)
         _banner(self)
-        _show_header(self, 29, "LLM context refines the class distribution")
+        _show_header(self, 12, "LLM context refines the class distribution")
 
         transition_equation = mt(
             r"p_{H,A}\xrightarrow{\ +\,Z_L(A)\ }p_{C,A}", 45,
-        ).move_to(UP * 1.92)
+        ).move_to(UP * 2.12)
 
         # Keep both distributions on one centered baseline and preserve a clear
         # transition corridor between the two panels.
         before = probability_chart(
             [0.45, 0.40, 0.15], r"p_{H,A}", CLASS_NAMES, width=6.15,
-        ).scale(0.79).move_to(LEFT * 3.28 + DOWN * 0.35)
+        ).scale(0.79).move_to(LEFT * 3.28 + DOWN * 0.15)
         after = probability_chart(
             [0.15, 0.80, 0.05], r"p_{C,A}", CLASS_NAMES, width=6.15,
-        ).scale(0.79).move_to(RIGHT * 3.28 + DOWN * 0.35)
+        ).scale(0.79).move_to(RIGHT * 3.28 + DOWN * 0.15)
 
         before_note = txt("GNN-ONLY", 20, MUTED, BOLD).next_to(
             before, DOWN, buff=0.28,
@@ -1362,22 +1373,22 @@ class S4_29_RefinedDistribution(GlanceMovingScene):
         )
 
         with self.voiceover(
-            text="Trước khi sử dụng lờ lờ mờ, gờ nờ nờ tạo phân phối ban đầu là 0.45, 0.40 và 0.15. Phân phối "
+            text="Trước khi sử dụng lờ lờ mờ, gờ nờ nờ tạo phân phối ban đầu là không chấm bốn năm, không chấm bốn không và không chấm một năm. Phân phối "
             "này chưa thể hiện sự khác biệt rõ ràng giữa hai lớp đầu tiên."
         ) as tracker:
-            self.play(Write(transition_equation), run_time=max(0.48, tracker.duration * 0.4))
-            self.play(FadeIn(before, shift=UP * 0.08), FadeIn(before_note), run_time=max(0.62, tracker.duration * 0.6))
+            self.play(Write(transition_equation), run_time=0.48)
+            self.play(FadeIn(before, shift=UP * 0.08), FadeIn(before_note), run_time=0.62)
         with self.voiceover(
-            text="Sau khi bổ sung lờ lờ mờ ngữ cảnh và đi qua bộ tinh chỉnh, phân phối chuyển thành 0.15, 0.80 "
-            "và 0.05."
+            text="Sau khi bổ sung lờ lờ mờ ngữ cảnh và đi qua bộ tinh chỉnh, phân phối chuyển thành không chấm một năm, không chấm tám không "
+            "và không chấm không năm."
         ) as tracker:
-            self.play(GrowArrow(comparison_arrow), run_time=max(0.38, tracker.duration * 0.35))
-            self.play(FadeIn(after, shift=UP * 0.08), FadeIn(after_note), run_time=max(0.68, tracker.duration * 0.65))
+            self.play(GrowArrow(comparison_arrow), run_time=0.38)
+            self.play(FadeIn(after, shift=UP * 0.08), FadeIn(after_note), run_time=0.68)
         highlight = SurroundingRectangle(
             after[1][1][1], color=INK, buff=0.08, stroke_width=2,
         )
         with self.voiceover(text="Xác suất tập trung mạnh hơn vào lớp khai phá đồ thị.") as tracker:
-            self.play(Create(highlight), run_time=max(0.40, tracker.duration))
+            self.play(Create(highlight), run_time=0.40)
         with self.voiceover(
             text="Ví dụ này minh họa cách ngữ cảnh văn bản có thể giúp điều chỉnh một dự đoán còn "
             "chưa chắc chắn của gờ nờ nờ."
@@ -1392,7 +1403,7 @@ class S4_30_FinalPrediction(GlanceMovingScene):
     def construct(self):
         _clear_except(self)
         _banner(self)
-        _show_header(self, 30, "Final prediction and the two GLANCE flows")
+        _show_header(self, 13, "Final prediction and the two GLANCE flows")
 
         final_equation = fit_width(
             mt(
@@ -1407,7 +1418,7 @@ class S4_30_FinalPrediction(GlanceMovingScene):
         with self.voiceover(
             text="Cuối cùng, gờ lans xác định phân phối được sử dụng tùy theo kết quả định tuyến."
         ) as tracker:
-            self.play(Write(final_equation), run_time=max(0.82, tracker.duration))
+            self.play(Write(final_equation), run_time=0.82)
 
         with_llm = equation_card(
             r"v\in R:\quad p_v=p_{C,v}",
@@ -1425,13 +1436,13 @@ class S4_30_FinalPrediction(GlanceMovingScene):
         ).move_to(RIGHT * 3.10 + DOWN * 0.55)
 
         with self.voiceover(
-            text="Nếu nót thuộc tập R, hệ thống sử dụng phân phối đã tinh chỉnh là p C phẩy v. Nếu nót "
-            "không thuộc R, hệ thống giữ nguyên phân phối gờ nờ nờ là p H phẩy v."
+            text="Nếu nót thuộc tập rời, hệ thống sử dụng phân phối đã tinh chỉnh là bê xê phẩy vê. Nếu nót "
+            "không thuộc rời, hệ thống giữ nguyên phân phối gờ nờ nờ là bê hắc phẩy vê."
         ) as tracker:
             self.play(
                 FadeIn(with_llm, shift=UP * 0.08),
                 FadeIn(without_llm, shift=UP * 0.08),
-                run_time=max(0.70, tracker.duration),
+                run_time=0.70,
             )
 
         result = VGroup(
@@ -1440,18 +1451,22 @@ class S4_30_FinalPrediction(GlanceMovingScene):
             txt("Graph Mining", 31, INK, BOLD),
         ).arrange(RIGHT, buff=0.28).move_to(DOWN * 2.00)
         with self.voiceover(
-            text="Với nót A trong ví dụ, A được định tuyến nên sử dụng kết quả của bộ tinh chỉnh. Lớp có xác "
-            "suất lớn nhất là khai phá đồ thị, vì vậy đây là nhãn cuối cùng của nót A."
+            text="Với nót a trong ví dụ, a được định tuyến nên sử dụng kết quả của bộ tinh chỉnh. Lớp có xác "
+            "suất lớn nhất là khai phá đồ thị, vì vậy đây là nhãn cuối cùng của nót a."
         ) as tracker:
-            self.play(FadeIn(result, shift=UP * 0.08), run_time=max(0.50, tracker.duration))
+            self.play(FadeIn(result, shift=UP * 0.08), run_time=0.50)
 
-        self.say(
-            "Tóm lại, gờ lans có thể được mô tả bằng ba ý chính: gờ nờ nờ được sử dụng trước để xử lý "
+        closing = takeaway_chip(
+            "GNN-first · LLM-on-demand · two explicit inference flows"
+        )
+        with self.voiceover(
+            text="Tóm lại, gờ lans có thể được mô tả bằng ba ý chính: gờ nờ nờ được sử dụng trước để xử lý "
             "toàn bộ đồ thị. bộ định tuyến lựa chọn những nót thực sự cần hỗ trợ. Và lờ lờ mờ chỉ được gọi theo "
             "nhu cầu để bổ sung thông tin ngữ nghĩa cho các trường hợp khó. Thiết kế này giúp gờ lans "
             "kết hợp được khả năng khai thác cấu trúc của gờ nờ nờ với khả năng hiểu văn bản của lờ lờ mờ, "
             "nhưng vẫn kiểm soát được chi phí tính toán."
-        )
+        ) as tracker:
+            self.play(FadeIn(closing, shift=UP * 0.08), run_time=0.40)
 
         self.wait(0.6)
         self.say(

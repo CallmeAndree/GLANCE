@@ -40,6 +40,32 @@
    "chỉ route node heterophilous" là không tối ưu → cần thêm ngữ cảnh, tức là cần một
    **router học được**. Đây chính là lý do tồn tại của section 4.
 
+## Bổ sung: Step 1 — năm routing signals (chốt ngày 2026-08-07)
+
+Nhóm đã dời điểm cắt giữa section 3 và section 4: **section 3 dựng đủ năm signal và
+kết thúc tại $\mathbf{f}_v$; section 4 nhận $\mathbf{f}_v$ rồi mới bắt đầu** (router →
+top-k → refiner). Vì vậy 12 cảnh `S4_03…S4_14` được chuyển nguyên (cả animation lẫn
+lời thoại) sang file này thành `S3_07…S3_19`:
+
+| Cảnh mới | Nội dung | Gốc |
+|---|---|---|
+| `S3_07_ThreeSources` | ba nguồn thông tin của node | `S4_03` |
+| `S3_08_InitialState` … `S3_11_BeforeAfter` | message passing: $h^{(0)}$, AGGREGATE, UPDATE, before/after | `S4_04`–`S4_07` |
+| `S3_12_NodeEmbedding` | **signal 1** $\mathbf{z}_G(A)$, tách khỏi $\mathbf{p}_{H,A}$ | `S4_08` |
+| `S3_13_Uncertainty` | **signal 2** $u_A$ | `S4_09` |
+| `S3_14_MLPQ`, `S3_15_NeighborAverage`, `S3_16_SoftHomophily` | **signal 3** $\hat h_A$ | `S4_10`–`S4_12` |
+| `S3_17_NodeFeatures` | **signal 4** $\mathbf{x}_A$ | nửa trái `S4_13` |
+| `S3_18_Degree` | **signal 5** $d_A$ | nửa phải `S4_13` |
+| `S3_19_RoutingFeature` | ghép $\mathbf{f}_A$, bàn giao sang section 4 | `S4_14` |
+
+Sáu cảnh cũ `S3_07_NodeEmbedding`…`S3_12_Combine` đã bỏ vì trùng nội dung. Hai đoạn
+độc đáo của chúng được giữ lại: bảng **hard vs soft** ở cuối `S3_16`, và cảnh báo
+**$d_v$ vs $\bar d_v$** ở cuối `S3_18`.
+
+Section 3 **không** được tính routing score, xếp hạng node hay chọn top-k — đó là
+section 4. `S3_05_Bridge` vì vậy không còn thẻ "Task 4"; thẻ chuyển section nằm ở
+cuối `S3_19`.
+
 ## Lưu ý
 
 - Đây là section "phát hiện" — bản lề giữa phần phủ định (section 2) và phần giải pháp
