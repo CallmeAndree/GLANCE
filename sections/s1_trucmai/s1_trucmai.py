@@ -1465,18 +1465,11 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     # SECTION 10 — GLANCE Research Question & Task 2
     # ─────────────────────────────────────────────────────────
     def section_10_glance_question(self):
-        # Recap: khó với GNN ≠ chắc chắn có lợi từ LLM (màu đúng vai trò).
         with self.narrated_caption([
             "Như vậy, độ khó với gờ nờ nờ",
             "chưa đủ để quyết định.",
         ]):
             self.play(FadeOut(self.sec9_objects, shift=UP * 0.3), run_time=0.7)
-            recap = VGroup(
-                t("GNN DIFFICULTY", size=38, color=gs.C_GNN, weight=BOLD),
-                t("≠", size=58, color=gs.C_BAD, weight=BOLD),
-                t("GUARANTEED LLM BENEFIT", size=38, color=gs.C_LLM, weight=BOLD),
-            ).arrange(DOWN, buff=0.32)
-            self.play(FadeIn(recap, shift=UP * 0.2), run_time=0.7)
             self.wait(0.3)
 
         # GLANCE = quyết định định tuyến từng nót: giữ GNN, hoặc gọi LLM để tinh chỉnh.
@@ -1500,7 +1493,6 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "gờ lans biến việc này thành một quyết định định tuyến cho từng nót:",
             "giữ dự đoán của gờ nờ nờ, hoặc gọi lờ lờ mờ để tinh chỉnh nó.",
         ]):
-            self.play(FadeOut(recap), run_time=0.4)
             self.play(FadeIn(VGroup(node, gnn, router)), GrowArrow(arr1), GrowArrow(arr2),
                       run_time=1.0)
             self.play(FadeIn(keep), FadeIn(query), GrowArrow(a_up), GrowArrow(a_dn),
