@@ -63,6 +63,15 @@ def freeze(mobj):
     return mobj.animate.set_opacity(0.35)
 
 
+def fit_box_label(box_group, width, pad=0.3):
+    """labeled_box() không tự co chữ theo width — nhãn dài (vd "REFINER  ξ")
+    tràn ra ngoài khung và đè lên khung bên cạnh. Co lại cho vừa."""
+    label = box_group[1]
+    if label.width > width - pad:
+        label.scale_to_fit_width(width - pad)
+    return box_group
+
+
 # ---------------------------------------------------------------------------
 # VO — mọi lời thuyết minh gom một chỗ. Đã viết theo cách ĐỌC LÊN và phiên âm
 # thuật ngữ tiếng Anh theo bảng chung trong glance_style.py / SKILL.md, vì
@@ -301,24 +310,22 @@ class S5_02_TopKProblem(GlanceScene):
             self.play(Create(cut), FadeIn(jump_label, shift=UP * 0.1), FadeIn(marker, scale=0.6),
                       run_time=min(1.4, tracker.duration))
 
-        # Điểm B tụt nhẹ từ 0.82 xuống 0.78 — thấp hơn C (0.79) — nên đổi hạng:
-        # B và C hoán đổi vị trí, "vé" đi theo C chứ không theo B.
-        b_center = nodes[1].get_center().copy()
-        c_center = nodes[2].get_center().copy()
-        score_078 = txt("0.78", size=SMALL_SIZE - 5, color=C_BAD, weight=BOLD).move_to(score_texts[2])
-        score_079_moved = score_texts[2].copy().move_to(score_texts[1])
-        nodes[1].generate_target()
-        nodes[1].target.move_to(c_center)
-        nodes[2].generate_target()
-        nodes[2].target.move_to(b_center)
+        # Điểm B tụt nhẹ từ 0.82 xuống 0.78 — thấp hơn C (0.79) — nên đổi hạng.
+        # Giữ nguyên vị trí các ô (không hoán đổi B/C): trong không gian hẹp,
+        # cho hai ô bay qua nhau từng đè lên nhau giữa đường đi. Chỉ cần đổi
+        # số điểm của B và chuyển "vé" sang C là đủ thể hiện quyết định nhảy.
+        score_078 = txt("0.78", size=SMALL_SIZE - 5, color=C_BAD, weight=BOLD).move_to(score_texts[1])
+        # Đặt tick bên DƯỚI dòng điểm số, không phải phía trên node — lúc này
+        # hàng node đã bị thu nhỏ/đẩy sát lên đỉnh khung hình (gần banner tiêu
+        # đề), đặt phía trên sẽ đè lên chữ tiêu đề.
+        new_ticket = check(color=C_LLM).next_to(score_texts[2], DOWN, buff=0.22)
         self.play(
             Transform(score_texts[1], score_078),
-            Transform(score_texts[2], score_079_moved),
-            MoveToTarget(nodes[1]), MoveToTarget(nodes[2]),
-            tickets[1].animate.move_to(b_center + UP * 0.55),
+            Indicate(nodes[1], color=C_BAD, scale_factor=1.08),
             marker.animate.move_to(step_axis.c2p(2.65, 1)),
-            run_time=1.6,
+            run_time=1.2,
         )
+        self.play(FadeIn(new_ticket, scale=0.7), run_time=0.5)
         self.play(Flash(marker, color=C_BAD, flash_radius=0.35), run_time=0.6)
         self.wait(0.5)
 
@@ -333,7 +340,7 @@ class S5_02_TopKProblem(GlanceScene):
 
         with self.voiceover(text=VO["topk_block"]) as tracker:
             self.play(
-                FadeOut(VGroup(nodes, score_texts, step_axis, step, cut, jump_label, marker, tickets[1])),
+                FadeOut(VGroup(nodes, score_texts, step_axis, step, cut, jump_label, marker, new_ticket)),
                 run_time=0.5,
             )
             self.play(FadeIn(chain), run_time=1.0)
@@ -557,10 +564,10 @@ class S5_05_JointObjective(GlanceScene):
             )
 
         modules = VGroup(
-            labeled_box("GNN  F", C_GNN, width=2.1, height=0.75),
-            labeled_box("LLM  L", C_LLM, width=2.1, height=0.75),
-            labeled_box("REFINER  ξ", C_GOOD, width=2.1, height=0.75),
-            labeled_box("ROUTER  π", C_ROUTER, width=2.1, height=0.75),
+            fit_box_label(labeled_box("GNN  F", C_GNN, width=2.1, height=0.75), 2.1),
+            fit_box_label(labeled_box("LLM  L", C_LLM, width=2.1, height=0.75), 2.1),
+            fit_box_label(labeled_box("REFINER  ξ", C_GOOD, width=2.1, height=0.75), 2.1),
+            fit_box_label(labeled_box("ROUTER  π", C_ROUTER, width=2.1, height=0.75), 2.1),
         ).arrange(RIGHT, buff=0.3).move_to([0, -2.35, 0])
         status_labels = VGroup(
             pill("FREEZE", MUTED, width=1.45, size=SMALL_SIZE - 5),
@@ -591,8 +598,11 @@ class S5_05_JointObjective(GlanceScene):
                 run_time=0.8,
             )
             self.play(GrowArrow(to_refiner), GrowArrow(to_router), run_time=0.8)
+            # scale_factor mặc định của Indicate (~1.2) khiến 2 khối liền kề
+            # (buff=0.3) phình to đè lên nhau — ép nhỏ lại để không chạm nhau.
             self.play(freeze(modules[0]), freeze(modules[1]),
-                      Indicate(modules[2], color=C_GOOD), Indicate(modules[3], color=C_ROUTER),
+                      Indicate(modules[2], color=C_GOOD, scale_factor=1.08),
+                      Indicate(modules[3], color=C_ROUTER, scale_factor=1.08),
                       run_time=min(1.6, tracker.duration))
             self.play(
                 FadeOut(VGroup(update_label, to_refiner, to_router)),
