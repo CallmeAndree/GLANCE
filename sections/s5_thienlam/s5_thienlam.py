@@ -64,7 +64,7 @@ def freeze(mobj):
 
 
 def fit_box_label(box_group, width, pad=0.3):
-    """labeled_box() không tự co chữ theo width — nhãn dài (vd "REFINER  ξ")
+    """labeled_box() không tự co chữ theo width — nhãn dài (vd "REFINER  C")
     tràn ra ngoài khung và đè lên khung bên cạnh. Co lại cho vừa."""
     label = box_group[1]
     if label.width > width - pad:
@@ -261,17 +261,19 @@ class S5_02_TopKProblem(GlanceScene):
         self.banner()
         head = heading("Vấn đề cốt lõi — top-K không khả vi", color=ACCENT).to_edge(UP, buff=0.85)
 
-        budget = pill("NGÂN SÁCH CỨNG  ·  K = 2", C_LLM, width=4.4).move_to([0, 1.9, 0])
+        # Pill ngân sách nâng cao hẳn và nhỏ lại; hàng node hạ xuống, để hàng
+        # dấu tick (đặt trên node) không chạm mép dưới pill như bản trước.
+        budget = pill("NGÂN SÁCH CỨNG  ·  K = 2", C_LLM, width=4.0).move_to([0, 2.15, 0])
 
         labels = ["A", "B", "C", "D", "E", "F"]
         scores = [0.91, 0.82, 0.79, 0.61, 0.44, 0.20]
         nodes = VGroup(*[labeled_box(l, C_ROUTER, width=1.05, height=0.85) for l in labels])
-        nodes.arrange(RIGHT, buff=0.35).move_to([0, 0.9, 0])
+        nodes.arrange(RIGHT, buff=0.35).move_to([0, 0.55, 0])
         score_texts = VGroup(*[
             txt(f"{s:.2f}", size=SMALL_SIZE, color=MUTED, weight=BOLD).next_to(n, DOWN, buff=0.12)
             for n, s in zip(nodes, scores)
         ])
-        tickets = VGroup(*[check(color=C_LLM).next_to(n, UP, buff=0.14) for n in nodes[:2]])
+        tickets = VGroup(*[check(color=C_LLM, size=0.30).next_to(n, UP, buff=0.16) for n in nodes[:2]])
 
         with self.voiceover(text=VO["topk_setup"]) as tracker:
             self.play(Write(head), FadeIn(budget, scale=0.92), run_time=1.0)
@@ -318,7 +320,7 @@ class S5_02_TopKProblem(GlanceScene):
         # Đặt tick bên DƯỚI dòng điểm số, không phải phía trên node — lúc này
         # hàng node đã bị thu nhỏ/đẩy sát lên đỉnh khung hình (gần banner tiêu
         # đề), đặt phía trên sẽ đè lên chữ tiêu đề.
-        new_ticket = check(color=C_LLM).next_to(score_texts[2], DOWN, buff=0.22)
+        new_ticket = check(color=C_LLM, size=0.30).next_to(score_texts[2], DOWN, buff=0.22)
         self.play(
             Transform(score_texts[1], score_078),
             Indicate(nodes[1], color=C_BAD, scale_factor=1.08),
@@ -369,11 +371,14 @@ class S5_03_CounterfactualLoss(GlanceScene):
         with self.voiceover(text=VO["cf_intro"]):
             self.play(GrowFromCenter(node), FadeIn(route_tag, shift=DOWN * 0.15), run_time=1.2)
 
-        upper = panel(Rectangle(width=7.0, height=1.5)).move_to([0.1, 1.0, 0])
-        lower = panel(Rectangle(width=7.0, height=1.5), color=C_LLM).move_to([0.1, -0.7, 0])
-        up_text = txt("KHÔNG GỌI LLM  ·  GNN → đầu H → p_H  ·  lᴳ = CE(yᵥ, p_H)",
+        # panel() bọc thêm buff=0.4 quanh Rectangle, nên hai khung 1.5 cao đặt
+        # ở y=±0.7 (bản cũ) thực chất chồng lên nhau ở dải giữa. Thu buff còn
+        # 0.26 và tách tâm ra ±1.15 để hai panel rời hẳn, không đè.
+        upper = panel(Rectangle(width=7.0, height=1.35), buff=0.26).move_to([0.1, 1.15, 0])
+        lower = panel(Rectangle(width=7.0, height=1.35), color=C_LLM, buff=0.26).move_to([0.1, -0.95, 0])
+        up_text = txt("KHÔNG GỌI LLM  ·  GNN → đầu H → p_H  ·  ℓᵥᴳᴺᴺ = CE(yᵥ, p_H)",
                        size=SMALL_SIZE - 3, color=C_GNN).move_to(upper).scale_to_fit_width(6.4)
-        low_text = txt("ĐÃ GỌI LLM  ·  GNN + LLM → refiner ξ → p_ξ  ·  lᴸ = CE(yᵥ, p_ξ)",
+        low_text = txt("ĐÃ GỌI LLM  ·  GNN + LLM → refiner C → p_C  ·  ℓᵥᴸᴸᴹ = CE(yᵥ, p_C)",
                         size=SMALL_SIZE - 3, color=C_LLM).move_to(lower).scale_to_fit_width(6.4)
         arrow_up = Arrow(node.get_right(), upper.get_left(), buff=0.1, color=C_GNN, stroke_width=3)
         arrow_down = Arrow(node.get_right(), lower.get_left(), buff=0.1, color=C_LLM, stroke_width=3)
@@ -385,13 +390,13 @@ class S5_03_CounterfactualLoss(GlanceScene):
         # Đồng hồ loss bên phải mỗi nhánh: số chạy sống + thanh dài dần tới giá trị thật.
         gnn_value, llm_value = ValueTracker(0.0), ValueTracker(0.0)
         gnn_num = DecimalNumber(0, num_decimal_places=2, color=C_GNN, font_size=BODY_SIZE - 4)
-        gnn_num.add_updater(lambda m: m.set_value(gnn_value.get_value())).move_to([5.9, 1.0, 0])
+        gnn_num.add_updater(lambda m: m.set_value(gnn_value.get_value())).move_to([5.9, 1.15, 0])
         llm_num = DecimalNumber(0, num_decimal_places=2, color=C_LLM, font_size=BODY_SIZE - 4)
-        llm_num.add_updater(lambda m: m.set_value(llm_value.get_value())).move_to([5.9, -0.7, 0])
+        llm_num.add_updater(lambda m: m.set_value(llm_value.get_value())).move_to([5.9, -0.95, 0])
         gnn_track = RoundedRectangle(width=1.5, height=0.20, corner_radius=0.05,
-                                      stroke_color=C_GNN, stroke_width=1.4, fill_opacity=0).move_to([4.55, 1.0, 0])
+                                      stroke_color=C_GNN, stroke_width=1.4, fill_opacity=0).move_to([4.55, 1.15, 0])
         llm_track = RoundedRectangle(width=1.5, height=0.20, corner_radius=0.05,
-                                      stroke_color=C_LLM, stroke_width=1.4, fill_opacity=0).move_to([4.55, -0.7, 0])
+                                      stroke_color=C_LLM, stroke_width=1.4, fill_opacity=0).move_to([4.55, -0.95, 0])
         gnn_fill = RoundedRectangle(width=1.5 * 2.30 / 2.50, height=0.20, corner_radius=0.05,
                                      fill_color=C_GNN, fill_opacity=0.85, stroke_width=0)
         gnn_fill.move_to(gnn_track.get_center()).align_to(gnn_track, LEFT)
@@ -425,9 +430,9 @@ class S5_03_CounterfactualLoss(GlanceScene):
             self.play(Indicate(up_text, color=C_GNN), Indicate(low_text, color=C_LLM),
                       run_time=min(1.6, tracker.duration))
         banner = txt(
-            "lᴸ LÀ LOSS CỦA CẢ NHÁNH GNN + LLM + REFINER — KHÔNG PHẢI LLM ĐỨNG MỘT MÌNH",
+            "ℓᵥᴸᴸᴹ LÀ LOSS CỦA CẢ NHÁNH GNN + LLM + REFINER C — KHÔNG PHẢI LLM ĐỨNG MỘT MÌNH",
             size=SMALL_SIZE - 4, color=C_LLM, weight=BOLD,
-        ).move_to([0.1, -2.1, 0]).scale_to_fit_width(11.5)
+        ).move_to([0.1, -2.35, 0]).scale_to_fit_width(11.5)
         self.play(FadeIn(banner, shift=UP * 0.1), run_time=0.7)
         self.wait(0.6)
 
@@ -443,9 +448,9 @@ class S5_04_Reward(GlanceScene):
         self.add(head)
 
         row1 = VGroup(
-            pill("lᴳ = 2.30", C_GNN, width=2.2),
+            pill("ℓᵥᴳᴺᴺ = 2.30", C_GNN, width=2.5),
             txt("−", size=BODY_SIZE, color=MUTED),
-            pill("lᴸ = 0.30", C_LLM, width=2.2),
+            pill("ℓᵥᴸᴸᴹ = 0.30", C_LLM, width=2.5),
             txt("=", size=BODY_SIZE, color=MUTED),
             pill("gain 2.00", C_GOOD, width=2.3),
         ).arrange(RIGHT, buff=0.25).move_to([0, 1.3, 0])
@@ -486,13 +491,13 @@ class S5_04_Reward(GlanceScene):
 
         skip_row = VGroup(
             txt("NẾU SKIP", size=SMALL_SIZE, color=MUTED, weight=BOLD),
-            pill("reward = −lᴳ", C_BAD, width=3.0),
+            pill("reward = −ℓᵥᴳᴺᴺ", C_BAD, width=3.2),
         ).arrange(RIGHT, buff=0.4).move_to([0, -1.4, 0])
 
         with self.voiceover(text=VO["reward_skip"]) as tracker:
             self.play(FadeIn(skip_row, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
 
-        banner = txt("ROUTE:  rᵥ = lᴳ − lᴸ − β        SKIP:  rᵥ = −lᴳ",
+        banner = txt("ROUTE:  rᵥ = ℓᵥᴳᴺᴺ − ℓᵥᴸᴸᴹ − β        SKIP:  rᵥ = −ℓᵥᴳᴺᴺ",
                       size=BODY_SIZE - 2, color=C_ROUTER, weight=BOLD).move_to([0, -2.3, 0])
         self.play(FadeIn(banner, shift=UP * 0.1), run_time=0.8)
         self.wait(0.6)
@@ -509,7 +514,7 @@ class S5_05_JointObjective(GlanceScene):
         self.add(head)
 
         chain = pipeline(
-            [("reward rᵥ", C_GOOD), ("log π(fᵥ)", C_ROUTER), ("router loss", C_BAD)],
+            [("reward rᵥ", C_GOOD), ("log π(fᵥ)", C_ROUTER), ("ℓᵥʳᵒᵘᵗᵉ", C_BAD)],
         ).scale(0.85).move_to([0, 1.75, 0])
         good_rule = VGroup(
             txt("rᵥ > 0", size=SMALL_SIZE - 2, color=C_GOOD, weight=BOLD),
@@ -531,29 +536,35 @@ class S5_05_JointObjective(GlanceScene):
         self.play(FadeOut(rules), chain.animate.move_to([0, 1.5, 0]), run_time=0.5)
 
         formula = txt(
-            "lʳᵒᵘᵗᵉ = −rᵥ · log π(fᵥ)  −  λ_ent · H[π(fᵥ)]",
+            "ℓᵥʳᵒᵘᵗᵉ = −rᵥ · log π(fᵥ)  −  λ_H · H[π(fᵥ)]",
             size=BODY_SIZE - 4, color=INK, weight=BOLD,
         ).move_to([0, 0.75, 0])
         with self.voiceover(text=VO["obj_entropy"]) as tracker:
             self.play(Write(formula), run_time=min(1.6, tracker.duration))
 
-        pred_card = panel(Rectangle(width=5.2, height=1.1), color=C_GNN).move_to([-3.0, -0.45, 0])
-        route_card = panel(Rectangle(width=5.2, height=1.1), color=C_ROUTER).move_to([3.0, -0.45, 0])
-        pred_text = txt("PREDICTION LOSS  ·  top-K dùng lᴸ, còn lại dùng lᴳ",
-                         size=SMALL_SIZE - 4, color=C_GNN).move_to(pred_card).scale_to_fit_width(4.8)
-        route_text = txt("λ × ROUTER LOSS  ·  học phân bổ ngân sách",
-                          size=SMALL_SIZE - 4, color=C_ROUTER).move_to(route_card).scale_to_fit_width(4.8)
+        # panel() bọc thêm buff quanh Rectangle. Bản cũ width 5.2 + buff 0.4 =
+        # 6.0, đặt ở x=±3.0 nên hai khung chạm nhau ngay tại tâm. Thu nhỏ khung
+        # và buff, tách tâm để có khe rõ giữa hai card.
+        pred_card = panel(Rectangle(width=4.5, height=1.0), color=C_GNN, buff=0.28).move_to([-2.7, -0.45, 0])
+        route_card = panel(Rectangle(width=4.5, height=1.0), color=C_ROUTER, buff=0.28).move_to([2.7, -0.45, 0])
+        pred_text = txt("PREDICTION LOSS  ·  top-k: ℓᵥᴸᴸᴹ, còn lại ℓᵥᴳᴺᴺ",
+                         size=SMALL_SIZE - 4, color=C_GNN).move_to(pred_card).scale_to_fit_width(4.7)
+        route_text = txt("λ_router × ROUTER LOSS  ·  học phân bổ ngân sách",
+                          size=SMALL_SIZE - 4, color=C_ROUTER).move_to(route_card).scale_to_fit_width(4.7)
         with self.voiceover(text=VO["obj_pred"]) as tracker:
             self.play(FadeIn(pred_card), FadeIn(pred_text), run_time=min(1.6, tracker.duration))
 
-        total = pill("LOSS TỔNG", INK, width=2.6).move_to([0, -1.9, 0])
+        # Hai mũi tên gộp về LOSS TỔNG: đối xứng qua trục giữa, xuất phát từ
+        # đáy tâm mỗi card, chụm vào hai góc trên của pill. Hạ pill xuống đủ sâu
+        # để mũi tên dốc hẳn, không còn nằm ngang lệch như bản trước.
+        total = pill("LOSS TỔNG", INK, width=3.0).move_to([0, -2.6, 0])
         pred_to_total = Arrow(
-            pred_card.get_bottom(), total.get_top() + LEFT * 0.45,
-            buff=0.12, color=C_GNN, stroke_width=3,
+            pred_card.get_bottom(), total.get_top() + LEFT * 0.75,
+            buff=0.14, color=C_GNN, stroke_width=4, max_tip_length_to_length_ratio=0.14,
         )
         route_to_total = Arrow(
-            route_card.get_bottom(), total.get_top() + RIGHT * 0.45,
-            buff=0.12, color=C_ROUTER, stroke_width=3,
+            route_card.get_bottom(), total.get_top() + RIGHT * 0.75,
+            buff=0.14, color=C_ROUTER, stroke_width=4, max_tip_length_to_length_ratio=0.14,
         )
         with self.voiceover(text=VO["obj_total"]) as tracker:
             self.play(FadeIn(route_card), FadeIn(route_text), run_time=1.0)
@@ -566,7 +577,7 @@ class S5_05_JointObjective(GlanceScene):
         modules = VGroup(
             fit_box_label(labeled_box("GNN  F", C_GNN, width=2.1, height=0.75), 2.1),
             fit_box_label(labeled_box("LLM  L", C_LLM, width=2.1, height=0.75), 2.1),
-            fit_box_label(labeled_box("REFINER  ξ", C_GOOD, width=2.1, height=0.75), 2.1),
+            fit_box_label(labeled_box("REFINER  C", C_GOOD, width=2.1, height=0.75), 2.1),
             fit_box_label(labeled_box("ROUTER  π", C_ROUTER, width=2.1, height=0.75), 2.1),
         ).arrange(RIGHT, buff=0.3).move_to([0, -2.35, 0])
         status_labels = VGroup(
@@ -856,7 +867,10 @@ class S5_09_RoutingControls(GlanceScene):
         with self.voiceover(text=VO["ctrl_intro"]):
             self.play(Write(head), run_time=1.4)
 
-        left = panel(Rectangle(width=5.6, height=2.7), color=C_BAD).move_to([-3.2, 0.3, 0])
+        # panel() bọc thêm buff quanh Rectangle: width 5.6 + buff 0.4 = 6.4 ở
+        # x=±3.2 khiến hai khung chạm nhau tại tâm. Thu khung + buff, tách tâm
+        # ra ±3.35 để có khe rõ giữa hai đối chứng.
+        left = panel(Rectangle(width=5.2, height=2.7), color=C_BAD, buff=0.3).move_to([-3.35, 0.3, 0])
         left_title = txt("ROUTE HẾT · CORA", size=SMALL_SIZE - 4, color=C_BAD, weight=BOLD)
         left_title.next_to(left, UP, buff=0.12)
         hard_row = VGroup(pill("+2.8", C_GOOD, width=1.4), pill("+14.5", C_GOOD, width=1.4)).arrange(RIGHT, buff=0.2)
@@ -872,7 +886,7 @@ class S5_09_RoutingControls(GlanceScene):
             self.play(FadeIn(left), FadeIn(left_title), run_time=0.8)
             self.play(FadeIn(left_body, shift=UP * 0.1), run_time=min(1.8, tracker.duration))
 
-        right = panel(Rectangle(width=5.6, height=2.7), color=C_ROUTER).move_to([3.2, 0.3, 0])
+        right = panel(Rectangle(width=5.2, height=2.7), color=C_ROUTER, buff=0.3).move_to([3.35, 0.3, 0])
         right_title = txt("ROUTE NGẪU NHIÊN · CORA", size=SMALL_SIZE - 4, color=C_ROUTER, weight=BOLD)
         right_title.next_to(right, UP, buff=0.12)
         ranking = VGroup(
@@ -926,8 +940,11 @@ class S5_10_Scale(GlanceScene):
         dots[27].set_color(C_LLM).set_fill(opacity=1).scale(1.5)
         cloud_label = txt("2.45M NỐT · ~62M CẠNH", size=SMALL_SIZE - 4, color=INK, weight=BOLD)
         cloud_label.next_to(dots, UP, buff=0.25)
+        # Đưa card tỷ lệ về ĐÚNG cao độ với card kết quả (y=0.9) và lùi sang
+        # trái, để mũi tên rate → result là một đường ngang thẳng, đủ dài — bản
+        # cũ hai card gần nhau và lệch cao độ nên mũi tên ngắn, méo.
         rate = metric_card("TỶ LỆ ROUTE", "~1.6%", C_LLM, note="K=1, batch 64", width=3.0)
-        rate.move_to([-0.3, 0.4, 0])
+        rate.move_to([-1.4, 0.9, 0])
 
         with self.voiceover(text=VO["scale_setup"]) as tracker:
             self.play(
@@ -941,7 +958,8 @@ class S5_10_Scale(GlanceScene):
         result.move_to([2.8, 0.9, 0])
         oom = pill("GGCN · OOM", C_BAD, width=2.3).move_to([2.8, -0.3, 0])
         arxiv_year = metric_card("ARXIV-YEAR", "49.8", C_GOOD, width=2.6).move_to([2.8, -1.5, 0])
-        arrow = Arrow(rate.get_right(), result.get_left(), buff=0.12, color=MUTED, stroke_width=3)
+        arrow = Arrow(rate.get_right(), result.get_left(), buff=0.18, color=MUTED,
+                      stroke_width=4, max_tip_length_to_length_ratio=0.22)
 
         with self.voiceover(text=VO["scale_result"]) as tracker:
             self.play(GrowArrow(arrow), FadeIn(result, shift=RIGHT * 0.1), run_time=1.0)
