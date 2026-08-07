@@ -945,13 +945,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         pred_arrows = VGroup(*[small_arrow(pred_p[i].get_bottom(), pred_p[i+1].get_top()) for i in range(3)])
         pred_group = VGroup(predictor_title, VGroup(pred_p, pred_arrows)).arrange(DOWN, buff=0.35).scale(0.88).move_to(RIGHT * 3.5 + UP * 0.1)
 
-        with self.narrated_caption(["các phương pháp hiện nay chia thành hai hướng:", "lờ lờ mờ làm bộ tăng cường và lờ lờ mờ-as-predictor."]):
+        with self.narrated_caption(["các phương pháp hiện nay chia thành hai hướng:", "lờ lờ mờ ass èn han xờ và lờ lờ mờ ass prì đích tờ."]):
             self.play(Write(title), run_time=0.7)
             self.play(FadeIn(enh_group), FadeIn(pred_group), run_time=1.0)
 
         # Enhancer deep-dive
         noisy_nbhd = create_target_neighborhood(kind="noisy", scale=0.9).move_to(RIGHT * 2.8 + DOWN * 0.2)
-        with self.narrated_caption(["lờ lờ mờ làm bộ tăng cường tạo véc-tơ ngữ nghĩa giàu hơn,", "rồi gờ nờ nờ tiếp tục truyền thông tin và dự đoán."]):
+        with self.narrated_caption(["lờ lờ mờ ass èn han xờ tạo véc-tơ ngữ nghĩa giàu hơn,", "rồi gờ nờ nờ tiếp tục truyền thông tin và dự đoán."]):
             self.play(
                 FadeOut(pred_group),
                 enh_group.animate.scale(1.08).shift(RIGHT * 1.2),
@@ -1012,7 +1012,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             
         # Predictor deep-dive
         token_text = t("Prompt Token Count: 128", size=30, color=MID).move_to(LEFT * 2.8 + DOWN * 0.4)
-        with self.narrated_caption(["lờ lờ mờ-as-predictor đổi toàn bộ thông tin", "thành một câu lệnh văn bản dài."]):
+        with self.narrated_caption(["lờ lờ mờ ass prì đích tờ đổi toàn bộ thông tin", "thành một câu lệnh văn bản dài."]):
             pred_group.move_to(RIGHT * 2.5 + DOWN * 0.1).scale(1.08)
             self.play(
                 FadeOut(noisy_nbhd), FadeOut(noisy_msgs), FadeOut(blackout2), FadeOut(bias_text),
@@ -1023,7 +1023,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(Write(token_text), run_time=0.4)
 
         with self.narrated_caption(["vùng lân cận càng mở rộng,", "chuỗi văn bản càng dài và đắt đỏ hơn."]):
-            blackout3 = Rectangle(width=25, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(80)
+            blackout3 = Rectangle(width=25, height=15, fill_color=BLACK, fill_opacity=0.95).set_z_index(80)
             self.play(FadeIn(blackout3), run_time=0.5)
 
             # Helpers for visualization
@@ -1152,7 +1152,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         node_c = node("C", radius=0.34).move_to(LEFT * 5.4 + DOWN * 2.0)
         nodes = VGroup(node_a, node_b, node_c)
 
-        fusion = module("Fixed Fusion", "one rule for every node", width=3.5, height=1.25,
+        fusion = module("Static Fusion", "one rule for every node", width=3.5, height=1.25,
                         emphasized=True).move_to(RIGHT * 2.3 + UP * 0.1)
         fusion[0].set_stroke(gs.C_ROUTER)
         fusion[1][0].set_color(gs.C_ROUTER)
@@ -1277,7 +1277,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         title_B = t("Node B: Noisy Structure, Clear Text", size=34, color=INK, weight=BOLD).to_edge(UP, buff=0.35)
         group_B = create_target_neighborhood(kind="noisy", label="B", scale=0.95).move_to(LEFT * 4 + UP * 0.4)
         doc_B = create_text_document("Node B", ["Graph Learning", "Heterophily", "Node Classification"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
-        gnn_bar_B = probability_vector("GNN Prediction", [0.20, 0.65, 0.15], emphasized_index=1, color=gs.C_GNN, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 1.8 + DOWN * 0.8).scale(1.1)
+        gnn_bar_B = probability_vector("GNN Prediction", [0.20, 0.65, 0.15], emphasized_index=1, color=gs.C_GNN, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 1.8 + DOWN * 0.8).scale(0.9)
 
         with self.narrated_caption(["nót bê có vùng lân cận chứa nhiều loại khác nhau."]):
             self.play(
@@ -1298,14 +1298,14 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             ) for i, n in enumerate(group_B.neighbors)])
             self.play(AnimationGroup(*[GrowArrow(m) for m in msgs_B], lag_ratio=0.1), run_time=1.0)
             self.play(ReplacementTransform(gnn_bar_A, gnn_bar_B), run_time=0.7)
-            wrong_B = t("GNN: WRONG", color=gs.C_BAD, weight=BOLD, size=24).next_to(gnn_bar_B, DOWN, buff=0.15)
+            wrong_B = t("GNN: WRONG", color=gs.C_BAD, weight=BOLD, size=24).next_to(gnn_bar_B, DOWN, buff=0.25)
             self.play(FadeIn(wrong_B), run_time=0.4)
 
         with self.narrated_caption(["nhưng văn bản nót bê rất rõ ràng.", "lờ lờ mờ sửa lại dự đoán thành công."]):
             self.play(highlight_keywords(doc_B, [0, 1, 2]), run_time=0.8)
-            llm_bar_B = probability_vector("LLM Corrected", [0.90, 0.05, 0.05], emphasized_index=0, color=gs.C_LLM, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 5.2 + DOWN * 0.8).scale(1.1)
+            llm_bar_B = probability_vector("LLM Corrected", [0.90, 0.05, 0.05], emphasized_index=0, color=gs.C_LLM, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 5.2 + DOWN * 0.8).scale(0.9)
             self.play(FadeIn(llm_bar_B), run_time=0.7)
-            correct_B = t("LLM: CORRECT", color=gs.C_GOOD, weight=BOLD, size=24).next_to(llm_bar_B, DOWN, buff=0.15)
+            correct_B = t("LLM: CORRECT", color=gs.C_GOOD, weight=BOLD, size=24).next_to(llm_bar_B, DOWN, buff=0.25)
             self.play(FadeIn(correct_B), run_time=0.4)
 
         # Save Node B state for section 8
@@ -1321,8 +1321,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         doc_C = create_text_document("Node C", ["Some words...", "General text...", "Vague description"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
 
         with self.narrated_caption(["nót xê cũng khó với gờ nờ nờ.", "nhưng văn bản lại rất mơ hồ."]):
-            llm_bar_C = probability_vector("LLM Output", [0.33, 0.34, 0.33], emphasized_index=None, color=gs.C_LLM, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 5.2 + DOWN * 0.8).scale(1.1)
-            wrong_C = t("LLM: UNCERTAIN", color=gs.C_BAD, weight=BOLD, size=24).next_to(llm_bar_C, DOWN, buff=0.15)
+            llm_bar_C = probability_vector("LLM Output", [0.33, 0.34, 0.33], emphasized_index=None, color=gs.C_LLM, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 5.2 + DOWN * 0.8).scale(0.9)
+            wrong_C = t("LLM: UNCERTAIN", color=YELLOW, weight=BOLD, size=24).next_to(llm_bar_C, DOWN, buff=0.25)
             self.play(
                 FadeOut(title_B),
                 FadeIn(title_C),
@@ -1340,8 +1340,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         with self.narrated_caption(["lờ lờ mờ không đủ bằng chứng để sửa kết quả.", "cả hai mô hình đều thất bại."]):
             self.wait(0.6)
             # For Node C, GNN was also wrong. We just update the label for Node C's GNN
-            gnn_bar_C = probability_vector("GNN Prediction", [0.10, 0.20, 0.70], emphasized_index=2, color=gs.C_GNN, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 1.8 + DOWN * 0.8).scale(1.1)
-            wrong_gnn_C = t("GNN: WRONG", color=gs.C_BAD, weight=BOLD, size=24).next_to(gnn_bar_C, DOWN, buff=0.15)
+            gnn_bar_C = probability_vector("GNN Prediction", [0.10, 0.20, 0.70], emphasized_index=2, color=gs.C_GNN, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 1.8 + DOWN * 0.8).scale(0.9)
+            wrong_gnn_C = t("GNN: WRONG", color=gs.C_BAD, weight=BOLD, size=24).next_to(gnn_bar_C, DOWN, buff=0.25)
             self.play(ReplacementTransform(gnn_bar_B, gnn_bar_C), FadeOut(wrong_B), FadeIn(wrong_gnn_C), run_time=0.7)
 
         # Save Node C state for section 8
@@ -1394,7 +1394,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
 
             result_c = VGroup(
                 t("GNN: WRONG", size=28, color=gs.C_BAD),
-                t("LLM: UNCERTAIN", size=28, color=gs.C_SIGNAL, weight=BOLD)
+                t("LLM: UNCERTAIN", size=28, color=YELLOW, weight=BOLD)
             ).arrange(DOWN, aligned_edge=LEFT).next_to(arrow_c, RIGHT, buff=0.15)
             
             row_c = VGroup(node_c_label, text_c, arrow_c, result_c)
@@ -1465,18 +1465,11 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     # SECTION 10 — GLANCE Research Question & Task 2
     # ─────────────────────────────────────────────────────────
     def section_10_glance_question(self):
-        # Recap: khó với GNN ≠ chắc chắn có lợi từ LLM (màu đúng vai trò).
         with self.narrated_caption([
             "Như vậy, độ khó với gờ nờ nờ",
             "chưa đủ để quyết định.",
         ]):
             self.play(FadeOut(self.sec9_objects, shift=UP * 0.3), run_time=0.7)
-            recap = VGroup(
-                t("GNN DIFFICULTY", size=38, color=gs.C_GNN, weight=BOLD),
-                t("≠", size=58, color=gs.C_BAD, weight=BOLD),
-                t("GUARANTEED LLM BENEFIT", size=38, color=gs.C_LLM, weight=BOLD),
-            ).arrange(DOWN, buff=0.32)
-            self.play(FadeIn(recap, shift=UP * 0.2), run_time=0.7)
             self.wait(0.3)
 
         # GLANCE = quyết định định tuyến từng nót: giữ GNN, hoặc gọi LLM để tinh chỉnh.
@@ -1500,7 +1493,6 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "gờ lans biến việc này thành một quyết định định tuyến cho từng nót:",
             "giữ dự đoán của gờ nờ nờ, hoặc gọi lờ lờ mờ để tinh chỉnh nó.",
         ]):
-            self.play(FadeOut(recap), run_time=0.4)
             self.play(FadeIn(VGroup(node, gnn, router)), GrowArrow(arr1), GrowArrow(arr2),
                       run_time=1.0)
             self.play(FadeIn(keep), FadeIn(query), GrowArrow(a_up), GrowArrow(a_dn),

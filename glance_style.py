@@ -15,11 +15,13 @@ import json
 import os
 import pathlib
 import re
+import time
 from urllib import error as urlerror
 from urllib import request as urlrequest
 
 from manim import *
 from manim_voiceover import VoiceoverScene
+from manim_voiceover.defaults import DEFAULT_VOICEOVER_CACHE_JSON_FILENAME
 from manim_voiceover.helper import remove_bookmarks
 from manim_voiceover.services.base import SpeechService
 
@@ -32,7 +34,7 @@ import manimpango
 
 
 DEFAULT_TIMED_TTS_URL = (
-    "https://thunder-proceeding-paul-acknowledge.trycloudflare.com/v1/audio/speech"
+    "https://sunshine-ten-pvc-merit.trycloudflare.com/v1/audio/speech"
 )
 DEFAULT_TIMED_TTS_MODEL = "gwen-tts"
 DEFAULT_TIMED_TTS_VOICE = "longkhongphainong"
@@ -67,10 +69,8 @@ class TimedTTSService(SpeechService):
         self.speed = float(speed)
         self.timeout = timeout
 
-    def generate_from_text(self, text, cache_dir=None, path=None, **kwargs):
-        cache_dir = pathlib.Path(cache_dir or self.cache_dir)
-        input_text = remove_bookmarks(text)
-        input_data = {
+    def _cache_input_data(self, input_text):
+        return {
             "input_text": input_text,
             "service": "glance-timed-tts-v1",
             "endpoint": self.endpoint,
@@ -79,6 +79,95 @@ class TimedTTSService(SpeechService):
             "format": self.audio_format,
             "speed": self.speed,
         }
+
+    def _append_cache_atomic(self, entry):
+        """Ghi cache index nguyên tử và không nhân đôi cache hit.
+
+        manim-voiceover 0.3.x ghi lại toàn bộ cache.json sau *mỗi* câu,
+        kể cả khi câu đó đã cache. Hai tiến trình render chồng nhau có
+        thể làm hai lần ghi xen kẽ và phá hỏng JSON. Khoá bằng mkdir
+        hoạt động trên cả macOS/Linux/Windows; os.replace giúp reader chỉ
+        thấy bản cũ hoặc bản mới hoàn chỉnh.
+        """
+        cache_dir = pathlib.Path(self.cache_dir)
+        cache_path = cache_dir / DEFAULT_VOICEOVER_CACHE_JSON_FILENAME
+        lock_dir = cache_dir / f"{DEFAULT_VOICEOVER_CACHE_JSON_FILENAME}.lock"
+        deadline = time.monotonic() + 30.0
+
+        while True:
+            try:
+                lock_dir.mkdir()
+                break
+            except FileExistsError:
+                try:
+                    if time.time() - lock_dir.stat().st_mtime > 120:
+                        lock_dir.rmdir()
+                        continue
+                except (FileNotFoundError, OSError):
+                    continue
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("Cache TTS đang bị tiến trình khác khoá.")
+                time.sleep(0.05)
+
+        temporary = cache_dir / (
+            f".{DEFAULT_VOICEOVER_CACHE_JSON_FILENAME}.{os.getpid()}.tmp"
+        )
+        try:
+            if cache_path.exists():
+                entries = json.loads(cache_path.read_text(encoding="utf-8"))
+            else:
+                entries = []
+            if not isinstance(entries, list):
+                raise ValueError("Cache TTS phải là một danh sách JSON.")
+
+            if any(item.get("input_data") == entry["input_data"] for item in entries):
+                return
+
+            entries.append(entry)
+            temporary.write_text(
+                json.dumps(entries, ensure_ascii=True, indent=2),
+                encoding="utf-8",
+            )
+            os.replace(temporary, cache_path)
+        finally:
+            temporary.unlink(missing_ok=True)
+            try:
+                lock_dir.rmdir()
+            except FileNotFoundError:
+                pass
+
+    def _wrap_generate_from_text(self, text, path=None, **kwargs):
+        """Giữ nguyên API của SpeechService nhưng không ghi lại cache hit."""
+        normalized_text = " ".join(text.split())
+        input_data = self._cache_input_data(remove_bookmarks(normalized_text))
+        cache_dir = pathlib.Path(self.cache_dir)
+        cached = self.get_cached_result(input_data, cache_dir)
+        if cached is not None:
+            cached_audio = cache_dir / cached["original_audio"]
+            if cached_audio.is_file():
+                result = dict(cached)
+                result.setdefault("final_audio", result["original_audio"])
+                return result
+
+        if self.global_speed != 1:
+            raise ValueError(
+                "TimedTTSService dùng tham số speed của API; "
+                "không dùng global_speed của manim-voiceover."
+            )
+
+        result = self.generate_from_text(
+            normalized_text, cache_dir=None, path=path, **kwargs
+        )
+        original_audio = result["original_audio"]
+        self.audio_callback(original_audio, result, **kwargs)
+        result["final_audio"] = original_audio
+        self._append_cache_atomic(result)
+        return result
+
+    def generate_from_text(self, text, cache_dir=None, path=None, **kwargs):
+        cache_dir = pathlib.Path(cache_dir or self.cache_dir)
+        input_text = remove_bookmarks(text)
+        input_data = self._cache_input_data(input_text)
 
         cached = self.get_cached_result(input_data, cache_dir)
         if cached is not None:

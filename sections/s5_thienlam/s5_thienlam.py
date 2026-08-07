@@ -63,6 +63,15 @@ def freeze(mobj):
     return mobj.animate.set_opacity(0.35)
 
 
+def fit_box_label(box_group, width, pad=0.3):
+    """labeled_box() không tự co chữ theo width — nhãn dài (vd "REFINER  ξ")
+    tràn ra ngoài khung và đè lên khung bên cạnh. Co lại cho vừa."""
+    label = box_group[1]
+    if label.width > width - pad:
+        label.scale_to_fit_width(width - pad)
+    return box_group
+
+
 # ---------------------------------------------------------------------------
 # VO — mọi lời thuyết minh gom một chỗ. Đã viết theo cách ĐỌC LÊN và phiên âm
 # thuật ngữ tiếng Anh theo bảng chung trong glance_style.py / SKILL.md, vì
@@ -191,9 +200,9 @@ VO = {
     # --- S5_09 Controls ---
     "ctrl_intro": "Bằng chứng mạnh nhất không phải là thêm lờ lờ mờ, mà là chọn đúng nốt để gọi.",
     "ctrl_all": (
-        "định tuyến hết mọi nốt trên pắp mét: hai nhóm khó tăng, tổng thể thậm chí nhích lên cộng một "
-        "chấm năm điểm — nhưng đổi lại, hai nhóm dễ sụp gần hai mươi điểm; con số tổng che mất cái giá "
-        "phải trả đó."
+        "định tuyến hết mọi nốt trên cô ra: nhóm khó nhất tăng nhẹ, nhóm giữa tăng mạnh tới mười bốn "
+        "chấm năm điểm — nhưng nhóm dễ lại giảm, kéo tổng thể tụt một chấm hai điểm dù tốn gần gấp ba "
+        "số lượt gọi lờ lờ mờ."
     ),
     "ctrl_random": (
         "Giữ nguyên lờ lờ mờ và bộ tinh chỉnh nhưng định tuyến ngẫu nhiên trên cô ra: chỉ còn tám mươi sáu "
@@ -216,15 +225,15 @@ VO = {
     "scale_verdict": "Chọn lọc học được không chỉ cân bằng và chính xác, mà còn rẻ và mở rộng tới quy mô triệu nốt.",
     # --- S5_11 Callout ---
     "final_reconnect": (
-        "Ở đầu vi đi eo, câu hỏi đặt ra là: có cách nào kết hợp gờ nờ nờ và lờ lờ mờ mà biết tính "
+        "Ở đầu vi đi eo, câu hỏi đặt ra là: có cách nào kết hợp gờ, nờ, nờ và lờ, lờ, mờ mà biết tính "
         "chi phí không? Đây là câu trả lời của gờ lans, gói trong năm ý."
     ),
-    "final_1": "Một: gờ nờ nờ và lờ lờ mờ giỏi ở những nốt khác nhau; hô mô phi li cục bộ dự báo ai sẽ thắng.",
+    "final_1": "Một: gờ, nờ, nờ và lờ, lờ, mờ giỏi ở những nốt khác nhau; hô mô phi li cục bộ dự báo ai sẽ thắng.",
     "final_2": "Hai: vì tốp ca không khả vi, phần thưởng chấm điểm từng quyết định để dạy bộ định tuyến.",
-    "final_3": "Ba: chỉ bộ định tuyến và bộ tinh chỉnh được huấn luyện; gờ nờ nờ và lờ lờ mờ đóng băng.",
+    "final_3": "Ba: chỉ bộ định tuyến và bộ tinh chỉnh được huấn luyện; gờ, nờ, nờ và lờ, lờ, mờ đóng băng.",
     "final_4": "Bốn: kết quả là mô hình cân bằng nhất và dẫn đầu tổng thể, nhờ sự chọn lọc học được.",
     "final_5": "Năm: chỉ định tuyến một phần nhỏ nốt, gờ lans vẫn mở rộng tới đồ thị hàng triệu nốt.",
-    "final_punch": "Tất cả gói trong một câu — đừng dùng nhiều lờ lờ mờ hơn, hãy dùng lờ lờ mờ đúng chỗ.",
+    "final_punch": "Tất cả gói trong một câu — đừng dùng nhiều lờ, lờ, mờ hơn, hãy dùng lờ, lờ, mờ đúng chỗ.",
 }
 
 
@@ -301,24 +310,22 @@ class S5_02_TopKProblem(GlanceScene):
             self.play(Create(cut), FadeIn(jump_label, shift=UP * 0.1), FadeIn(marker, scale=0.6),
                       run_time=min(1.4, tracker.duration))
 
-        # Điểm B tụt nhẹ từ 0.82 xuống 0.78 — thấp hơn C (0.79) — nên đổi hạng:
-        # B và C hoán đổi vị trí, "vé" đi theo C chứ không theo B.
-        b_center = nodes[1].get_center().copy()
-        c_center = nodes[2].get_center().copy()
-        score_078 = txt("0.78", size=SMALL_SIZE - 5, color=C_BAD, weight=BOLD).move_to(score_texts[2])
-        score_079_moved = score_texts[2].copy().move_to(score_texts[1])
-        nodes[1].generate_target()
-        nodes[1].target.move_to(c_center)
-        nodes[2].generate_target()
-        nodes[2].target.move_to(b_center)
+        # Điểm B tụt nhẹ từ 0.82 xuống 0.78 — thấp hơn C (0.79) — nên đổi hạng.
+        # Giữ nguyên vị trí các ô (không hoán đổi B/C): trong không gian hẹp,
+        # cho hai ô bay qua nhau từng đè lên nhau giữa đường đi. Chỉ cần đổi
+        # số điểm của B và chuyển "vé" sang C là đủ thể hiện quyết định nhảy.
+        score_078 = txt("0.78", size=SMALL_SIZE - 5, color=C_BAD, weight=BOLD).move_to(score_texts[1])
+        # Đặt tick bên DƯỚI dòng điểm số, không phải phía trên node — lúc này
+        # hàng node đã bị thu nhỏ/đẩy sát lên đỉnh khung hình (gần banner tiêu
+        # đề), đặt phía trên sẽ đè lên chữ tiêu đề.
+        new_ticket = check(color=C_LLM).next_to(score_texts[2], DOWN, buff=0.22)
         self.play(
             Transform(score_texts[1], score_078),
-            Transform(score_texts[2], score_079_moved),
-            MoveToTarget(nodes[1]), MoveToTarget(nodes[2]),
-            tickets[1].animate.move_to(b_center + UP * 0.55),
+            Indicate(nodes[1], color=C_BAD, scale_factor=1.08),
             marker.animate.move_to(step_axis.c2p(2.65, 1)),
-            run_time=1.6,
+            run_time=1.2,
         )
+        self.play(FadeIn(new_ticket, scale=0.7), run_time=0.5)
         self.play(Flash(marker, color=C_BAD, flash_radius=0.35), run_time=0.6)
         self.wait(0.5)
 
@@ -333,7 +340,7 @@ class S5_02_TopKProblem(GlanceScene):
 
         with self.voiceover(text=VO["topk_block"]) as tracker:
             self.play(
-                FadeOut(VGroup(nodes, score_texts, step_axis, step, cut, jump_label, marker, tickets[1])),
+                FadeOut(VGroup(nodes, score_texts, step_axis, step, cut, jump_label, marker, new_ticket)),
                 run_time=0.5,
             )
             self.play(FadeIn(chain), run_time=1.0)
@@ -524,14 +531,14 @@ class S5_05_JointObjective(GlanceScene):
         self.play(FadeOut(rules), chain.animate.move_to([0, 1.5, 0]), run_time=0.5)
 
         formula = txt(
-            "lʳᵒᵘᵗᵉ = −rᵥ · log π(fᵥ)  −  λₑₙₜ · H[π(fᵥ)]",
+            "lʳᵒᵘᵗᵉ = −rᵥ · log π(fᵥ)  −  λ_ent · H[π(fᵥ)]",
             size=BODY_SIZE - 4, color=INK, weight=BOLD,
-        ).move_to([0, 0.55, 0])
+        ).move_to([0, 0.75, 0])
         with self.voiceover(text=VO["obj_entropy"]) as tracker:
             self.play(Write(formula), run_time=min(1.6, tracker.duration))
 
-        pred_card = panel(Rectangle(width=5.2, height=1.1), color=C_GNN).move_to([-3.0, -0.55, 0])
-        route_card = panel(Rectangle(width=5.2, height=1.1), color=C_ROUTER).move_to([3.0, -0.55, 0])
+        pred_card = panel(Rectangle(width=5.2, height=1.1), color=C_GNN).move_to([-3.0, -0.45, 0])
+        route_card = panel(Rectangle(width=5.2, height=1.1), color=C_ROUTER).move_to([3.0, -0.45, 0])
         pred_text = txt("PREDICTION LOSS  ·  top-K uses lᴸ, all others use lᴳ",
                          size=SMALL_SIZE - 4, color=C_GNN).move_to(pred_card).scale_to_fit_width(4.8)
         route_text = txt("λ × ROUTER LOSS  ·  learns budget allocation",
@@ -539,36 +546,81 @@ class S5_05_JointObjective(GlanceScene):
         with self.voiceover(text=VO["obj_pred"]) as tracker:
             self.play(FadeIn(pred_card), FadeIn(pred_text), run_time=min(1.6, tracker.duration))
 
-        total = pill("TOTAL LOSS", INK, width=2.6).move_to([0, -1.4, 0])
+        total = pill("TOTAL LOSS", INK, width=2.6).move_to([0, -1.9, 0])
+        pred_to_total = Arrow(
+            pred_card.get_bottom(), total.get_top() + LEFT * 0.45,
+            buff=0.12, color=C_GNN, stroke_width=3,
+        )
+        route_to_total = Arrow(
+            route_card.get_bottom(), total.get_top() + RIGHT * 0.45,
+            buff=0.12, color=C_ROUTER, stroke_width=3,
+        )
         with self.voiceover(text=VO["obj_total"]) as tracker:
             self.play(FadeIn(route_card), FadeIn(route_text), run_time=1.0)
-            self.play(FadeIn(total, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
+            self.play(
+                GrowArrow(pred_to_total), GrowArrow(route_to_total),
+                FadeIn(total, shift=UP * 0.1),
+                run_time=min(1.2, tracker.duration),
+            )
 
         modules = VGroup(
-            labeled_box("GNN  F", C_GNN, width=2.4, height=0.85),
-            labeled_box("LLM  L", C_LLM, width=2.4, height=0.85),
-            labeled_box("REFINER  ξ", C_GOOD, width=2.4, height=0.85),
-            labeled_box("ROUTER  π", C_ROUTER, width=2.4, height=0.85),
-        ).arrange(RIGHT, buff=0.35).move_to([0, -2.05, 0])
+            fit_box_label(labeled_box("GNN  F", C_GNN, width=2.1, height=0.75), 2.1),
+            fit_box_label(labeled_box("LLM  L", C_LLM, width=2.1, height=0.75), 2.1),
+            fit_box_label(labeled_box("REFINER  ξ", C_GOOD, width=2.1, height=0.75), 2.1),
+            fit_box_label(labeled_box("ROUTER  π", C_ROUTER, width=2.1, height=0.75), 2.1),
+        ).arrange(RIGHT, buff=0.3).move_to([0, -2.35, 0])
+        status_labels = VGroup(
+            pill("FREEZE", MUTED, width=1.45, size=SMALL_SIZE - 5),
+            pill("FREEZE", MUTED, width=1.45, size=SMALL_SIZE - 5),
+            pill("UPDATE", C_GOOD, width=1.45, size=SMALL_SIZE - 5),
+            pill("UPDATE", C_ROUTER, width=1.45, size=SMALL_SIZE - 5),
+        )
+        for status, module in zip(status_labels, modules):
+            status.next_to(module, DOWN, buff=0.18)
+        update_label = pill("TOTAL LOSS  →  UPDATE PARAMETERS", C_GOOD, width=4.8)
+        update_label.move_to([0, 0.35, 0])
+        to_refiner = Arrow(
+            update_label.get_bottom() + LEFT * 0.8,
+            modules[2].get_top(), buff=0.12, color=C_GOOD, stroke_width=3,
+        )
+        to_router = Arrow(
+            update_label.get_bottom() + RIGHT * 0.8,
+            modules[3].get_top(), buff=0.12, color=C_ROUTER, stroke_width=3,
+        )
+
         with self.voiceover(text=VO["obj_freeze"]) as tracker:
             self.play(
-                FadeOut(VGroup(chain, formula, pred_card, pred_text, route_card, route_text, total)),
-                FadeIn(modules),
-                run_time=1.0,
+                FadeOut(VGroup(
+                    chain, formula, pred_card, pred_text, route_card, route_text,
+                    total, pred_to_total, route_to_total,
+                )),
+                FadeIn(update_label), FadeIn(modules),
+                run_time=0.8,
             )
+            self.play(GrowArrow(to_refiner), GrowArrow(to_router), run_time=0.8)
+            # scale_factor mặc định của Indicate (~1.2) khiến 2 khối liền kề
+            # (buff=0.3) phình to đè lên nhau — ép nhỏ lại để không chạm nhau.
             self.play(freeze(modules[0]), freeze(modules[1]),
-                      Indicate(modules[2], color=C_GOOD), Indicate(modules[3], color=C_ROUTER),
+                      Indicate(modules[2], color=C_GOOD, scale_factor=1.08),
+                      Indicate(modules[3], color=C_ROUTER, scale_factor=1.08),
                       run_time=min(1.6, tracker.duration))
+            self.play(
+                FadeOut(VGroup(update_label, to_refiner, to_router)),
+                modules.animate.move_to([0, -0.25, 0]),
+                status_labels.animate.move_to([0, -1.12, 0]),
+                FadeIn(status_labels, shift=UP * 0.1),
+                run_time=0.7,
+            )
 
         hparam = VGroup(
             txt("batch 32  ·  route top-12 per batch  ·  β = {0.1, 0.2, 0.3}",
                 size=SMALL_SIZE - 4, color=MUTED),
             txt("budget schedule: K decreases from 32 to 8, factor r = 0.5",
                 size=SMALL_SIZE - 5, color=MUTED),
-        ).arrange(DOWN, buff=0.12).move_to([0, -3.1, 0])
+        ).arrange(DOWN, buff=0.12).move_to([0, -2.25, 0])
         with self.voiceover(text=VO["obj_hparam"]) as tracker:
             self.play(FadeIn(hparam, shift=UP * 0.06), run_time=min(1.6, tracker.duration))
-        self.add(source("Appendix C.4, p.17"))
+        self.add(source("Appendix C.4, pp.18–19"))
 
         with self.voiceover(text=VO["obj_question"]) as tracker:
             self.wait(tracker.duration)
@@ -629,7 +681,7 @@ class S5_06_Setup(GlanceScene):
                 run_time=1.2,
             )
             self.play(FadeIn(budget, shift=LEFT * 0.1), run_time=min(1.4, tracker.duration))
-        self.add(source("§6.1, p.7"))
+        self.add(source("§6.1, p.8"))
         self.wait(0.5)
 
 
@@ -655,14 +707,14 @@ class S5_07_BalancedResults(GlanceScene):
                 run_time=min(2.0, tracker.duration),
             )
 
-        margin = pill("OVERALL MARGIN IS BELOW 1 POINT", C_LLM, width=7.0).move_to([0, -0.9, 0])
+        margin = pill("OVERALL MARGIN IS BELOW 1 POINT", C_LLM, width=7.0).move_to([0, -1.15, 0])
         with self.voiceover(text=VO["res_margin"]) as tracker:
             self.play(FadeIn(margin, scale=0.96), run_time=min(1.2, tracker.duration))
 
         hard_chart = bar_chart(
             [33.4, 46.4], ["Runner-up", "GLANCE"], colors=[MUTED, C_ROUTER],
             y_range=(0, 50, 10), width=4.2, height=2.4, value_fmt="{:.1f}",
-        ).move_to([-3.3, -2.0, 0])
+        ).move_to([-3.3, -1.45, 0])
         hard_title = txt("CORA · HARDEST GROUP (h_v < 0.25)", size=SMALL_SIZE - 5, color=C_BAD)
         hard_title.next_to(hard_chart, UP, buff=0.45)
         gain_arrow = DoubleArrow(
@@ -686,8 +738,8 @@ class S5_07_BalancedResults(GlanceScene):
             )
 
         rank = metric_card("AVERAGE RANK", "2.4", C_ROUTER, note="runner-up: 4.7", width=3.4)
-        rank.move_to([2.9, -0.9, 0])
-        easy = pill("EASY GROUPS REMAIN NEAR-PERFECT", C_GNN, width=4.2).move_to([2.9, -2.0, 0])
+        rank.move_to([2.9, -0.55, 0])
+        easy = pill("EASY GROUPS REMAIN NEAR-PERFECT", C_GNN, width=4.2).move_to([2.9, -1.65, 0])
         with self.voiceover(text=VO["res_rank"]) as tracker:
             self.play(FadeIn(rank, shift=LEFT * 0.1), run_time=0.9)
             self.play(FadeIn(easy, shift=UP * 0.1), run_time=min(1.3, tracker.duration))
@@ -789,7 +841,7 @@ class S5_08_RouterLearned(GlanceScene):
         banner.move_to([0, -3.2, 0])
         with self.voiceover(text=VO["router_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
-        self.add(source("§6.3, pp.8–9"))
+        self.add(source("§6.3, p.9"))
         self.wait(0.4)
 
 
@@ -805,11 +857,11 @@ class S5_09_RoutingControls(GlanceScene):
             self.play(Write(head), run_time=1.4)
 
         left = panel(Rectangle(width=5.6, height=2.7), color=C_BAD).move_to([-3.2, 0.3, 0])
-        left_title = txt("ROUTE ALL · PUBMED", size=SMALL_SIZE - 4, color=C_BAD, weight=BOLD)
+        left_title = txt("ROUTE ALL · CORA", size=SMALL_SIZE - 4, color=C_BAD, weight=BOLD)
         left_title.next_to(left, UP, buff=0.12)
-        hard_row = VGroup(pill("+10.9", C_GOOD, width=1.4), pill("+13.3", C_GOOD, width=1.4)).arrange(RIGHT, buff=0.2)
-        easy_row = VGroup(pill("−18.3", C_BAD, width=1.4), pill("−19.7", C_BAD, width=1.4)).arrange(RIGHT, buff=0.2)
-        overall_pill = pill("OVERALL Δ  +1.5  (masks easy-group collapse)", C_LLM, width=5.0, size=SMALL_SIZE - 6)
+        hard_row = VGroup(pill("+2.8", C_GOOD, width=1.4), pill("+14.5", C_GOOD, width=1.4)).arrange(RIGHT, buff=0.2)
+        easy_row = VGroup(pill("−2.8", C_BAD, width=1.4), pill("−1.2", C_BAD, width=1.4)).arrange(RIGHT, buff=0.2)
+        overall_pill = pill("OVERALL Δ  −1.2  (negative despite mid-group gains)", C_LLM, width=5.0, size=SMALL_SIZE - 6)
         left_body = VGroup(
             txt("hard groups", size=SMALL_SIZE - 5, color=MUTED), hard_row,
             txt("easy groups", size=SMALL_SIZE - 5, color=MUTED), easy_row,
@@ -854,7 +906,7 @@ class S5_09_RoutingControls(GlanceScene):
         banner.move_to([0, -1.6, 0])
         with self.voiceover(text=VO["ctrl_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
-        self.add(source("Tables 10–12, Appendix F"))
+        self.add(source("Tables 10–12, Appendix F, pp.23–24"))
         self.wait(0.4)
 
 
@@ -900,7 +952,7 @@ class S5_10_Scale(GlanceScene):
         banner.move_to([0, -2.7, 0])
         with self.voiceover(text=VO["scale_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
-        self.add(source("Table 5, p.9"))
+        self.add(source("Table 5, pp.9–10"))
         self.wait(0.4)
 
 

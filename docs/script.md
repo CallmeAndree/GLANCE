@@ -44,12 +44,12 @@ Tự động trích từ `sections/*/**.py` (dict `VO`, `voiceover(text=...)`, `
 - nhằm khai thác đầy đủ cả nội dung và quan hệ trong ti ây gi.
 - với khả năng học cấu trúc của gờ nờ nờ,
 - các phương pháp hiện nay chia thành hai hướng:
-- lờ lờ mờ làm bộ tăng cường và lờ lờ mờ-as-predictor.
-- lờ lờ mờ làm bộ tăng cường tạo véc-tơ ngữ nghĩa giàu hơn,
+- lờ lờ mờ ass èn han xờ và lờ lờ mờ ass prì đích tờ.
+- lờ lờ mờ ass èn han xờ tạo véc-tơ ngữ nghĩa giàu hơn,
 - rồi gờ nờ nờ tiếp tục truyền thông tin và dự đoán.
 - gờ nờ nờ vẫn có thể bị kéo lệch bởi các hàng xóm nhiễu.
 - tuy nhiên, dù véc-tơ ngữ nghĩa tốt hơn,
-- lờ lờ mờ-as-predictor đổi toàn bộ thông tin
+- lờ lờ mờ ass prì đích tờ đổi toàn bộ thông tin
 - thành một câu lệnh văn bản dài.
 - chuỗi văn bản càng dài và đắt đỏ hơn.
 - vùng lân cận càng mở rộng,
