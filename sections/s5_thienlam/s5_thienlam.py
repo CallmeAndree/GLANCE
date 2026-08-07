@@ -28,7 +28,10 @@ ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 
 def pill(text, color, width=None, size=SMALL_SIZE):
     """Nhãn viên thuốc: khung bo tròn viền màu quanh một dòng chữ ngắn."""
-    label = txt(text, size=size, color=color, weight=BOLD)
+    # `text` cũng nhận một mobject, dùng khi nhãn là công thức (MathTex).
+    label = text if isinstance(text, Mobject) else txt(
+        text, size=size, color=color, weight=BOLD
+    )
     if width and label.width > width - 0.4:
         label.scale_to_fit_width(width - 0.4)
     box = RoundedRectangle(
@@ -273,7 +276,10 @@ class S5_02_TopKProblem(GlanceScene):
             txt(f"{s:.2f}", size=SMALL_SIZE, color=MUTED, weight=BOLD).next_to(n, DOWN, buff=0.12)
             for n, s in zip(nodes, scores)
         ])
-        tickets = VGroup(*[check(color=C_LLM, size=0.30).next_to(n, UP, buff=0.16) for n in nodes[:2]])
+        # buff nhỏ lại rồi hạ thêm 0.15: đỉnh dấu tick không còn chạm mép dưới
+        # của pill ngân sách. Vị trí `budget` và `nodes` giữ nguyên.
+        tickets = VGroup(*[check(color=C_LLM, size=0.30).next_to(n, UP, buff=0.10) for n in nodes[:2]])
+        tickets.shift(DOWN * 0.15)
 
         with self.voiceover(text=VO["topk_setup"]) as tracker:
             self.play(Write(head), FadeIn(budget, scale=0.92), run_time=1.0)
@@ -297,7 +303,13 @@ class S5_02_TopKProblem(GlanceScene):
             step_axis.c2p(2.5, 1), step_axis.c2p(6, 1),
         ])
         cut = DashedLine(step_axis.c2p(2.5, -0.15), step_axis.c2p(2.5, 1.15), color=C_BAD, stroke_width=2)
-        jump_label = txt("rank swap → decision jumps", size=SMALL_SIZE - 4, color=C_BAD)
+        # Dựng bằng ba mobject rồi arrange: một lần txt() cho cả câu khiến các
+        # cụm từ dính vào nhau ở cỡ chữ này.
+        jump_label = VGroup(
+            txt("rank swap", size=SMALL_SIZE - 4, color=C_BAD),
+            txt("→", size=SMALL_SIZE - 4, color=C_BAD),
+            txt("decision jumps", size=SMALL_SIZE - 4, color=C_BAD),
+        ).arrange(RIGHT, buff=0.12)
         jump_label.next_to(cut, DOWN, buff=0.55)
         marker = Dot(step_axis.c2p(2.35, 0), radius=0.09, color=YELLOW)
 
@@ -376,10 +388,12 @@ class S5_03_CounterfactualLoss(GlanceScene):
         # 0.26 và tách tâm ra ±1.15 để hai panel rời hẳn, không đè.
         upper = panel(Rectangle(width=7.0, height=1.35), buff=0.26).move_to([-0.1, 1.15, 0])
         lower = panel(Rectangle(width=7.0, height=1.35), color=C_LLM, buff=0.26).move_to([-0.1, -0.95, 0])
-        up_text = txt("NO LLM CALL  ·  GNN → head H → p_H  ·  ℓᵥᴳᴺᴺ = CE(yᵥ, p_H)",
-                       size=SMALL_SIZE - 3, color=C_GNN).move_to(upper).scale_to_fit_width(6.4)
-        low_text = txt("LLM CALLED  ·  GNN + LLM → refiner C → p_C  ·  ℓᵥᴸᴸᴹ = CE(yᵥ, p_C)",
-                        size=SMALL_SIZE - 3, color=C_LLM).move_to(lower).scale_to_fit_width(6.4)
+        up_text = MathTex(r"\text{NO LLM CALL}\;\cdot\;\text{GNN}\to\text{head }H\to p_H"
+                          r"\;\cdot\;\ell_v^{GNN}=\mathrm{CE}(y_v,\,p_H)",
+                          font_size=30, color=C_GNN).move_to(upper).scale_to_fit_width(6.4)
+        low_text = MathTex(r"\text{LLM CALLED}\;\cdot\;\text{GNN}+\text{LLM}\to\text{refiner }C\to p_C"
+                           r"\;\cdot\;\ell_v^{LLM}=\mathrm{CE}(y_v,\,p_C)",
+                           font_size=30, color=C_LLM).move_to(lower).scale_to_fit_width(6.4)
         arrow_up = Arrow(node.get_right(), upper.get_left(), buff=0.1, color=C_GNN, stroke_width=3)
         arrow_down = Arrow(node.get_right(), lower.get_left(), buff=0.1, color=C_LLM, stroke_width=3)
 
@@ -425,7 +439,7 @@ class S5_03_CounterfactualLoss(GlanceScene):
                 run_time=min(1.8, tracker.duration),
             )
 
-        truth = txt("same true label  yᵥ", size=SMALL_SIZE - 3, color=C_GOOD, weight=BOLD)
+        truth = MathTex(r"\text{same true label }y_v", font_size=30, color=C_GOOD)
         truth.move_to([-5.6, -0.9, 0])
         with self.voiceover(text=VO["cf_same_label"]) as tracker:
             self.play(FadeIn(truth, scale=0.95), run_time=0.9)
@@ -450,9 +464,9 @@ class S5_04_Reward(GlanceScene):
         self.add(head)
 
         row1 = VGroup(
-            pill("ℓᵥᴳᴺᴺ = 2.30", C_GNN, width=2.5),
+            pill(MathTex(r"\ell_v^{GNN}=2.30", font_size=30, color=C_GNN), C_GNN, width=2.5),
             txt("−", size=BODY_SIZE, color=MUTED),
-            pill("ℓᵥᴸᴸᴹ = 0.30", C_LLM, width=2.5),
+            pill(MathTex(r"\ell_v^{LLM}=0.30", font_size=30, color=C_LLM), C_LLM, width=2.5),
             txt("=", size=BODY_SIZE, color=MUTED),
             pill("gain 2.00", C_GOOD, width=2.3),
         ).arrange(RIGHT, buff=0.25).move_to([0, 1.3, 0])
@@ -493,14 +507,15 @@ class S5_04_Reward(GlanceScene):
 
         skip_row = VGroup(
             txt("IF SKIPPED", size=SMALL_SIZE, color=MUTED, weight=BOLD),
-            pill("reward = −ℓᵥᴳᴺᴺ", C_BAD, width=3.2),
+            pill(MathTex(r"\text{reward}=-\ell_v^{GNN}", font_size=30, color=C_BAD), C_BAD, width=3.2),
         ).arrange(RIGHT, buff=0.4).move_to([0, -1.4, 0])
 
         with self.voiceover(text=VO["reward_skip"]) as tracker:
             self.play(FadeIn(skip_row, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
 
-        banner = txt("ROUTE:  rᵥ = ℓᵥᴳᴺᴺ − ℓᵥᴸᴸᴹ − β        SKIP:  rᵥ = −ℓᵥᴳᴺᴺ",
-                      size=BODY_SIZE - 2, color=C_ROUTER, weight=BOLD).move_to([0, -2.3, 0])
+        banner = MathTex(r"\text{ROUTE:}\;r_v=\ell_v^{GNN}-\ell_v^{LLM}-\beta"
+                          r"\qquad\text{SKIP:}\;r_v=-\ell_v^{GNN}",
+                          font_size=36, color=C_ROUTER).move_to([0, -2.3, 0])
         self.play(FadeIn(banner, shift=UP * 0.1), run_time=0.8)
         self.wait(0.6)
 
@@ -519,14 +534,14 @@ class S5_05_JointObjective(GlanceScene):
             [("reward rᵥ", C_GOOD), ("log π(fᵥ)", C_ROUTER), ("ℓᵥʳᵒᵘᵗᵉ", C_BAD)],
         ).scale(0.85).move_to([0, 1.75, 0])
         good_rule = VGroup(
-            txt("rᵥ > 0", size=SMALL_SIZE - 2, color=C_GOOD, weight=BOLD),
+            MathTex(r"r_v>0", font_size=32, color=C_GOOD),
             txt("→", size=SMALL_SIZE - 2, color=MUTED),
-            txt("π(fᵥ) increases", size=SMALL_SIZE - 2, color=C_GOOD, weight=BOLD),
+            MathTex(r"\pi(f_v)\ \text{increases}", font_size=32, color=C_GOOD),
         ).arrange(RIGHT, buff=0.16)
         bad_rule = VGroup(
-            txt("rᵥ < 0", size=SMALL_SIZE - 2, color=C_BAD, weight=BOLD),
+            MathTex(r"r_v<0", font_size=32, color=C_BAD),
             txt("→", size=SMALL_SIZE - 2, color=MUTED),
-            txt("π(fᵥ) decreases", size=SMALL_SIZE - 2, color=C_BAD, weight=BOLD),
+            MathTex(r"\pi(f_v)\ \text{decreases}", font_size=32, color=C_BAD),
         ).arrange(RIGHT, buff=0.16)
         rules = VGroup(good_rule, bad_rule).arrange(RIGHT, buff=1.0).move_to([0, 1.0, 0])
 
@@ -537,9 +552,9 @@ class S5_05_JointObjective(GlanceScene):
             self.play(FadeIn(rules, shift=UP * 0.08), run_time=min(1.2, tracker.duration))
         self.play(FadeOut(rules), chain.animate.move_to([0, 1.5, 0]), run_time=0.5)
 
-        formula = txt(
-            "ℓᵥʳᵒᵘᵗᵉ = −rᵥ · log π(fᵥ)  −  λ_H · H[π(fᵥ)]",
-            size=BODY_SIZE - 4, color=INK, weight=BOLD,
+        formula = MathTex(
+            r"\ell_v^{route}=-r_v\cdot\log\pi(f_v)\;-\;\lambda_H\cdot H[\pi(f_v)]",
+            font_size=34, color=INK,
         ).move_to([0, 0.75, 0])
         with self.voiceover(text=VO["obj_entropy"]) as tracker:
             self.play(Write(formula), run_time=min(1.6, tracker.duration))
@@ -549,10 +564,12 @@ class S5_05_JointObjective(GlanceScene):
         # và buff, tách tâm để có khe rõ giữa hai card.
         pred_card = panel(Rectangle(width=4.5, height=1.0), color=C_GNN, buff=0.28).move_to([-2.7, -0.45, 0])
         route_card = panel(Rectangle(width=4.5, height=1.0), color=C_ROUTER, buff=0.28).move_to([2.7, -0.45, 0])
-        pred_text = txt("PREDICTION LOSS  ·  top-k: ℓᵥᴸᴸᴹ, all others ℓᵥᴳᴺᴺ",
-                         size=SMALL_SIZE - 4, color=C_GNN).move_to(pred_card).scale_to_fit_width(4.7)
-        route_text = txt("λ_router × ROUTER LOSS  ·  learns budget allocation",
-                          size=SMALL_SIZE - 4, color=C_ROUTER).move_to(route_card).scale_to_fit_width(4.7)
+        pred_text = MathTex(r"\text{PREDICTION LOSS}\;\cdot\;\text{top-}k\!:\ \ell_v^{LLM},"
+                            r"\ \text{all others }\ell_v^{GNN}",
+                            font_size=28, color=C_GNN).move_to(pred_card).scale_to_fit_width(4.7)
+        route_text = MathTex(r"\lambda_{router}\times\text{ROUTER LOSS}"
+                             r"\;\cdot\;\text{learns budget allocation}",
+                             font_size=28, color=C_ROUTER).move_to(route_card).scale_to_fit_width(4.7)
         with self.voiceover(text=VO["obj_pred"]) as tracker:
             self.play(FadeIn(pred_card), FadeIn(pred_text), run_time=min(1.6, tracker.duration))
 
@@ -633,7 +650,6 @@ class S5_05_JointObjective(GlanceScene):
         ).arrange(DOWN, buff=0.12).move_to([0, -2.25, 0])
         with self.voiceover(text=VO["obj_hparam"]) as tracker:
             self.play(FadeIn(hparam, shift=UP * 0.06), run_time=min(1.6, tracker.duration))
-        self.add(source("Appendix C.4, pp.18–19"))
 
         with self.voiceover(text=VO["obj_question"]) as tracker:
             self.wait(tracker.duration)
@@ -694,7 +710,6 @@ class S5_06_Setup(GlanceScene):
                 run_time=1.2,
             )
             self.play(FadeIn(budget, shift=LEFT * 0.1), run_time=min(1.4, tracker.duration))
-        self.add(source("§6.1, p.8"))
         self.wait(0.5)
 
 
@@ -728,7 +743,8 @@ class S5_07_BalancedResults(GlanceScene):
             [33.4, 46.4], ["Runner-up", "GLANCE"], colors=[MUTED, C_ROUTER],
             y_range=(0, 50, 10), width=4.2, height=2.4, value_fmt="{:.1f}",
         ).move_to([-3.3, -1.45, 0])
-        hard_title = txt("CORA · HARDEST GROUP (h_v < 0.25)", size=SMALL_SIZE - 5, color=C_BAD)
+        hard_title = MathTex(r"\text{CORA}\;\cdot\;\text{HARDEST GROUP }(h_v<0.25)",
+                            font_size=26, color=C_BAD)
         hard_title.next_to(hard_chart, UP, buff=0.45)
         gain_arrow = DoubleArrow(
             hard_chart.bars[0][0].get_top() + UP * 0.45,
@@ -765,7 +781,6 @@ class S5_07_BalancedResults(GlanceScene):
                 run_time=0.5,
             )
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
-        self.add(source("Tables 3–4, p.8"))
         self.wait(0.4)
 
 
@@ -791,7 +806,7 @@ class S5_08_RouterLearned(GlanceScene):
             bar.move_to([x, -1.2 + h / 2, 0])
             lab = txt(bl, size=SMALL_SIZE - 6, color=MUTED).next_to(bar, DOWN, buff=0.1)
             hist.add(VGroup(bar, lab))
-        hist_note = txt("ROUTED NODE COUNT by local h_v", size=SMALL_SIZE - 5, color=INK)
+        hist_note = MathTex(r"\text{ROUTED NODE COUNT by local }h_v", font_size=26, color=INK)
         hist_note.next_to(hist, UP, buff=0.3)
 
         with self.voiceover(text=VO["router_hist"]) as tracker:
@@ -812,7 +827,8 @@ class S5_08_RouterLearned(GlanceScene):
         sens = VGroup(
             txt("K: 8→12 +3.4%  ·  12→16 another +3.0%  (Pubmed, Arxiv23)  ·  Cora +12.3% at K=16",
                 size=SMALL_SIZE - 5, color=MUTED),
-            txt("h_v > 0.75 region is nearly unchanged (−0.06%)", size=SMALL_SIZE - 5, color=MUTED),
+            MathTex(r"h_v>0.75\ \text{region is nearly unchanged }(-0.06\%)",
+                    font_size=26, color=MUTED),
         ).arrange(DOWN, buff=0.1).move_to([0, -2.5, 0])
         with self.voiceover(text=VO["router_budget"]) as tracker:
             self.play(FadeOut(VGroup(graph, ring)), run_time=0.4)
@@ -833,7 +849,7 @@ class S5_08_RouterLearned(GlanceScene):
             colors=[C_BAD, C_BAD, C_BAD], y_range=(-8, 1, 2),
             width=4.6, height=2.0, value_fmt="{:.1f}",
         ).move_to([2.2, -1.0, 0])
-        homophily_title = txt("REMOVE HOMOPHILY (BIN h_v < 0.5)", size=SMALL_SIZE - 6, color=C_BAD)
+        homophily_title = MathTex(r"\text{REMOVE HOMOPHILY (BIN }h_v<0.5)", font_size=24, color=C_BAD)
         homophily_title.next_to(homophily_chart, UP, buff=0.35)
         divider = DashedLine([-0.85, -0.2, 0], [-0.85, -2.2, 0], color=C_EDGE, stroke_width=1.5)
 
@@ -854,7 +870,6 @@ class S5_08_RouterLearned(GlanceScene):
         banner.move_to([0, -3.2, 0])
         with self.voiceover(text=VO["router_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
-        self.add(source("§6.3, p.9"))
         self.wait(0.4)
 
 
@@ -922,7 +937,6 @@ class S5_09_RoutingControls(GlanceScene):
         banner.move_to([0, -1.6, 0])
         with self.voiceover(text=VO["ctrl_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
-        self.add(source("Tables 10–12, Appendix F, pp.23–24"))
         self.wait(0.4)
 
 
@@ -972,7 +986,6 @@ class S5_10_Scale(GlanceScene):
         banner.move_to([0, -2.7, 0])
         with self.voiceover(text=VO["scale_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
-        self.add(source("Table 5, pp.9–10"))
         self.wait(0.4)
 
 

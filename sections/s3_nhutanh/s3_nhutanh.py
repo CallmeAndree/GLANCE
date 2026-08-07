@@ -219,7 +219,9 @@ VO = {
         "Bước này kết hợp trạng thái trước đó của nót a với thông tin vừa tổng hợp từ hàng xóm."
     ),
     "up_example": (
-        "Trong ví dụ minh họa, trạng thái cũ của a là không chấm hai, không chấm tám, "
+        # "minh họa" đứng ngay đầu câu bị giọng đọc phát méo; bỏ hẳn từ này và
+        # dùng "ở đây" cho câu chạy trơn. Đổi text cũng khiến TTS sinh lại.
+        "Trong ví dụ ở đây, trạng thái cũ của a là không chấm hai, không chấm tám, "
         "còn thông điệp hàng xóm là không chấm sáu, không chấm bốn."
     ),
     "up_result": (
@@ -426,7 +428,7 @@ class S3_01_LocalHomophily(GlanceScene):
             edges.add(Line(V_POS, pos, stroke_width=2.4, color=C_EDGE, z_index=-1))
 
         legend = VGroup(
-            VGroup(Dot(radius=0.1, color=C_GNN), txt("same label as v", size=17, color=INK)
+            VGroup(Dot(radius=0.1, color=C_GNN), txt("same label", size=17, color=INK)
                    ).arrange(RIGHT, buff=0.2),
             VGroup(Dot(radius=0.1, color=C_BAD), txt("different label", size=17, color=INK)
                    ).arrange(RIGHT, buff=0.2),
@@ -463,17 +465,20 @@ class S3_01_LocalHomophily(GlanceScene):
 
         with self.voiceover(text=VO["check"]):
             self.play(Write(formula[0]), Write(formula[1]), run_time=1.0)
-            # Từng hàng xóm sáng lên: cùng nhãn -> 1, khác nhãn -> 0.
-            for dot, digit, same in zip(u_dots, digits, SAME_LABEL):
-                self.play(
+            # Công thức lộ dần SONG SONG với việc kiểm tra từng hàng xóm: mỗi nhịp
+            # vừa sáng một nót vừa viết thêm một mảnh công thức, theo đúng thứ tự
+            # đọc — đếm từng hàng xóm, cộng trên cả tập, rồi lấy trung bình. Bản cũ
+            # kiểm hết bốn nót rồi mới viết công thức nên hai thứ rời nhau.
+            reveal_order = [formula[4], formula[3], formula[2], None]
+            for (dot, digit, same), part in zip(zip(u_dots, digits, SAME_LABEL), reveal_order):
+                anims = [
                     Indicate(dot, color=C_GOOD if same else C_BAD, scale_factor=1.5),
                     FadeIn(digit, scale=0.6),
-                    run_time=0.9,
-                )
-                self.wait(0.3)
-            self.play(Write(formula[4]), run_time=1.1)
-            self.play(Write(formula[3]), run_time=0.9)
-            self.play(Write(formula[2]), run_time=0.9)
+                ]
+                if part is not None:
+                    anims.append(Write(part))
+                self.play(*anims, run_time=1.0)
+                self.wait(0.2)
 
         # ------------------------------------------------------------------
         # Nhịp 3 — Thay số: h_v = (1+1+1+0)/4 = 0.75
@@ -591,9 +596,12 @@ class S3_02_RelativeDegree(GlanceScene):
         u1_spokes = spokes(u1_pos, 4, -PI / 6, PI / 2 + 0.3)
         u2_spokes = spokes(u2_pos, 2, -PI / 2 - 0.2, 0.0)
 
-        v_deg = txt("d_v = 2", size=21, color=C_HIGHLIGHT).next_to(v_dot, LEFT, buff=0.25)
-        u1_deg = txt("d = 5", size=19, color=INK).next_to(u1_dot, UP, buff=0.55)
-        u2_deg = txt("d = 3", size=19, color=INK).next_to(u2_dot, DOWN, buff=0.55)
+        # Ký hiệu bậc dựng bằng MathTex: viết "d_v" bằng txt() thì gạch dưới hiện
+        # nguyên xi thay vì thành chỉ số dưới.
+        v_deg = MathTex(r"d_v = 2", font_size=30, color=C_HIGHLIGHT)
+        v_deg.next_to(v_dot, LEFT, buff=0.25)
+        u1_deg = MathTex(r"d_u = 5", font_size=27, color=INK).next_to(u1_dot, UP, buff=0.55)
+        u2_deg = MathTex(r"d_u = 3", font_size=27, color=INK).next_to(u2_dot, DOWN, buff=0.55)
 
         note = txt("Not just: how many edges does this node have?", size=21, color=MUTED)
         note.to_edge(DOWN, buff=0.75)
@@ -764,7 +772,6 @@ class S3_03_Complementary(GlanceScene):
             self.play(FadeIn(spread), run_time=0.7)
             self.play(FadeIn(caveat), run_time=0.7)
 
-        self.add(source("Figure 1, p.4 & Appendix E.5"))
         self.wait(1.0)
 
     # ----------------------------------------------------------------------
@@ -801,7 +808,13 @@ class S3_04_EstimatedHomophily(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Problem: h_v requires true labels", color=ACCENT).to_edge(UP, buff=0.75)
+        # Tiêu đề ghép chữ với MathTex để "h_v" ra đúng chỉ số dưới, thay vì hiện
+        # nguyên dấu gạch dưới như khi viết bằng txt().
+        head = VGroup(
+            heading("Problem:", color=ACCENT),
+            MathTex(r"h_v", font_size=46, color=ACCENT),
+            heading("requires true labels", color=ACCENT),
+        ).arrange(RIGHT, buff=0.24).to_edge(UP, buff=0.75)
 
         true_h = MathTex(
             r"h_v = \frac{1}{|\mathcal{N}(v)|}\sum_{u \in \mathcal{N}(v)}"
@@ -833,8 +846,14 @@ class S3_04_EstimatedHomophily(GlanceScene):
             self.play(FadeIn(lock_frame), FadeIn(lock), run_time=0.9)
 
         # --- MLP Q dự đoán nhãn tạm thời ---
+        # Hai đầu là ký hiệu toán nên dựng bằng MathTex; "MLP Q" là tên khối, giữ
+        # chữ thường.
         flow = pipeline(
-            [("x_v", MUTED), ("MLP Q", C_ROUTER), ("ŷ_v", C_HIGHLIGHT)],
+            [
+                (MathTex(r"x_v", font_size=32, color=MUTED), MUTED),
+                ("MLP Q", C_ROUTER),
+                (MathTex(r"\hat{y}_v", font_size=32, color=C_HIGHLIGHT), C_HIGHLIGHT),
+            ],
             box_w=1.9, box_h=0.85, buff=0.5, text_size=20,
         )
         flow.next_to(head, DOWN, buff=0.7)
@@ -905,7 +924,6 @@ class S3_04_EstimatedHomophily(GlanceScene):
                                   lag_ratio=0.3), run_time=1.6)
             self.play(Create(highlight), run_time=0.9)
 
-        self.add(source("§4.2.2 & Table 2, p.5"))
         self.wait(1.0)
 
 
@@ -957,7 +975,8 @@ class S3_05_Bridge(GlanceScene):
         # --- Ngưỡng cố định bị gạch bỏ, tín hiệu đi vào router học được ---
         threshold = VGroup(
             txt("Fixed threshold", size=22, color=MUTED),
-            txt("if h_v < 0.5 → query LLM", size=19, color=MUTED),
+            MathTex(r"h_v < 0.5 \;\Rightarrow\; \text{query LLM}",
+                    font_size=27, color=MUTED),
         ).arrange(DOWN, buff=0.2)
         thr_frame = panel(threshold, color=MUTED, buff=0.3)
         thr_group = VGroup(thr_frame, threshold).move_to(difficulty)
@@ -1429,8 +1448,10 @@ class S3_13_Uncertainty(GlanceScene):
             self.play(ReplacementTransform(VGroup(passes, pass_arrows), uncertainty), run_time=0.8)
 
         note = txt("Larger variation means higher uncertainty", 25, MUTED, BOLD).move_to(DOWN * 2.10)
-        caveat = txt("The source does not define a unique closed-form equation for u_A",
-                     19, MUTED).next_to(note, DOWN, buff=0.16)
+        caveat = VGroup(
+            txt("The source does not define a unique closed-form equation for", 19, MUTED),
+            MathTex(r"u_A", font_size=25, color=MUTED),
+        ).arrange(RIGHT, buff=0.16).next_to(note, DOWN, buff=0.16)
         with self.voiceover(text=VO["uc_signal"]):
             self.play(FadeIn(note), FadeIn(caveat), run_time=0.65)
         self.wait(0.8)

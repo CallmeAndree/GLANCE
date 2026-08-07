@@ -263,6 +263,12 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         VoiceoverScene.setup(self)
         self.camera.background_color = gs.BG
         self._init_tts()
+
+    def tear_down(self):
+        # Xem chú thích ở GlanceScene.tear_down: video phải dài hơn audio, nếu
+        # không `build.sh` (-shortest) sẽ cắt mất đuôi câu cuối scene.
+        self.wait(0.5)
+        super().tear_down()
         self.current_subtitle = None
         # self.debug_safe_zones()  # uncomment during preview debugging
 
@@ -306,21 +312,31 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         self.add(header_zone, sub_zone)
 
     @contextmanager
-    def narrated_caption(self, text_segments):
+    def narrated_caption(self, text_segments, speed=None):
         """
         text_segments: single string or list of strings.
         If list, they are treated as sequential cues for a single voiceover generation.
-        We now use manim-voiceover's native subcaption generation to ensure exact 
+        We now use manim-voiceover's native subcaption generation to ensure exact
         word-level synchronization and prevent subtitles from disappearing prematurely.
+
+        speed: tốc độ đọc riêng cho đúng câu này, ví dụ 1.15 cho các chuỗi chữ
+        cái đọc rời rạc. Audio được SINH ở tốc độ đó (không kéo giãn bản cũ) và
+        tốc độ nằm trong cache key nên TTS thật sự được gọi lại.
         """
         if isinstance(text_segments, str):
             text_segments = [text_segments]
-            
+
         full_text = " ".join(text_segments)
-        
+
         if USE_VOICEOVER:
-            with self.voiceover(text=full_text) as tracker:
-                yield tracker
+            override = getattr(self.speech_service, "speed_override", None)
+            if speed is not None and override is not None:
+                with override(speed):
+                    with self.voiceover(text=full_text) as tracker:
+                        yield tracker
+            else:
+                with self.voiceover(text=full_text) as tracker:
+                    yield tracker
         else:
             yield None
             self.wait(0.7)
@@ -509,8 +525,18 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             stroke_color=gs.C_ROUTER,
             stroke_width=2.6,
         ).move_to(target_node).set_z_index(5)
-        target_label = t("TARGET USER", size=13, color=gs.C_ROUTER, weight=BOLD)
-        target_label.next_to(target_node, DOWN, buff=0.22).set_z_index(6)
+        # Nhãn nằm ngay dưới nót mục tiêu, tức đúng chỗ hai cạnh chéo dưới chụm
+        # lại — để chữ trần thì bị cạnh gạch ngang qua và không đọc được. Đặt
+        # chữ trên một chip nền mờ và cho z-index cao hơn lớp cạnh; căn theo
+        # target_ring (vòng ngoài) chứ không theo avatar, vì vòng rộng hơn.
+        target_caption = t("TARGET USER", size=14, color=gs.C_ROUTER, weight=BOLD)
+        target_chip = panel(
+            target_caption.width + 0.26, target_caption.height + 0.18,
+            stroke=gs.C_ROUTER, fill=BG, opacity=0.95,
+        )
+        target_caption.move_to(target_chip)
+        target_label = VGroup(target_chip, target_caption)
+        target_label.next_to(target_ring, DOWN, buff=0.12).set_z_index(8)
 
         graph_edges = VGroup(*[
             Line(
@@ -729,24 +755,45 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             callout.heading.set_color(gs.C_LLM)   # văn bản node = amber
             self.play(node_B.animate.set_stroke(gs.C_GNN, width=3.0), GrowArrow(link),
                       FadeIn(callout, shift=RIGHT * 0.15), run_time=1.0)
+            # Callout "Paper B" là chỗ khán giả phải đọc chữ trong khung; giữ nó
+            # đứng yên một nhịp trước khi fade, không đổi run_time của animation nào.
+            self.wait(1.0)
             self.play(FadeOut(callout), FadeOut(link), node_B.animate.set_stroke(LIGHT, width=1.5), run_time=0.5)
 
         # ── Beat 3: cấu trúc này được gọi là TAG; cả mạng sáng lên ──
+        # Câu này kết bằng chuỗi chữ cái rời "ti ây gi" nên giọng đọc bị khựng.
+        # Thêm "viết tắt là" để có đà trước khi đánh vần, và sinh lại ở 1.15x
+        # như các chỗ đọc acronym khác.
         with self.narrated_caption([
             "Cấu trúc kết hợp giữa văn bản và quan hệ này",
-            "được gọi là đồ thị có thuộc tính văn bản, hay ti ây gi.",
-        ]):
+            "được gọi là đồ thị có thuộc tính văn bản, viết tắt là ti ây gi.",
+        ], speed=1.15):
+            # Thứ tự kể: NỘI DUNG (nót, màu LLM) trước, QUAN HỆ (cạnh, màu GNN)
+            # sau — khớp thứ tự đọc của chú thích bên dưới. Chú thích cũng hiện
+            # theo hai nhịp đó thay vì bật cả cụm một lúc.
+            legend_nodes = t("Node = Textual content", 22, gs.C_LLM)
+            legend_sep = t("·", 22, MID)
+            legend_edges = t("Edge = Relationship", 22, gs.C_GNN)
+            legend = VGroup(legend_nodes, legend_sep, legend_edges)\
+                .arrange(RIGHT, buff=0.4)
+            fit(legend, 11.5)
+            legend.next_to(graph, DOWN, buff=0.3)
+
+            self.play(
+                LaggedStart(
+                    *[Indicate(n, color=gs.C_LLM, scale_factor=1.18)
+                      for n in graph.nodes.values()],
+                    lag_ratio=0.06,
+                ),
+                FadeIn(legend_nodes, shift=UP * 0.15),
+                run_time=0.8,
+            )
             self.play(
                 graph.edges.animate.set_stroke(gs.C_GNN, width=1.9),   # cạnh = GNN/xanh dương
                 Flash(node_A, color=gs.C_GNN, line_length=0.22, num_lines=14, flash_radius=0.55),
-                run_time=0.8,
+                FadeIn(VGroup(legend_sep, legend_edges), shift=UP * 0.15),
+                run_time=0.7,
             )
-            legend = VGroup(
-                t("Node = Textual content", 22, gs.C_LLM),
-                t("·", 22, MID),
-                t("Edge = Relationship", 22, gs.C_GNN),
-            ).arrange(RIGHT, buff=0.4).next_to(graph, DOWN, buff=0.3)
-            self.play(FadeIn(legend, shift=UP * 0.15), run_time=0.6)
 
         self.tag_graph = graph
 
@@ -780,9 +827,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                                   emphasized_index=1).next_to(hub, DOWN, buff=0.45).set_z_index(96)
 
         with self.narrated_caption([
-            "Từ hai nguồn thông tin này,",
-            "bài toán tiếp theo là dự đoán nhãn",
-            "của những nót chưa biết lớp.",
+            "Bài toán đặt ra là làm thế nào để dự đoán nhãn",
+            "của những nót chưa biết lớp?",
         ]):
             self.play(FadeIn(formula, shift=DOWN * 0.15), run_time=0.7)
             self.play(FadeIn(pred, shift=UP * 0.15), run_time=0.7)
@@ -810,6 +856,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "như tê ép y đê ép hoặc véc-tơ biểu diễn tĩnh.",
         ]):
             self.play(FadeOut(self.tag_punch), FadeOut(self.tag_blackout), run_time=0.4)
+            # Dọn dứt điểm phần còn lại của section 2: legend, callout và các
+            # object trung gian không nằm trong tag_punch/tag_blackout vẫn còn
+            # sống dưới lớp phủ và lộ mờ ra ở cảnh sau. Giữ đúng `graph` vì
+            # section 3 dùng tiếp nó.
+            leftovers = [m for m in self.mobjects if m is not graph and graph not in m.get_family()]
+            if leftovers:
+                self.remove(*leftovers)
             self.play(graph.animate.scale(0.62).to_edge(LEFT, buff=0.6).shift(DOWN * 0.2),
                       run_time=0.8)
             tfidf = custom_feature_vector("TF-IDF", [0.2, 0.8, 0.3, 0.6, 0.15],
@@ -860,69 +913,184 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(FadeIn(sem_tag, shift=UP * 0.1),
                       VGroup(tfidf, static).animate.set_opacity(0.4), run_time=0.8)
 
-        # ── Beat 4 (0:24–0:32): LLM (cam) đọc văn bản ──
+        # ── Beat 4: hai expert song song — cấu trúc (xanh) và ngữ nghĩa (cam) ──
+        #
+        # Bố cục hai hàng, mỗi hàng một nhánh. Các mobject trong cùng một hàng
+        # được ép về CÙNG tung độ trước khi tạo mũi tên, nên mũi tên nằm ngang
+        # tuyệt đối — bản cũ nối box lệch cao độ nên mũi tên bị xéo.
+        ROW_SEM, ROW_STRUCT = 1.55, -1.45
+
+        sem_rep = custom_feature_vector("Semantic representation", [0.7, 0.85, 0.6, 0.9, 0.75],
+                                        color=gs.C_LLM, width=2.8).scale(0.78)
+        struct_rep = custom_feature_vector("Structural representation", [0.75, 0.5, 0.85, 0.45, 0.7],
+                                           color=gs.C_GNN, width=2.8).scale(0.78)
+        sem_rep.move_to(RIGHT * 4.35 + UP * ROW_SEM)
+        struct_rep.move_to(RIGHT * 4.35 + UP * ROW_STRUCT)
+        # Mũi tên cắm vào KHUNG véc-tơ (phần [0]), không phải cả group kèm nhãn,
+        # nên lấy đúng tung độ của khung làm trục của cả hàng.
+        y_sem = sem_rep[0].get_center()[1]
+        y_struct = struct_rep[0].get_center()[1]
+
+        llm_mod = module("LLM", "reads node text", width=2.9, height=0.9,
+                         emphasized=True).move_to(RIGHT * 0.55).set_y(y_sem)
+        llm_mod[0].set_stroke(gs.C_LLM)
+        llm_mod[1][0].set_color(gs.C_LLM)
+
         with self.narrated_caption([
-            "Gần đây, sự phát triển của các mô hình ngôn ngữ lớn",
-            "đã mở ra một hướng tiếp cận mới.",
+            "Sự phát triển của các mô hình ngôn ngữ lớn",
+            "mở ra một nguồn thông tin bổ sung cho việc học trên đồ thị.",
+            "Nếu gờ nờ nờ học từ cấu trúc và các nót lân cận,",
+            "thì lờ lờ mờ có thể khai thác trực tiếp nội dung văn bản",
+            "để tạo ra những biểu diễn ngữ nghĩa giàu thông tin.",
         ]):
+            # MỘT đồ thị duy nhất ở bên trái rẽ làm hai nhánh: lên lờ lờ mờ (đọc
+            # văn bản của nót) và xuống gờ nờ nờ (tổng hợp hàng xóm). Đồ thị ở
+            # lại trên màn hình suốt beat, để thấy hai năng lực cùng khai thác
+            # một nguồn dữ liệu chứ không phải hai đầu vào rời nhau.
             self.play(
                 FadeOut(VGroup(tfidf, static, shallow_label, arr_in, struct_tag, sem_tag)),
-                gnn_mod.animate.move_to(LEFT * 3.6 + DOWN * 1.6),
-                FadeOut(graph),
+                graph.animate.scale(0.66).move_to(LEFT * 4.7),
+                gnn_mod.animate.move_to(RIGHT * 0.55).set_y(y_struct),
+                run_time=0.9,
+            )
+            # Hai nhánh xuất phát từ mép phải đồ thị, ở hai cao độ khác nhau.
+            branch_up = small_arrow(graph.get_right() + UP * 0.35, llm_mod.get_left(),
+                                    color=gs.C_LLM, buff=0.18)
+            branch_dn = small_arrow(graph.get_right() + DOWN * 0.35, gnn_mod.get_left(),
+                                    color=gs.C_GNN, buff=0.18)
+            branch_up_lbl = t("node text", size=15, color=gs.C_LLM)
+            branch_up_lbl.next_to(branch_up.get_center(), UP, buff=0.14)
+            branch_dn_lbl = t("neighbors", size=15, color=gs.C_GNN)
+            branch_dn_lbl.next_to(branch_dn.get_center(), DOWN, buff=0.14)
+
+            arr_ls = small_arrow(llm_mod.get_right(), sem_rep[0].get_left(), color=gs.C_LLM)
+            arr_gs = small_arrow(gnn_mod.get_right(), struct_rep[0].get_left(), color=gs.C_GNN)
+
+            # Nhánh ngữ nghĩa: văn bản của nót đi lên lờ lờ mờ.
+            self.play(GrowArrow(branch_up), FadeIn(branch_up_lbl), run_time=0.6)
+            self.play(FadeIn(llm_mod), run_time=0.5)
+            self.play(GrowArrow(arr_ls), FadeIn(sem_rep, shift=LEFT * 0.12), run_time=0.7)
+
+            # Nhánh cấu trúc: message chạy dọc cạnh rồi mới xuống gờ nờ nờ.
+            self.play(
+                LaggedStart(*[ShowPassingFlash(e.copy().set_stroke(gs.C_GNN, 4), time_width=0.5)
+                              for e in graph.edges], lag_ratio=0.05),
+                run_time=0.9,
+            )
+            self.play(GrowArrow(branch_dn), FadeIn(branch_dn_lbl), run_time=0.6)
+            self.play(GrowArrow(arr_gs), FadeIn(struct_rep, shift=LEFT * 0.12), run_time=0.7)
+            branch_labels = VGroup(branch_up_lbl, branch_dn_lbl)
+
+        # ── Beat 5: hợp nhất là hướng tự nhiên, nhưng áp đồng loạt thì sao? ──
+        with self.narrated_caption([
+            "Vì hai mô hình khai thác những nguồn thông tin khác nhau,",
+            "một hướng tự nhiên là kết hợp chúng trong cùng một kiến trúc.",
+            "Tuy nhiên, phần lớn các phương pháp hiện tại",
+            "áp dụng cùng một chiến lược hợp nhất cho mọi nót,",
+            "khiến lờ lờ mờ vẫn được gọi ngay cả khi gờ nờ nờ đã xử lý tốt nót đó.",
+            "Vậy, có thực sự cần gọi lờ lờ mờ cho tất cả các nót?",
+        ]):
+            fusion = module("GNN–LLM Fusion", "one strategy for every node",
+                            width=3.7, height=1.05, emphasized=True).move_to(RIGHT * 4.35)
+            fusion[0].set_stroke(gs.C_ROUTER)
+            fusion[1][0].set_color(gs.C_ROUTER)
+            to_fusion_sem = small_arrow(sem_rep[0].get_bottom(), fusion.get_top() + LEFT * 0.5,
+                                        color=gs.C_LLM, buff=0.14)
+            to_fusion_struct = small_arrow(struct_rep[0].get_top(), fusion.get_bottom() + LEFT * 0.5,
+                                           color=gs.C_GNN, buff=0.14)
+            self.play(
+                FadeOut(VGroup(branch_up, branch_dn, branch_labels, arr_ls, arr_gs,
+                               llm_mod, gnn_mod)),
+                run_time=0.6,
+            )
+            self.play(FadeIn(fusion), GrowArrow(to_fusion_sem), GrowArrow(to_fusion_struct),
+                      run_time=0.9)
+            self.play(Flash(fusion, color=gs.C_ROUTER, line_length=0.18, num_lines=12,
+                            flash_radius=0.9), run_time=0.6)
+
+            # Cùng chiến lược đó áp cho MỌI nót: đưa đồ thị ra giữa và phóng to,
+            # rồi cho từng nót sáng lên lần lượt. Không dùng mũi tên — chín mũi
+            # tên chụm về một khối chỉ tạo ra một bó nét, còn việc "nót nào cũng
+            # bị gọi" thì chính các nót lần lượt đổi màu đã nói đủ.
+            node_list = list(graph.nodes.values())
+            # Đồ thị lệch sang phải, khối hợp nhất lùi hẳn về góc trên trái, số
+            # đếm xuống góc dưới phải: ba thứ chiếm ba vùng riêng nên không đè
+            # nhau như bản đặt tất cả vào giữa.
+            self.play(
+                FadeOut(VGroup(sem_rep, struct_rep, to_fusion_sem, to_fusion_struct)),
+                graph.animate.scale(1.5).move_to(RIGHT * 1.5 + DOWN * 0.15),
+                fusion.animate.scale(0.8).to_corner(UL, buff=0.6),
+                run_time=0.9,
+            )
+            queries = ValueTracker(0)
+            counter = always_redraw(
+                lambda: t(f"LLM queries: {int(queries.get_value())} / {len(node_list)}",
+                          size=22,
+                          color=gs.C_LLM if queries.get_value() > 0 else MID,
+                          weight=BOLD).to_corner(DR, buff=0.7)
+            )
+            self.add(counter)
+            self.play(
+                LaggedStart(*[
+                    AnimationGroup(
+                        Flash(n, color=gs.C_LLM, line_length=0.14, num_lines=10,
+                              flash_radius=0.34),
+                        n.animate.set_color(gs.C_LLM),
+                    )
+                    for n in node_list
+                ], lag_ratio=0.16),
+                queries.animate.set_value(len(node_list)),
+                run_time=2.0,
+            )
+
+            # Một nót dễ mà GNN đã đúng vẫn bị gọi — đó là chỗ tốn kém.
+            easy_node = graph.nodes["G"]
+            # Nhãn có nền riêng và lùi hẳn lên trên nót: bản cũ đặt sát nót nên
+            # chữ chạy đè lên chính nót đó và lên các cạnh quanh nó.
+            easy_inner = VGroup(
+                gs.check(color=gs.C_GOOD, size=0.18),
+                t("GNN correct · 96% confidence", size=16, color=gs.C_GOOD, weight=BOLD),
+            ).arrange(RIGHT, buff=0.14)
+            easy_bg = RoundedRectangle(
+                width=easy_inner.width + 0.32, height=easy_inner.height + 0.24,
+                corner_radius=0.12, fill_color=gs.BG, fill_opacity=0.95,
+                stroke_color=gs.C_GOOD, stroke_width=1.6,
+            )
+            easy_inner.move_to(easy_bg)
+            easy_tag = VGroup(easy_bg, easy_inner).set_z_index(30)
+            easy_tag.next_to(easy_node, UP, buff=0.55)
+            # Nót G nằm gần mép phải nên nhãn dễ tràn ra ngoài khung: kéo lại cho
+            # nằm trọn trong khung hình.
+            limit_x = 6.45 - easy_tag.width / 2
+            easy_tag.set_x(min(max(easy_tag.get_x(), -limit_x), limit_x))
+            self.play(
+                easy_node.animate.set_color(gs.C_GOOD),
+                FadeIn(easy_tag, shift=UP * 0.1),
                 run_time=0.8,
             )
-            doc = doc_icon("Node text", ["Title", "Abstract"], width=2.6, height=1.5)\
-                .move_to(LEFT * 3.3 + UP * 1.4)
-            doc.heading.set_color(gs.C_LLM)
-            doc[0].set_stroke(gs.C_LLM)
-            llm_mod = module("LLM", "semantic reasoning", width=3.0, height=0.95,
-                             emphasized=True).move_to(RIGHT * 0.2 + UP * 1.4)
-            llm_mod[0].set_stroke(gs.C_LLM)
-            llm_mod[1][0].set_color(gs.C_LLM)
-            sem_rep = custom_feature_vector("Semantic representation", [0.7, 0.85, 0.6, 0.9, 0.75],
-                                            color=gs.C_LLM, width=2.8).scale(0.82)\
-                .move_to(RIGHT * 4.4 + UP * 1.4)
-            arr_dl = small_arrow(doc.get_right(), llm_mod.get_left(), color=gs.C_LLM)
-            arr_ls = small_arrow(llm_mod.get_right(), sem_rep[0].get_left(), color=gs.C_LLM)
-            self.play(FadeIn(doc, shift=RIGHT * 0.15), run_time=0.6)
-            self.play(GrowArrow(arr_dl), FadeIn(llm_mod), run_time=0.7)
-            self.play(GrowArrow(arr_ls), FadeIn(sem_rep, shift=LEFT * 0.15), run_time=0.7)
+            self.wait(0.4)
+            # Chốt số đếm lại: để nguyên updater thì mobject vẫn tự dựng lại mỗi
+            # frame và không fade out cùng phần còn lại được.
+            counter.clear_updaters()
 
-        # ── Beat 5 (0:32–0:40): hai luồng hợp nhất → Hybrid (tím) ──
-        with self.narrated_caption([
-            "Các kiến trúc lai kết hợp khả năng suy luận ngữ nghĩa của lờ lờ mờ",
-            "với khả năng học cấu trúc của gờ nờ nờ,",
-            "nhằm khai thác đầy đủ cả nội dung và quan hệ trong ti ây gi.",
-        ]):
-            self.play(
-                FadeOut(VGroup(doc, arr_dl, arr_ls, sem_rep)),
-                llm_mod.animate.move_to(LEFT * 3.6 + UP * 0.9),
-                run_time=0.7,
-            )
-            hybrid = module("Hybrid GNN–LLM", "graph learning", width=3.6, height=1.05,
-                            emphasized=True).move_to(RIGHT * 2.6)
-            hybrid[0].set_stroke(gs.C_ROUTER)
-            hybrid[1][0].set_color(gs.C_ROUTER)
-            arr_g = small_arrow(gnn_mod.get_right(), hybrid.get_left() + DOWN * 0.22, color=gs.C_GNN)
-            arr_l = small_arrow(llm_mod.get_right(), hybrid.get_left() + UP * 0.22, color=gs.C_LLM)
-            self.play(GrowArrow(arr_g), GrowArrow(arr_l), FadeIn(hybrid), run_time=0.9)
+            # Kết bằng câu hỏi routing, không kết bằng "hybrid là lời giải".
+            # Câu hỏi gom về MỘT góc (dưới trái) thay vì nằm giữa đè lên đồ thị;
+            # lớp phủ cũng nhẹ đi để vẫn thấy các nót vừa sáng phía sau.
+            dim = Rectangle(width=25, height=15, fill_color=BLACK,
+                            fill_opacity=0.35, stroke_width=0).set_z_index(60)
+            question = t("Does every node really need the LLM?",
+                         size=30, color=INK, weight=BOLD).set_z_index(70)
+            cost_line = t("Accuracy ↔ Computational cost",
+                          size=20, color=gs.C_ROUTER).set_z_index(70)
+            closing = VGroup(question, cost_line).arrange(DOWN, aligned_edge=LEFT, buff=0.26)
+            fit(closing, 6.4)
+            closing.to_corner(DL, buff=0.8)
+            self.play(FadeIn(dim), FadeIn(question, shift=UP * 0.12), run_time=0.8)
+            self.play(FadeIn(cost_line), run_time=0.5)
 
-            eq = VGroup(
-                t("LLM", size=30, color=gs.C_LLM, weight=BOLD),
-                t("+", size=30, color=INK),
-                t("GNN", size=30, color=gs.C_GNN, weight=BOLD),
-                t("=", size=30, color=INK),
-                t("Hybrid graph learning", size=30, color=gs.C_ROUTER, weight=BOLD),
-            ).arrange(RIGHT, buff=0.28).to_edge(DOWN, buff=1.15)
-            subs = VGroup(
-                t("Semantic reasoning", size=15, color=MID).next_to(eq[0], DOWN, buff=0.14),
-                t("Structural learning", size=15, color=MID).next_to(eq[2], DOWN, buff=0.14),
-            )
-            self.play(FadeIn(eq, shift=UP * 0.15), run_time=0.8)
-            self.play(FadeIn(subs), run_time=0.5)
-            self.wait(0.5)
-            self.play(FadeOut(VGroup(gnn_mod, llm_mod, hybrid, arr_g, arr_l, eq, subs)),
-                      run_time=0.5)
+        # Dọn NGOÀI khối voiceover: nếu fade ngay trong khối thì khối còn phải
+        # chờ nốt phần audio dư và khán giả nhìn màn hình trống mấy giây.
+        self.play(FadeOut(Group(*self.mobjects)), run_time=0.5)
 
     # ─────────────────────────────────────────────────────────
     # SECTION 5 — Two Existing GNN–LLM Paradigms
@@ -945,18 +1113,25 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         pred_arrows = VGroup(*[small_arrow(pred_p[i].get_bottom(), pred_p[i+1].get_top()) for i in range(3)])
         pred_group = VGroup(predictor_title, VGroup(pred_p, pred_arrows)).arrange(DOWN, buff=0.35).scale(0.88).move_to(RIGHT * 3.5 + UP * 0.1)
 
-        with self.narrated_caption(["các phương pháp hiện nay chia thành hai hướng:", "lờ lờ mờ ass èn han xờ và lờ lờ mờ ass prì đích tờ."]):
+        # Ba khối dưới đây đọc tên hai paradigm bằng phiên âm rời rạc; sinh ở
+        # 1.15x cho liền mạch, chỉ ba khối này chứ không cả section.
+        # Ở 1.15x câu này bị đọc thành ngữ điệu ngân nga; hạ về 1.05 để giọng ổn
+        # định trở lại (API bỏ qua tham số temperature nên tốc độ là đòn bẩy duy
+        # nhất phía dịch vụ).
+        with self.narrated_caption(["các phương pháp hiện nay chia thành hai hướng:", "lờ lờ mờ ass èn han xờ và lờ lờ mờ ass prì đích tờ."], speed=1.05):
             self.play(Write(title), run_time=0.7)
             self.play(FadeIn(enh_group), FadeIn(pred_group), run_time=1.0)
 
         # Enhancer deep-dive
-        noisy_nbhd = create_target_neighborhood(kind="noisy", scale=0.9).move_to(RIGHT * 2.8 + DOWN * 0.2)
-        with self.narrated_caption(["lờ lờ mờ ass èn han xờ tạo véc-tơ ngữ nghĩa giàu hơn,", "rồi gờ nờ nờ tiếp tục truyền thông tin và dự đoán."]):
+        hetero_nbhd = create_target_neighborhood(kind="noisy", scale=0.9).move_to(RIGHT * 2.8 + DOWN * 0.2)
+        with self.narrated_caption(["lờ lờ mờ ass èn han xờ tạo véc-tơ ngữ nghĩa giàu hơn,", "rồi gờ nờ nờ tiếp tục truyền thông tin và dự đoán."], speed=1.25):
             self.play(
                 FadeOut(pred_group),
                 enh_group.animate.scale(1.08).shift(RIGHT * 1.2),
-                title.animate.scale(0.55).to_corner(UR),
-                FadeIn(noisy_nbhd.target), FadeIn(noisy_nbhd.neighbors), FadeIn(noisy_nbhd.edges),
+                # Tiêu đề rời hẳn màn hình thay vì thu nhỏ nằm lại ở góc: chữ nhỏ
+                # đó không còn nhiệm vụ gì trong các nhịp sau, chỉ làm rối khung.
+                FadeOut(title),
+                FadeIn(hetero_nbhd.target), FadeIn(hetero_nbhd.neighbors), FadeIn(hetero_nbhd.edges),
                 run_time=0.8
             )
             
@@ -968,168 +1143,334 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(ReplacementTransform(vec_raw, vec_rich), run_time=0.8)
             self.wait(0.25)
             
-            inject_arr = small_arrow(vec_rich.get_bottom(), noisy_nbhd.target.get_top())
+            inject_arr = small_arrow(vec_rich.get_bottom(), hetero_nbhd.target.get_top())
             self.play(GrowArrow(inject_arr), run_time=0.8)
-            self.play(noisy_nbhd.target[0].animate.set_stroke(gs.C_LLM), noisy_nbhd.target[1].animate.set_color(gs.C_LLM), run_time=0.8)
+            self.play(hetero_nbhd.target[0].animate.set_stroke(gs.C_LLM), hetero_nbhd.target[1].animate.set_color(gs.C_LLM), run_time=0.8)
             self.wait(0.6)
             self.play(FadeOut(vec_rich), FadeOut(inject_arr), run_time=0.6)
-            noisy_msgs = VGroup(*[create_message_vector(
-                n.get_center(), noisy_nbhd.target.get_center(),
+            conflicting_msgs = VGroup(*[create_message_vector(
+                n.get_center(), hetero_nbhd.target.get_center(),
                 color=DARK if i not in {1, 2, 5, 7} else gs.C_BAD
-            ) for i, n in enumerate(noisy_nbhd.neighbors)])
-            self.play(AnimationGroup(*[GrowArrow(m) for m in noisy_msgs], lag_ratio=0.08), run_time=1.0)
+            ) for i, n in enumerate(hetero_nbhd.neighbors)])
+            self.play(AnimationGroup(*[GrowArrow(m) for m in conflicting_msgs], lag_ratio=0.08), run_time=1.0)
 
-        with self.narrated_caption(["tuy nhiên, dù véc-tơ ngữ nghĩa tốt hơn,", "gờ nờ nờ vẫn có thể bị kéo lệch bởi các hàng xóm nhiễu."]):
-            # Emphasize the noisy neighbors (indices 1, 2, 5, 7)
-            noisy_nodes = VGroup(*[noisy_nbhd.neighbors[i] for i in {1, 2, 5, 7}])
-            noisy_arrows = VGroup(*[noisy_msgs[i] for i in {1, 2, 5, 7}])
-            
-            self.wait(0.7)
-            
-            # Flash the noisy arrows and target node permanently
+        # ── Ngữ nghĩa tốt hơn KHÔNG chữa được thiên lệch cấu trúc ──
+        #
+        # Kể theo chuỗi nhân quả: đặc trưng ngữ nghĩa tốt → các tín hiệu xung đột
+        # → AGGREGATE → biểu diễn dịch chuyển → dự đoán đổi. Không dùng "nhiễu"
+        # cho hàng xóm dị phối, và không rung nót (rung không nói lên điều gì).
+        with self.narrated_caption([
+            "Tuy nhiên, biểu diễn ngữ nghĩa tốt hơn",
+            "không giải quyết được vấn đề cấu trúc.",
+            "Khi vùng lân cận chứa nhiều tín hiệu xung đột với nót trung tâm,",
+            "gờ nờ nờ vẫn tổng hợp các tín hiệu này.",
+            "Kết quả là biểu diễn của nót có thể bị kéo sang một vùng khác",
+            "trong không gian đặc trưng, và dẫn đến dự đoán sai.",
+        ]):
+            conflicting_nodes = VGroup(*[hetero_nbhd.neighbors[i] for i in {1, 2, 5, 7}])
+            aligned_msgs = VGroup(*[conflicting_msgs[i] for i in range(8) if i not in {1, 2, 5, 7}])
+            conflicting_arrows = VGroup(*[conflicting_msgs[i] for i in {1, 2, 5, 7}])
+
+            # Cột paradigm lùi hẳn về mép trái và nhỏ lại: nó vẫn neo bối cảnh
+            # "đang nói về nhánh enhancer", nhưng nhường dải giữa cho khối
+            # AGGREGATE và trục tiềm ẩn — bản đầu đặt chồng lên nhau.
+            self.play(enh_group.animate.scale(0.78).to_edge(LEFT, buff=0.3), run_time=0.6)
+
+            # Message cùng lớp xanh, message xung đột coral.
             self.play(
-                noisy_nodes.animate.set_color(gs.C_BAD),
-                noisy_arrows.animate.set_color(gs.C_BAD),
-                noisy_nbhd.target[0].animate.set_stroke(gs.C_BAD),
-                noisy_nbhd.target[1].animate.set_color(gs.C_BAD),
-                run_time=0.8
+                aligned_msgs.animate.set_color(gs.C_GNN),
+                conflicting_nodes.animate.set_color(gs.C_BAD),
+                conflicting_arrows.animate.set_color(gs.C_BAD),
+                run_time=0.8,
             )
-            # Wiggle it back and forth
-            self.play(noisy_nbhd.target.animate.shift(RIGHT * 0.15), rate_func=there_and_back, run_time=0.4)
-            self.play(noisy_nbhd.target.animate.shift(LEFT * 0.15), rate_func=there_and_back, run_time=0.4)
-            
-            self.wait(0.7) # Wait to let the visual sink in
-            
-            # Punchline ON TOP of the diagram
-            bias_text = t("BETTER TEXT ≠ NO STRUCTURAL BIAS", size=40, color=INK, weight=BOLD).set_z_index(100)
-            blackout2 = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(99)
+
+            # Việc tổng hợp được KỂ bằng chuyển động: từng hàng xóm gửi một chấm
+            # chạy dọc cạnh vào a, chấm xung đột màu coral, chấm cùng lớp màu
+            # xanh. Sau khi chúng dồn vào nơi, a đỏ dần lên. Cách này thay cho
+            # khối AGGREGATE tĩnh — khối hộp không cho thấy "bị kéo lệch".
+            agg_dots = VGroup(*[
+                Dot(radius=0.07,
+                    color=gs.C_BAD if index in {1, 2, 5, 7} else gs.C_GNN).move_to(neighbor)
+                for index, neighbor in enumerate(hetero_nbhd.neighbors)
+            ]).set_z_index(8)
+            self.add(agg_dots)
             self.play(
-                FadeIn(blackout2),
-                FadeIn(bias_text, shift=UP * 0.1), 
-                run_time=1.0
+                LaggedStart(*[
+                    MoveAlongPath(dot, Line(dot.get_center(), hetero_nbhd.target.get_center()))
+                    for dot in agg_dots
+                ], lag_ratio=0.11),
+                run_time=1.0,
             )
+            self.play(
+                FadeOut(agg_dots, scale=0.3),
+                hetero_nbhd.target[0].animate.set_stroke(gs.C_BAD),
+                hetero_nbhd.target[1].animate.set_color(gs.C_BAD),
+                run_time=0.8,
+            )
+
+            # Trục tiềm ẩn: h_v trước → sau, vượt qua ranh giới quyết định.
+            axis = Line(LEFT * 2.2, RIGHT * 2.2, color=DIM, stroke_width=2)
+            axis.move_to(LEFT * 2.5 + DOWN * 2.25)
+            boundary = DashedLine(axis.get_center() + UP * 0.42, axis.get_center() + DOWN * 0.42,
+                                  dash_length=0.08, color=MID, stroke_width=2)
+            class_a = t("class A", size=15, color=gs.C_GOOD).next_to(axis.get_left(), DOWN, buff=0.22)
+            class_b = t("class B", size=15, color=gs.C_BAD).next_to(axis.get_right(), DOWN, buff=0.22)
+            h_before = Dot(axis.get_left() + RIGHT * 0.7, radius=0.09, color=gs.C_GNN)
+            h_before_lbl = MathTex(r"h_v\ \text{before}", font_size=22, color=gs.C_GNN).next_to(h_before, UP, buff=0.16)
+            self.play(Create(axis), Create(boundary), FadeIn(class_a), FadeIn(class_b),
+                      FadeIn(h_before), FadeIn(h_before_lbl), run_time=0.8)
+
+            h_after = h_before.copy().set_color(gs.C_BAD).move_to(axis.get_right() + LEFT * 0.7)
+            h_after_lbl = MathTex(r"h_v\ \text{after}", font_size=22, color=gs.C_BAD).next_to(h_after, UP, buff=0.16)
+            drift = small_arrow(h_before.get_center() + UP * 0.03, h_after.get_center() + UP * 0.03,
+                                color=gs.C_BAD, buff=0.16)
+            self.play(GrowArrow(drift), run_time=0.5)
+            self.play(FadeIn(h_after), FadeIn(h_after_lbl), run_time=0.7)
+
+            # Dự đoán đổi theo — ghi rõ là ví dụ minh hoạ, không phải số đo.
+            shift_rows = VGroup(
+                t("A:  0.78  →  0.39", size=20, color=gs.C_BAD, weight=BOLD),
+                t("B:  0.17  →  0.55", size=20, color=gs.C_BAD, weight=BOLD),
+                t("Schematic example", size=13, color=MID),
+            ).arrange(DOWN, buff=0.14).move_to(RIGHT * 4.75 + DOWN * 2.35)
+            self.play(FadeIn(shift_rows, shift=UP * 0.1), run_time=0.7)
+            self.wait(0.4)
+
+            # Punchline KHÔNG kèm lớp phủ: hình bên dưới giữ nguyên độ sáng, câu
+            # chốt nằm ở dải trên cùng nên không cần làm mờ gì cả.
+            bias_text = VGroup(
+                t("BETTER SEMANTICS ≠ RELIABLE AGGREGATION", size=34, color=INK, weight=BOLD),
+                t("Message passing still depends on neighbors", size=20, color=gs.C_BAD),
+            ).arrange(DOWN, buff=0.22).move_to(UP * 2.55).set_z_index(100)
+            self.play(FadeIn(bias_text, shift=UP * 0.1), run_time=1.0)
             self.wait(0.7)
+            self.aggregation_debris = VGroup(
+                axis, boundary, class_a, class_b,
+                h_before, h_before_lbl, h_after, h_after_lbl, drift, shift_rows,
+            )
             
-        # Predictor deep-dive
-        token_text = t("Prompt Token Count: 128", size=30, color=MID).move_to(LEFT * 2.8 + DOWN * 0.4)
-        with self.narrated_caption(["lờ lờ mờ ass prì đích tờ đổi toàn bộ thông tin", "thành một câu lệnh văn bản dài."]):
+        # ── Predictor deep-dive: mở rộng vùng lân cận → chuỗi dài → chi phí ──
+        with self.narrated_caption([
+            "Với lờ lờ mờ ass prì đích tờ, thông tin của nót và vùng lân cận",
+            "phải được tuần tự hoá thành một chuỗi văn bản để mô hình xử lý.",
+        ], speed=1.15):
             pred_group.move_to(RIGHT * 2.5 + DOWN * 0.1).scale(1.08)
             self.play(
-                FadeOut(noisy_nbhd), FadeOut(noisy_msgs), FadeOut(blackout2), FadeOut(bias_text),
+                FadeOut(hetero_nbhd), FadeOut(conflicting_msgs), FadeOut(bias_text),
+                FadeOut(self.aggregation_debris),
                 FadeOut(enh_group),
-                FadeIn(pred_group),
                 run_time=0.8
             )
-            self.play(Write(token_text), run_time=0.4)
+            # Quy trình dựng dần: hộp → mũi tên → hộp kế tiếp, thay vì bật cả
+            # sơ đồ một lúc. Khán giả thấy được thứ tự các bước.
+            pred_title, pred_body = pred_group[0], pred_group[1]
+            pred_boxes, pred_links = pred_body[0], pred_body[1]
+            self.play(FadeIn(pred_title), run_time=0.4)
+            chain_steps = []
+            for index, box in enumerate(pred_boxes):
+                chain_steps.append(FadeIn(box, shift=UP * 0.12))
+                if index < len(pred_links):
+                    chain_steps.append(GrowArrow(pred_links[index]))
+            self.play(LaggedStart(*chain_steps, lag_ratio=0.6), run_time=2.2)
+            self.wait(0.3)
 
-        with self.narrated_caption(["vùng lân cận càng mở rộng,", "chuỗi văn bản càng dài và đắt đỏ hơn."]):
-            blackout3 = Rectangle(width=25, height=15, fill_color=BLACK, fill_opacity=0.95).set_z_index(80)
-            self.play(FadeIn(blackout3), run_time=0.5)
+        # Lớp phủ nhẹ hơn (0.72): vẫn thấy đồ thị, chuỗi và card phía sau punchline.
+        blackout3 = Rectangle(width=25, height=15, fill_color=BLACK, fill_opacity=0.72).set_z_index(80)
 
-            # Helpers for visualization
-            def create_hop_nodes(labels, radius, color, center):
-                nodes = VGroup()
-                edges = VGroup()
-                angle_step = TAU / len(labels)
-                for i, lbl in enumerate(labels):
-                    pos = center + radius * np.array([np.cos(i * angle_step), np.sin(i * angle_step), 0])
-                    n = node(lbl, radius=0.18).move_to(pos)
-                    n[0].set_stroke(color)
-                    n[1].set_color(color)
-                    e = Line(center, pos, color=DIM, stroke_width=1.5).set_z_index(85)
-                    nodes.add(n)
-                    edges.add(e)
-                nodes.set_z_index(90)
-                return nodes, edges
+        graph_center = LEFT * 3.75 + DOWN * 0.15
+        # Ba bán kính vòng lân cận khai báo một chỗ, dùng chung cho cả nót lẫn
+        # vòng pulse, để hai thứ luôn khớp nhau.
+        RING_1, RING_2, RING_3 = 0.72, 1.38, 1.98
+        # Dải chuỗi neo theo MÉP TRÁI cố định, không căn theo tâm: mỗi lần thêm
+        # ô mà căn tâm thì dải nở về cả hai phía, mép trái trườn lên đầu mũi tên
+        # và chữ 'Serialize'.
+        SEQ_LEFT_X, SEQ_Y = -0.55, 0.35
+        # Card nằm dưới hàng tiêu đề và trên chuỗi: cao hơn thì đè tiêu đề góc,
+        # thấp hơn thì chạm ô đầu tiên của chuỗi.
+        CARD_POS = RIGHT * 4.75 + UP * 1.75
 
-            def make_sequence(labels, colors, show_dots=False, final_node=None, final_color=None):
-                boxes = VGroup()
-                for lbl, col in zip(labels, colors):
-                    b = panel(0.4, 0.4, fill=BG, stroke=col).set_opacity(0.8)
-                    t_lbl = t(lbl, size=14, color=col).move_to(b)
-                    boxes.add(VGroup(b, t_lbl))
-                if show_dots:
-                    boxes.add(t("...", size=24, color=LIGHT))
-                if final_node:
-                    b = panel(0.4, 0.4, fill=BG, stroke=final_color).set_opacity(0.8)
-                    t_lbl = t(final_node, size=14, color=final_color).move_to(b)
-                    boxes.add(VGroup(b, t_lbl))
-                boxes.arrange(RIGHT, buff=0.08)
-                return boxes.set_z_index(90)
+        def ring_nodes(labels, radius, color, center, angle_offset=0.0):
+            """Một vòng lân cận: nót xếp đều trên đường tròn bán kính `radius`.
 
-            graph_center = LEFT * 3.5 + UP * 0.5
-            target_A = node("A", radius=0.25).move_to(graph_center).set_z_index(90)
-            target_A[0].set_stroke(gs.C_GNN)
-            target_A[1].set_color(gs.C_GNN)
+            `angle_offset` xoay VỊ TRÍ các nót trên vòng. Trước đây đợt thứ hai
+            được tạo rồi gọi .rotate() lên cả nhóm, khiến chữ trong nót bị quay
+            ngược (chữ N thành И, K thành Ʞ).
+            """
+            nodes, edges = VGroup(), VGroup()
+            angle_step = TAU / len(labels)
+            for i, lbl in enumerate(labels):
+                angle = i * angle_step + angle_offset
+                pos = center + radius * np.array([np.cos(angle), np.sin(angle), 0])
+                n = node(lbl, radius=0.17).move_to(pos)
+                n[0].set_stroke(color)
+                n[1].set_color(color)
+                nodes.add(n)
+                edges.add(Line(center, pos, color=DIM, stroke_width=1.4).set_z_index(85))
+            nodes.set_z_index(90)
+            return nodes, edges
 
-            # Stage 1
-            nodes_1, edges_1 = create_hop_nodes(["B", "C", "D", "E"], 0.8, MID, graph_center)
-            lbl_1 = t("1-hop context", size=20, color=MID).move_to(graph_center + DOWN * 2.9).set_z_index(90)
-            seq_1 = make_sequence(["A", "B", "C", "D", "E"], [gs.C_GNN] + [MID]*4).move_to(RIGHT * 3.0 + UP * 0.5)
-            
-            c1_nodes = t("Graph nodes: 5", size=22, color=LIGHT)
-            c1_toks = t("Text tokens: 80", size=22, color=LIGHT)
-            counters = VGroup(c1_nodes, c1_toks).arrange(DOWN, aligned_edge=LEFT).to_corner(UR, buff=0.6).set_z_index(90)
-            
-            serialize_arr = small_arrow(LEFT * 1.0 + UP * 0.5, RIGHT * 0.5 + UP * 0.5).set_z_index(90)
-            serialize_txt = t("Serialize", size=20, color=LIGHT).next_to(serialize_arr, UP, buff=0.1).set_z_index(90)
+        def seq_box(label, color):
+            """Một ô của chuỗi: nhãn nót + hai vạch gợi ý Title/Abstract đi kèm,
+            để chuỗi đọc ra là VĂN BẢN đã tuần tự hoá chứ không phải danh sách id."""
+            box = panel(0.42, 0.54, fill=BG, stroke=color).set_opacity(0.85)
+            head = t(label, size=13, color=color, weight=BOLD)
+            stripes = VGroup(*[
+                Line(ORIGIN, RIGHT * 0.26, color=color, stroke_width=1.6).set_opacity(0.55)
+                for _ in range(2)
+            ]).arrange(DOWN, buff=0.07)
+            VGroup(head, stripes).arrange(DOWN, buff=0.07).move_to(box)
+            return VGroup(box, head, stripes).set_z_index(90)
+
+        seq_items = []
+
+        def grow_sequence(new_items, run_time=0.9, from_nodes=None):
+            """Kéo dài chuỗi theo chiều ngang: ô cũ dịch sang, ô mới bay từ nót."""
+            seq_items.extend(new_items)
+            ghost = VGroup(*[m.copy() for m in seq_items])
+            ghost.arrange(RIGHT, buff=0.07)
+            ghost.align_to(np.array([SEQ_LEFT_X, 0.0, 0.0]), LEFT).set_y(SEQ_Y)
+            anims = []
+            for item, target in zip(seq_items, ghost):
+                if item in new_items:
+                    item.move_to(target)
+                else:
+                    anims.append(item.animate.move_to(target))
+            for index, item in enumerate(new_items):
+                source = from_nodes[index] if from_nodes else None
+                anims.append(TransformFromCopy(source, item) if source else FadeIn(item, scale=0.6))
+            self.play(LaggedStart(*anims, lag_ratio=0.05), run_time=run_time)
+
+        def context_card(nodes_value, prompt_value, prompt_color=LIGHT):
+            rows = VGroup(
+                t("CONTEXT SIZE", size=16, color=MID, weight=BOLD),
+                VGroup(t("Nodes", size=18, color=MID),
+                       t(nodes_value, size=18, color=LIGHT, weight=BOLD)).arrange(RIGHT, buff=0.30),
+                VGroup(t("Prompt", size=18, color=MID),
+                       t(prompt_value, size=18, color=prompt_color, weight=BOLD)).arrange(RIGHT, buff=0.30),
+                t("Schematic example", size=12, color=MID),
+            ).arrange(DOWN, buff=0.11)
+            frame = panel(rows.width + 0.5, rows.height + 0.4, fill=BG, stroke=DIM)
+            rows.move_to(frame)
+            return VGroup(frame, rows).move_to(CARD_POS).set_z_index(92)
+
+        target_A = node("A", radius=0.24).move_to(graph_center).set_z_index(90)
+        target_A[0].set_stroke(gs.C_GNN)
+        target_A[1].set_color(gs.C_GNN)
+        serialize_arr = small_arrow(
+            graph_center + RIGHT * 2.35,
+            np.array([SEQ_LEFT_X - 0.28, SEQ_Y, 0.0]),
+        ).set_z_index(90)
+        serialize_txt = t("Serialize", size=19, color=LIGHT).next_to(serialize_arr, UP, buff=0.1).set_z_index(90)
+        hop_label = t("1-hop context", size=19, color=MID).move_to(graph_center + DOWN * 3.0).set_z_index(90)
+        card = context_card("5", "~80")
+
+        # ── Stage 1: target trước, vòng lân cận thứ nhất bật lần lượt ──
+        with self.narrated_caption([
+            "Với vòng lân cận thứ nhất, câu lệnh chỉ cần chứa nót trung tâm",
+            "và một nhóm nhỏ các hàng xóm.",
+        ]):
+            # Cột pipeline của paradigm rời sân khấu ở đây: nó nằm đúng chỗ chuỗi
+            # tuần tự hoá chạy qua, để lại thì hai thứ chồng lên nhau.
+            self.play(FadeIn(blackout3), FadeOut(pred_group), run_time=0.4)
+            self.play(FadeIn(target_A, scale=0.7), run_time=0.5)
+            pulse = Circle(radius=RING_1, color=gs.C_GNN, stroke_width=2.5).move_to(graph_center).set_z_index(86)
+            self.play(GrowFromCenter(pulse), run_time=0.5)
+            self.play(pulse.animate.set_stroke(opacity=0.25), FadeIn(hop_label), run_time=0.4)
+
+            nodes_1, edges_1 = ring_nodes(["B", "C", "D", "E"], RING_1, MID, graph_center)
+            self.play(
+                LaggedStart(*[AnimationGroup(Create(e), GrowFromCenter(n))
+                              for n, e in zip(nodes_1, edges_1)], lag_ratio=0.22),
+                run_time=1.1,
+            )
+            self.play(GrowArrow(serialize_arr), FadeIn(serialize_txt), run_time=0.5)
+            grow_sequence([seq_box("A", gs.C_GNN)], run_time=0.5, from_nodes=[target_A])
+            grow_sequence([seq_box(l, MID) for l in ["B", "C", "D", "E"]],
+                          run_time=1.0, from_nodes=list(nodes_1))
+            self.play(FadeIn(card, shift=LEFT * 0.1), run_time=0.5)
+
+        # ── Stage 2: vòng nở ra, nót vòng hai bật theo đợt ──
+        with self.narrated_caption([
+            "Nhưng khi mở rộng sang vòng lân cận thứ hai,",
+            "số nót cần mô tả tăng nhanh,",
+            "kéo theo lượng văn bản trong câu lệnh cũng phình ra.",
+        ]):
+            hop_label_2 = t("2-hop context", size=19, color=LIGHT).move_to(hop_label).set_z_index(90)
+            nodes_2, edges_2 = ring_nodes(["F", "G", "H", "I", "J", "K", "L", "M"], RING_2, LIGHT, graph_center)
+            self.play(
+                pulse.animate.scale(RING_2 / RING_1).set_stroke(opacity=0.5),
+                ReplacementTransform(hop_label, hop_label_2),
+                run_time=0.7,
+            )
+            self.play(
+                LaggedStart(*[AnimationGroup(Create(e), GrowFromCenter(n))
+                              for n, e in zip(nodes_2, edges_2)], lag_ratio=0.10),
+                run_time=1.3,
+            )
+            grow_sequence([seq_box(l, MID) for l in ["F", "G", "H", "I"]],
+                          run_time=1.0, from_nodes=list(nodes_2[:4]))
+            grow_sequence([t("...", size=22, color=LIGHT).set_z_index(90)], run_time=0.4)
+            card_2 = context_card("18", "~420")
+            self.play(ReplacementTransform(card, card_2), run_time=0.5)
+
+        # ── Stage 3: hai đợt nữa; chi phí chuyển amber rồi mới sang đỏ ──
+        with self.narrated_caption([
+            "Nếu tiếp tục mở rộng vùng lân cận, số lượng nót có thể tăng rất nhanh.",
+            "Mỗi nót lại mang theo văn bản riêng,",
+            "khiến câu lệnh ngày càng dài và tốn kém để xử lý.",
+        ]):
+            hop_label_3 = t("3-hop context", size=19, color=gs.C_LLM).move_to(hop_label).set_z_index(90)
+            wave_a, edges_a = ring_nodes(["N", "O", "P", "Q", "R", "S"], RING_3, MID, graph_center)
+            wave_b, edges_b = ring_nodes(["T", "U", "V", "W", "X", "Y"], RING_3, MID,
+                                         graph_center, angle_offset=TAU / 12)
 
             self.play(
-                FadeIn(target_A), FadeIn(nodes_1), FadeIn(edges_1), FadeIn(lbl_1),
-                GrowArrow(serialize_arr), FadeIn(serialize_txt),
-                FadeIn(seq_1), FadeIn(counters),
-                run_time=1.0
+                pulse.animate.scale(RING_3 / RING_2).set_stroke(opacity=0.35),
+                ReplacementTransform(hop_label_2, hop_label_3),
+                run_time=0.6,
             )
-            self.wait(0.5)
-
-            # Stage 2
-            nodes_2, edges_2 = create_hop_nodes(["F", "G", "H", "I", "J", "K", "L", "M"], 1.6, LIGHT, graph_center)
-            lbl_2 = t("2-hop context", size=20, color=LIGHT).move_to(lbl_1).set_z_index(90)
-            seq_2 = make_sequence(["A", "B", "C", "D", "E", "F", "G", "H", "I"], [gs.C_GNN] + [MID]*4 + [MID]*4, show_dots=True).move_to(RIGHT * 3.0 + UP * 0.5)
-            c2_nodes = t("Graph nodes: 18", size=22, color=LIGHT)
-            c2_toks = t("Text tokens: 420", size=22, color=LIGHT)
-            counters_2 = VGroup(c2_nodes, c2_toks).arrange(DOWN, aligned_edge=LEFT).to_corner(UR, buff=0.6).set_z_index(90)
+            self.play(
+                LaggedStart(*[AnimationGroup(Create(e), GrowFromCenter(n))
+                              for n, e in zip(wave_a, edges_a)], lag_ratio=0.08),
+                run_time=1.0,
+            )
+            grow_sequence([seq_box("N", MID)], run_time=0.5, from_nodes=[wave_a[0]])
+            card_3 = context_card("34", "~760", prompt_color=gs.C_LLM)
+            self.play(ReplacementTransform(card_2, card_3), run_time=0.4)
 
             self.play(
-                FadeOut(lbl_1), FadeIn(lbl_2),
-                FadeIn(nodes_2), FadeIn(edges_2),
-                ReplacementTransform(seq_1, seq_2),
-                ReplacementTransform(counters, counters_2),
-                run_time=1.0
+                LaggedStart(*[AnimationGroup(Create(e), GrowFromCenter(n))
+                              for n, e in zip(wave_b, edges_b)], lag_ratio=0.08),
+                run_time=1.0,
             )
-            self.wait(0.5)
+            grow_sequence([seq_box("Y", MID)], run_time=0.5, from_nodes=[wave_b[0]])
+            card_4 = context_card("52", "~1.3k", prompt_color=gs.C_LLM)
+            self.play(ReplacementTransform(card_3, card_4), run_time=0.4)
+            # Đỏ đến SAU một nhịp, không đỏ ngay từ lúc số nhảy.
+            self.wait(0.4)
+            self.play(card_4[1][2][1].animate.set_color(gs.C_BAD), run_time=0.5)
 
-            # Stage 3
-            nodes_3, edges_3 = create_hop_nodes(["N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y"], 2.4, MID, graph_center)
-            lbl_3 = t("3-hop context", size=20, color=MID).move_to(lbl_1).set_z_index(90)
-            seq_3 = make_sequence(["A", "B", "C", "D", "E", "F", "G", "H", "I"], [gs.C_GNN] + [MID]*4 + [MID]*4, show_dots=True, final_node="N", final_color=MID).move_to(RIGHT * 3.0 + UP * 0.5)
-            c3_nodes = t("Graph nodes: 52", size=22, color=LIGHT)
-            c3_toks = t("Text tokens: 1,300", size=22, color=gs.C_BAD)
-            counters_3 = VGroup(c3_nodes, c3_toks).arrange(DOWN, aligned_edge=LEFT).to_corner(UR, buff=0.6).set_z_index(90)
-
-            self.play(
-                FadeOut(lbl_2), FadeIn(lbl_3),
-                FadeIn(nodes_3), FadeIn(edges_3),
-                ReplacementTransform(seq_2, seq_3),
-                ReplacementTransform(counters_2, counters_3),
-                run_time=1.0
-            )
-            
-            # Highlight counter
-            self.play(c3_toks.animate.scale(1.2), run_time=0.4, rate_func=there_and_back)
-            
-            # Punchline
-            punchline1 = t("Larger graph context -> Longer text sequence", size=32, color=BRIGHT, weight=BOLD)
-            punchline2 = t("More tokens, higher LLM cost", size=26, color=gs.C_BAD)
-            punch_group = VGroup(punchline1, punchline2).arrange(DOWN, buff=0.2).move_to(ORIGIN).set_z_index(100)
-            
-            blackout_punch = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(95)
-            
-            self.play(FadeIn(blackout_punch), FadeIn(punch_group, shift=UP*0.2), run_time=1.0)
+        with self.narrated_caption([
+            "Vì vậy, càng đưa nhiều ngữ cảnh đồ thị vào lờ lờ mờ,",
+            "chi phí cho mỗi lần gọi càng lớn.",
+            "Và nếu làm điều này cho mọi nót thì sao?",
+        ]):
+            punch_group = VGroup(
+                t("MORE NEIGHBORS  →  MORE TEXT  →  MORE LLM COST",
+                  size=30, color=BRIGHT, weight=BOLD),
+                t("each query carries the whole neighborhood", size=20, color=gs.C_BAD),
+            # Punchline nằm ở khoảng trống bên PHẢI, dưới dải chuỗi: đặt giữa
+            # khung thì chữ cắt ngang đúng vòng nót bên trái.
+            ).arrange(DOWN, buff=0.22).set_z_index(100)
+            fit(punch_group, 6.7)
+            punch_group.move_to(RIGHT * 3.0 + DOWN * 1.75)
+            blackout_punch = Rectangle(width=20, height=15, fill_color=BLACK,
+                                       fill_opacity=0.55).set_z_index(95)
+            self.play(FadeIn(blackout_punch), FadeIn(punch_group, shift=UP * 0.2), run_time=1.0)
             self.wait(0.7)
             
             # Không liệt kê tay từng nhóm nữa: cách cũ bỏ sót enh_group,
-            # noisy_nbhd, noisy_msgs, blackout2, bias_text và các seq/counter
+            # hetero_nbhd, conflicting_msgs, bias_text và các seq/counter
             # trung gian, nên chúng còn sống dưới lớp blackout rồi lộ ra ở
             # cảnh sau. Gom mọi mobject đang có mặt để dọn dứt điểm.
             # Giữ nguyên nhịp: vẫn không fade out ở đây, để audio chạy hết.
@@ -1161,10 +1502,19 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             t("+", size=18, color=INK),
             t("LLM", size=18, color=gs.C_LLM, weight=BOLD),
         ).arrange(RIGHT, buff=0.22).next_to(fusion, UP, buff=0.22)
+        # Ba mũi tên cắm vào ba cao độ RỜI NHAU trên cạnh trái của khối, với buff
+        # rõ ở cả hai đầu và đầu tên nhỏ lại — bản cũ để ba đầu tên tụ vào cùng
+        # một vùng nên trông như một chùm đầu nhọn, không chỉ rõ nót nào đi đâu.
+        # Không sửa small_arrow() vì các cảnh khác đang dùng đúng đầu tên đó.
         arrows = VGroup(*[
-            small_arrow(n.get_right(), fusion.get_left() + UP * (0.4 - 0.4 * i), color=MID)
-            for i, n in enumerate(nodes)
+            Arrow(n.get_right(), fusion.get_left() + UP * offset,
+                  buff=0.20, color=MID, stroke_width=1.8, tip_length=0.09,
+                  max_tip_length_to_length_ratio=0.08)
+            for n, offset in zip(nodes, [0.45, 0.0, -0.45])
         ])
+        # Cả cụm to lên và căn vào giữa khung: bản cũ hàng nót dạt sát mép trái
+        # còn khối hợp nhất lệch phải, nhìn trống một bên.
+        VGroup(nodes, fusion, src, arrows).scale(1.14).move_to(UP * 0.1)
         with self.narrated_caption([
             "Tuy nhiên, phần lớn các hệ thống lai hiện nay",
             "vẫn áp dụng một chiến lược hợp nhất duy nhất cho tất cả các nót trong đồ thị.",
@@ -1216,10 +1566,14 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                         emphasized=True).move_to(fusion)
         router[0].set_stroke(gs.C_ROUTER)
         router[1][0].set_color(gs.C_ROUTER)
-        r_arr_g = small_arrow(router.get_right(), router.get_right() + RIGHT * 0.8 + UP * 0.5, color=gs.C_GNN)
-        r_arr_l = small_arrow(router.get_right(), router.get_right() + RIGHT * 0.8 + DOWN * 0.5, color=gs.C_LLM)
-        r_g = t("Keep GNN", size=15, color=gs.C_GNN, weight=BOLD).next_to(r_arr_g.get_end(), RIGHT, buff=0.1)
-        r_l = t("Query LLM", size=15, color=gs.C_LLM, weight=BOLD).next_to(r_arr_l.get_end(), RIGHT, buff=0.1)
+        # Hai nhánh xuất phát từ hai cao độ khác nhau trên cạnh phải, và nhãn lùi
+        # ra xa hơn (buff 0.18) để đầu mũi tên không chạm vào chữ.
+        r_arr_g = small_arrow(router.get_right() + UP * 0.22,
+                              router.get_right() + RIGHT * 0.8 + UP * 0.5, color=gs.C_GNN)
+        r_arr_l = small_arrow(router.get_right() + DOWN * 0.22,
+                              router.get_right() + RIGHT * 0.8 + DOWN * 0.5, color=gs.C_LLM)
+        r_g = t("Keep GNN", size=15, color=gs.C_GNN, weight=BOLD).next_to(r_arr_g.get_end(), RIGHT, buff=0.18)
+        r_l = t("Query LLM", size=15, color=gs.C_LLM, weight=BOLD).next_to(r_arr_l.get_end(), RIGHT, buff=0.18)
         # GLANCE dùng LLM để TINH CHỈNH dự đoán GNN, không thay bằng LLM thuần.
         r_refine = t("refine GNN", size=12, color=gs.C_ROUTER).next_to(r_l, DOWN, buff=0.12, aligned_edge=LEFT)
         center = VGroup(
@@ -1268,10 +1622,36 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(AnimationGroup(*[GrowArrow(m) for m in msgs_A], lag_ratio=0.1), run_time=1.0)
             self.play(FadeIn(gnn_bar_A), run_time=0.7)
 
-        with self.narrated_caption(["gờ nờ nờ dự đoán đúng. gọi lờ lờ mờ là không cần thiết."]):
-            skip_label = t("[SKIP LLM]", size=34, color=gs.C_GOOD, weight=BOLD).next_to(gnn_bar_A, DOWN, buff=0.4)
-            self.play(FadeIn(skip_label, shift=UP * 0.1), run_time=0.6)
+        with self.narrated_caption([
+            "gờ nờ nờ đã đủ tốt cho nót a,",
+            "nên ta giữ dự đoán này và không tốn thêm một lần gọi lờ lờ mờ.",
+        ]):
+            # Không chỉ hiện dòng chữ [SKIP LLM]: dựng thành một QUYẾT ĐỊNH giữ
+            # nhánh GNN — dấu ✓, thông điệp chính "KEEP GNN", nhãn phụ nhỏ.
+            keep_rows = VGroup(
+                VGroup(
+                    gs.check(color=gs.C_GOOD, size=0.22),
+                    t("KEEP GNN", size=26, color=gs.C_GOOD, weight=BOLD),
+                ).arrange(RIGHT, buff=0.18),
+                t("No LLM call needed", size=16, color=MID),
+                t("[SKIP LLM]", size=13, color=DIM),
+            ).arrange(DOWN, buff=0.13)
+            skip_card = panel(keep_rows.width + 0.6, keep_rows.height + 0.42,
+                              stroke=gs.C_GOOD, fill=BG, opacity=0.9)
+            keep_rows.move_to(skip_card)
+            skip_label = VGroup(skip_card, keep_rows).next_to(gnn_bar_A, DOWN, buff=0.38)
+            decision_arrow = small_arrow(gnn_bar_A.get_bottom(), skip_card.get_top(),
+                                         color=gs.C_GOOD, buff=0.12)
+
+            self.play(
+                Indicate(group_A.target, color=gs.C_GOOD, scale_factor=1.25),
+                Indicate(gnn_bar_A, color=gs.C_GOOD, scale_factor=1.04),
+                run_time=0.7,
+            )
+            self.play(GrowArrow(decision_arrow), run_time=0.4)
+            self.play(FadeIn(skip_label, scale=0.94), run_time=0.6)
             self.wait(0.4)
+            skip_label = VGroup(skip_label, decision_arrow)
 
         # ── NODE B ──────────────────────────────────────────
         title_B = t("Node B: Noisy Structure, Clear Text", size=34, color=INK, weight=BOLD).to_edge(UP, buff=0.35)
@@ -1291,7 +1671,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 run_time=1.1
             )
 
-        with self.narrated_caption(["các tín hiệu kéo nhiều hướng, gờ nờ nờ dự đoán sai."]):
+        # Câu ngắn bắt đầu bằng chữ thường và kết ngay sau chuỗi "gờ nờ nờ" bị
+        # đọc méo. Viết hoa đầu câu cho giọng có ngữ điệu chuẩn và tách mệnh đề
+        # thành hai vế rõ ràng; đổi text nên TTS sinh lại bản mới.
+        with self.narrated_caption([
+            "Các tín hiệu kéo về nhiều hướng khác nhau,",
+            "nên gờ nờ nờ dự đoán sai.",
+        ], speed=1.05):
             msgs_B = VGroup(*[create_message_vector(
                 n.get_center(), group_B.target.get_center(),
                 color=DARK if i not in {1, 2, 5, 7} else gs.C_BAD
@@ -1424,42 +1810,86 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     # SECTION 9 — Aggregate Accuracy
     # ─────────────────────────────────────────────────────────
     def section_9_aggregate_accuracy(self):
-        with self.narrated_caption(["Xét một ví dụ minh họa.", "Nó cho thấy vì sao độ chính xác tổng thể có thể tăng rất ít."]):
+        # Cả section neo vào MỘT hình: quần thể 100 nót. Bản cũ fade sạch màn
+        # hình ngay nhịp đầu rồi để lời đọc chạy trên nền trống mấy giây.
+        HARD_INDICES = [7, 16, 23, 38, 44, 51, 66, 72, 85, 93]
+
+        with self.narrated_caption([
+            "Xét một ví dụ cụ thể.",
+            "Nó cho thấy vì sao độ chính xác tổng thể có thể tăng rất ít.",
+        ]):
+            self.play(FadeOut(self.comparison_objects, shift=UP * 0.3), run_time=0.6)
+            head9 = t("100 NODES  ·  SCHEMATIC EXAMPLE", size=23, color=MID, weight=BOLD)
+            head9.to_edge(UP, buff=0.6)
+            population = VGroup(*[Dot(radius=0.085, color=gs.C_GNN) for _ in range(100)])
+            population.arrange_in_grid(rows=10, cols=10, buff=0.17)
+            population.move_to(LEFT * 3.9 + DOWN * 0.35)
+            hard_dots = VGroup(*[population[i] for i in HARD_INDICES])
+            hard_dots.set_color(gs.C_BAD)
+            self.play(FadeIn(head9), run_time=0.4)
             self.play(
-                FadeOut(self.comparison_objects, shift=UP * 0.3),
-                run_time=0.8
+                LaggedStart(*[FadeIn(d, scale=0.55) for d in population], lag_ratio=0.012),
+                run_time=1.7,
             )
 
-        with self.narrated_caption(["giả sử chín mươi phần trăm là các nót dễ,", "còn mười phần trăm là các nót khó."]):
+        with self.narrated_caption([
+            "giả sử chín mươi phần trăm là các nót dễ,",
+            "còn mười phần trăm là các nót khó.",
+        ]):
             easy_group = VGroup(
-                t("90% Easy Nodes", size=38, color=gs.C_GNN, weight=BOLD),
-                t("GNN: 95%  ->  Fusion: 94%", size=26, color=LIGHT)
-            ).arrange(DOWN, buff=0.2).move_to(LEFT * 3.2 + UP * 1.4)
+                t("90 easy nodes", size=30, color=gs.C_GNN, weight=BOLD),
+                t("GNN 95%   →   Fusion 94%", size=22, color=LIGHT),
+            ).arrange(DOWN, buff=0.16).move_to(RIGHT * 3.15 + UP * 2.05)
             hard_group = VGroup(
-                t("10% Hard Nodes", size=38, color=gs.C_BAD, weight=BOLD),
-                t("GNN: 40%  ->  Fusion: 53%", size=26, color=LIGHT)
-            ).arrange(DOWN, buff=0.2).move_to(RIGHT * 3.2 + UP * 1.4)
-            self.play(FadeIn(easy_group, shift=UP * 0.2), FadeIn(hard_group, shift=UP * 0.2), run_time=1.0)
+                t("10 hard nodes", size=30, color=gs.C_BAD, weight=BOLD),
+                t("GNN 40%   →   Fusion 53%", size=22, color=LIGHT),
+            ).arrange(DOWN, buff=0.16).move_to(RIGHT * 3.15 + UP * 0.55)
+            self.play(FadeIn(easy_group, shift=UP * 0.15), run_time=0.7)
+            self.play(
+                FadeIn(hard_group, shift=UP * 0.15),
+                LaggedStart(*[Indicate(d, color=gs.C_BAD, scale_factor=1.8)
+                              for d in hard_dots], lag_ratio=0.07),
+                run_time=1.0,
+            )
 
         with self.narrated_caption(["trên nhóm khó, lờ lờ mờ giúp tăng mười ba điểm phần trăm."]):
-            gnn_eq = mt(r"\text{GNN: } 0.9{\times}95\% + 0.1{\times}40\% = 89.5\%", size=38).move_to(DOWN * 0.5)
+            # Chính mười chấm coral đổi sang xanh: thấy ngay phần được cải thiện
+            # chỉ là một góc nhỏ của quần thể.
+            gain_hard = t("hard-node gain:  +13 pts", size=23, color=gs.C_GOOD, weight=BOLD)
+            gain_hard.next_to(hard_group, DOWN, buff=0.35)
+            self.play(
+                LaggedStart(*[d.animate.set_color(gs.C_GOOD) for d in hard_dots], lag_ratio=0.07),
+                FadeIn(gain_hard, shift=UP * 0.1),
+                run_time=1.1,
+            )
+            gnn_eq = mt(r"\text{GNN: } 0.9{\times}95\% + 0.1{\times}40\% = 89.5\%", size=30)
+            fit(gnn_eq, 6.4)
+            gnn_eq.move_to(RIGHT * 3.15 + DOWN * 1.35)
             self.play(Write(gnn_eq), run_time=0.9)
-            gain_hard = t("Hard-node gain: +13 pts", size=26, color=gs.C_GOOD, weight=BOLD).next_to(hard_group, DOWN, buff=0.4)
-            self.play(FadeIn(gain_hard, shift=UP * 0.1), run_time=0.6)
 
         with self.narrated_caption(["nhưng trên toàn đồ thị, tổng thể chỉ tăng không chấm bốn điểm."]):
-            fusion_eq = mt(r"\text{Fusion: } 0.9{\times}94\% + 0.1{\times}53\% = 89.9\%", size=38).next_to(gnn_eq, DOWN, buff=0.4)
+            fusion_eq = mt(r"\text{Fusion: } 0.9{\times}94\% + 0.1{\times}53\% = 89.9\%", size=30)
+            fit(fusion_eq, 6.4)
+            fusion_eq.next_to(gnn_eq, DOWN, buff=0.32)
             self.play(TransformFromCopy(gnn_eq, fusion_eq), run_time=0.9)
-            self.play(gnn_eq.animate.set_opacity(0.3), run_time=0.4)
-            gain_overall = t("Overall gain: +0.4 percentage points", size=28, color=MID).next_to(fusion_eq, DOWN, buff=0.3)
+            self.play(gnn_eq.animate.set_opacity(0.35), run_time=0.4)
+            gain_overall = t("overall gain:  +0.4 pts", size=23, color=MID)
+            gain_overall.next_to(fusion_eq, DOWN, buff=0.28)
             self.play(FadeIn(gain_overall), run_time=0.5)
 
         with self.narrated_caption(["lợi ích lớn ở một nhóm nhỏ trông rất nhỏ khi tính tổng."]):
-            takeaway = t("LARGE SUBGROUP GAINS CAN LOOK SMALL IN AGGREGATE", size=28, color=gs.C_ROUTER, weight=BOLD).move_to(DOWN * 2.45)
-            self.play(FadeIn(takeaway, shift=UP * 0.1), run_time=0.7)
-            self.wait(0.8)
+            # Câu chốt dạng chữ đã bỏ: lời thoại nói đúng ý đó rồi, và dải chữ
+            # rộng bằng khung hình chỉ chen vào giữa lưới nót với hai công thức.
+            # Thay bằng một nhịp nhấn chính mười chấm đã đổi màu.
+            self.play(
+                LaggedStart(*[Indicate(d, color=gs.C_GOOD, scale_factor=1.6)
+                              for d in hard_dots], lag_ratio=0.06),
+                run_time=1.0,
+            )
+            self.wait(0.6)
 
-        self.sec9_objects = VGroup(easy_group, hard_group, gnn_eq, fusion_eq, gain_hard, gain_overall, takeaway)
+        self.sec9_objects = VGroup(head9, population, easy_group, hard_group,
+                                   gnn_eq, fusion_eq, gain_hard, gain_overall)
 
     # ─────────────────────────────────────────────────────────
     # SECTION 10 — GLANCE Research Question & Task 2
@@ -1486,8 +1916,10 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         query[0].set_stroke(gs.C_LLM); query[1][0].set_color(gs.C_LLM)
         arr1 = small_arrow(node.get_right(), gnn.get_left())
         arr2 = small_arrow(gnn.get_right(), router.get_left(), color=gs.C_GNN)
-        a_up = small_arrow(router.get_right(), keep.get_left(), color=gs.C_GNN)
-        a_dn = small_arrow(router.get_right(), query.get_left(), color=gs.C_LLM)
+        # Tách điểm xuất phát của hai nhánh để không chồng gốc lên nhau; đầu vẫn
+        # cắm đúng cạnh trái của box đích.
+        a_up = small_arrow(router.get_right() + UP * 0.22, keep.get_left(), color=gs.C_GNN, buff=0.14)
+        a_dn = small_arrow(router.get_right() + DOWN * 0.22, query.get_left(), color=gs.C_LLM, buff=0.14)
 
         with self.narrated_caption([
             "gờ lans biến việc này thành một quyết định định tuyến cho từng nót:",

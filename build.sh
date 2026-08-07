@@ -39,12 +39,30 @@ mkdir -p build build/norm
 #  2. Manim xuất audio ngắn hơn video vài chục ms mỗi scene. Ghép nối tiếp thì
 #     sai số cộng dồn và tiếng lệch dần khỏi hình. Đệm im lặng cho audio dài
 #     đúng bằng video (apad + -shortest) để mỗi clip tự khớp.
+#  3. Ngược lại, có scene audio DÀI hơn video vài trăm ms (manim chốt video theo
+#     mốc frame, audio thì không). Với những clip đó, `-shortest` cắt mất đuôi
+#     câu cuối: người xem nghe như bị nhảy ngang sang scene sau. Chỗ đó phải kéo
+#     dài VIDEO bằng cách giữ frame cuối (tpad) chứ không được cắt audio; chỉ
+#     những clip này mới phải mã hoá lại video, còn lại vẫn `-c:v copy`.
 normalize() {
   local src="$1" dst="build/norm/$(basename "$1")"
   if ffprobe -v error -select_streams a -show_entries stream=codec_type \
        -of csv=p=0 "$src" | grep -q audio; then
-    ffmpeg -y -loglevel error -i "$src" \
-      -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -af apad -shortest "$dst"
+    local vdur adur gap
+    vdur="$(ffprobe -v error -select_streams v -show_entries stream=duration \
+             -of default=nw=1:nk=1 "$src")"
+    adur="$(ffprobe -v error -select_streams a -show_entries stream=duration \
+             -of default=nw=1:nk=1 "$src")"
+    gap="$(awk -v a="$adur" -v v="$vdur" 'BEGIN{d=a-v; print (d>0.02)?d:0}')"
+    if [ "$gap" != "0" ]; then
+      ffmpeg -y -loglevel error -i "$src" \
+        -vf "tpad=stop_mode=clone:stop_duration=$(awk -v g="$gap" 'BEGIN{print g+0.1}')" \
+        -c:v libx264 -preset veryfast -crf 20 -pix_fmt yuv420p \
+        -c:a aac -b:a 128k -ar 48000 -ac 2 -af apad -shortest "$dst"
+    else
+      ffmpeg -y -loglevel error -i "$src" \
+        -c:v copy -c:a aac -b:a 128k -ar 48000 -ac 2 -af apad -shortest "$dst"
+    fi
   else
     ffmpeg -y -loglevel error -i "$src" \
       -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 \

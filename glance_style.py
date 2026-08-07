@@ -11,6 +11,7 @@ Usage inside sections/<yours>/<yours>.py:
     from glance_style import *
 """
 
+import contextlib
 import json
 import os
 import pathlib
@@ -68,6 +69,22 @@ class TimedTTSService(SpeechService):
         self.audio_format = audio_format.lower()
         self.speed = float(speed)
         self.timeout = timeout
+
+    @contextlib.contextmanager
+    def speed_override(self, speed):
+        """Đọc nhanh/chậm hơn cho đúng vài câu, không đổi tốc độ cả video.
+
+        `speed` là tham số gửi thẳng cho API, nên audio được SINH ở tốc độ mới
+        chứ không phải kéo giãn bản cũ. Nó cũng nằm trong `_cache_input_data`,
+        nên bản nhanh và bản thường là hai entry cache khác nhau và TTS thực sự
+        được gọi lại.
+        """
+        previous = self.speed
+        self.speed = float(speed)
+        try:
+            yield
+        finally:
+            self.speed = previous
 
     def _cache_input_data(self, input_text):
         return {
@@ -525,13 +542,21 @@ def panel(mobject, color=C_EDGE, buff=0.4, fill_opacity=0.06):
 
 
 def labeled_box(label, color, width=2.6, height=1.1):
-    """A model block: labeled_box('GNN', C_GNN)."""
+    """A model block: labeled_box('GNN', C_GNN).
+
+    `label` cũng nhận thẳng một mobject, dùng khi nhãn là công thức:
+    `labeled_box(MathTex(r"\\hat{y}_v"), C_HIGHLIGHT)`. Viết công thức bằng
+    chuỗi thường sẽ hiện nguyên dấu gạch dưới thay vì ra chỉ số.
+    """
     box = RoundedRectangle(
         corner_radius=0.16, width=width, height=height,
         stroke_color=color, stroke_width=3,
         fill_color=color, fill_opacity=0.12,
     )
-    return VGroup(box, txt(label, size=BODY_SIZE, color=color, weight=BOLD))
+    content = label if isinstance(label, Mobject) else txt(
+        label, size=BODY_SIZE, color=color, weight=BOLD
+    )
+    return VGroup(box, content)
 
 
 def pipeline(steps, direction=RIGHT, box_w=2.0, box_h=0.85, buff=0.55,
@@ -544,7 +569,10 @@ def pipeline(steps, direction=RIGHT, box_w=2.0, box_h=0.85, buff=0.55,
     boxes = VGroup()
     for label, color in steps:
         box = labeled_box(label, color, width=box_w, height=box_h)
-        box[1].set(font_size=text_size)
+        # Nhãn dạng mobject (MathTex) giữ nguyên cỡ đã dựng; chỉ chữ thường mới
+        # ép font_size theo tham số chung.
+        if isinstance(box[1], Text):
+            box[1].set(font_size=text_size)
         if box[1].width > box_w - 0.25:
             box[1].scale_to_fit_width(box_w - 0.25)
         box[1].move_to(box[0])
@@ -1149,12 +1177,43 @@ class GlanceScene(VoiceoverScene):
         self.camera.background_color = BG
         self.set_speech_service(self.speech_service(), create_subcaption=True)
 
+    def tear_down(self):
+        """Đệm một nhịp ở cuối scene để video không ngắn hơn audio.
+
+        manim ghi video theo mốc frame còn audio thì không, nên track audio của
+        scene thường dài hơn video vài chục tới hơn trăm mi-li-giây. `build.sh`
+        chuẩn hoá bằng `-shortest`, tức là đúng phần đuôi đó bị CẮT: câu cuối
+        của scene nghe như bị nhảy ngang sang scene sau. Nửa giây tĩnh ở đây
+        khiến video luôn dài hơn audio, và cũng cho người xem một nhịp thở
+        giữa hai scene.
+        """
+        self.wait(0.5)
+        super().tear_down()
+
     def voiceover(self, text=None, **kwargs):
         """Tự bọc thuật ngữ tiếng Anh bằng <lang> và giữ phụ đề sạch thẻ."""
         if text is not None and self._multilingual:
             kwargs.setdefault("subcaption", strip_ssml(text))
             text = ssml_mix(text)
         return super().voiceover(text=text, **kwargs)
+
+    @contextlib.contextmanager
+    def tts_speed(self, speed):
+        """Đọc riêng vài câu ở tốc độ khác, dùng bọc quanh khối voiceover:
+
+            with self.tts_speed(1.15):
+                with self.voiceover(text=...) as tracker:
+                    ...
+
+        Backend nào không hỗ trợ đổi tốc độ (gTTS, recorder) thì khối này chỉ
+        đơn giản không làm gì, chứ không hỏng render.
+        """
+        override = getattr(self.speech_service, "speed_override", None)
+        if speed is None or override is None:
+            yield
+        else:
+            with override(speed):
+                yield
 
     def speech_service(self):
         _load_env()

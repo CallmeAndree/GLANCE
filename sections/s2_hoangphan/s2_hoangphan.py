@@ -43,11 +43,16 @@ PAPER_ASSETS = [
 # --------------------------------------------------------------------------
 
 
-def beat(scene, text, *anims, run_time=1.0):
-    """Một nhịp nói: chạy animation trong lúc đọc, rồi giữ hình cho hết câu."""
-    with scene.voiceover(text=text) as tracker:
-        if anims:
-            scene.play(*anims, run_time=min(run_time, tracker.duration))
+def beat(scene, text, *anims, run_time=1.0, speed=None):
+    """Một nhịp nói: chạy animation trong lúc đọc, rồi giữ hình cho hết câu.
+
+    `speed` đọc riêng câu này nhanh/chậm hơn (audio sinh mới ở tốc độ đó, tốc độ
+    nằm trong cache key), dùng cho các chuỗi chữ cái đọc rời rạc.
+    """
+    with scene.tts_speed(speed):
+        with scene.voiceover(text=text) as tracker:
+            if anims:
+                scene.play(*anims, run_time=min(run_time, tracker.duration))
 
 
 # --------------------------------------------------------------------------
@@ -176,13 +181,19 @@ class S2_01_AdaptiveFusion(GlanceScene):
         ]).arrange(DOWN, buff=0.48).move_to(LEFT * 3.4 + DOWN * 0.2)
         node_label = mono("all nodes", size=17, color=MUTED).next_to(nodes, LEFT, buff=0.35)
         llm = labeled_box("LLM", C_LLM).move_to(RIGHT * 3.1 + DOWN * 0.2)
+        # Năm mũi tên cùng chụm vào một cạnh của khối lờ lờ mờ, nên đầu mũi tên
+        # mặc định phình to thành một bó nhọn. Ép tip_length nhỏ hẳn và cắm vào
+        # năm cao độ rời nhau trên cạnh trái để đọc ra từng đường một.
+        llm_left = llm.get_left()
+        arrow_targets = [llm_left + UP * offset for offset in (0.32, 0.16, 0.0, -0.16, -0.32)]
         all_arrows = VGroup(*[
             Arrow(
-                node.get_right(), llm.get_left(), buff=0.2,
-                color=C_EDGE, stroke_width=2.5,
-                max_tip_length_to_length_ratio=0.08,
+                node.get_right(), target, buff=0.2,
+                color=C_EDGE, stroke_width=2.0,
+                tip_length=0.10,
+                max_tip_length_to_length_ratio=0.04,
             )
-            for node in nodes
+            for node, target in zip(nodes, arrow_targets)
         ])
         static_note = txt("Every node queries the LLM", size=21, color=C_BAD)
         static_note.to_edge(DOWN, buff=0.55)
@@ -204,11 +215,12 @@ class S2_01_AdaptiveFusion(GlanceScene):
         ])
         routed_arrows = VGroup(*[
             Arrow(
-                nodes[i].get_right(), llm.get_left(), buff=0.2,
-                color=C_ROUTER, stroke_width=3,
-                max_tip_length_to_length_ratio=0.08,
+                nodes[i].get_right(), llm_left + UP * offset, buff=0.2,
+                color=C_ROUTER, stroke_width=2.6,
+                tip_length=0.11,
+                max_tip_length_to_length_ratio=0.05,
             )
-            for i in selected
+            for i, offset in zip(selected, (0.18, -0.18))
         ])
         adaptive_note = txt(
             "Route only nodes with expected LLM benefit",
@@ -249,13 +261,17 @@ class S2_01_AdaptiveFusion(GlanceScene):
             "Three prior adaptive-fusion methods", color=ACCENT,
         ).to_edge(UP, buff=0.45)
 
-        beat(
-            self,
-            "Ta hãy cùng khảo sát ba công trình từng áp dụng cách tiếp cận này: e lờ lờ a gờ nờ nờ, lờ lờ mờ, gờ nờ nờ, và lốc gin.",
-            FadeIn(paper_head),
-            LaggedStart(*[FadeIn(card, shift=UP * 0.2) for card in papers], lag_ratio=0.2),
-            run_time=1.8,
-        )
+        # Ba tên công trình tách thành ba clip riêng, mỗi clip ngắn và đọc nhanh:
+        # gộp cả ba chuỗi chữ cái vào một câu thì giọng đọc méo hẳn. Đổi lại mỗi
+        # tấm ảnh cũng lên đúng lúc tên nó được đọc.
+        beat(self, "Ta hãy cùng khảo sát ba công trình từng áp dụng cách tiếp cận này.",
+             FadeIn(paper_head), run_time=0.8)
+        beat(self, "Thứ nhất, e lờ lờ a gờ nờ nờ.",
+             FadeIn(papers[0], shift=UP * 0.2), run_time=0.7, speed=1.3)
+        beat(self, "Thứ hai, lờ lờ mờ, gờ nờ nờ.",
+             FadeIn(papers[1], shift=UP * 0.2), run_time=0.7, speed=1.3)
+        beat(self, "Và thứ ba, lốc gin.",
+             FadeIn(papers[2], shift=UP * 0.2), run_time=0.7, speed=1.3)
         beat(self, "Chúng dùng tiêu chí nào để đánh giá và định tuyến nót sang lờ lờ mờ?")
         beat(self, "Từng tiêu chí mạnh yếu ra sao?")
         # Câu hỏi thứ ba hướng về GLANCE, vì section này chỉ ra hạn chế của từng
@@ -329,14 +345,19 @@ class S2_03_Degree(GlanceScene):
         ring_r = g.nodes["H"].radius * 1.9
 
         beat(self, "Đầu tiên là e lờ lờ a gờ nờ nờ.",
-             FadeIn(head), FadeIn(sub), run_time=0.8)
-        beat(self, "Công trình này dùng nót bậc làm tiêu chí định tuyến.")
+             FadeIn(head), FadeIn(sub), run_time=0.8, speed=1.3)
+        # Đồ thị lên ngay từ câu thứ hai, đúng lúc bắt đầu nói về nót bậc — bản
+        # cũ để khán giả nghe ba câu liền trên nền trống rồi mới vẽ.
+        beat(self, "Công trình này dùng nót bậc làm tiêu chí định tuyến.",
+             Create(g.edges),
+             LaggedStart(*[GrowFromCenter(d) for d in g.nodes.values()], lag_ratio=0.06),
+             run_time=1.6)
         beat(self, "bậc là số hàng xóm nối với nót đó.")
         beat(self, "nót bậc thấp nhận ít thông tin qua truyền thông điệp.")
         beat(self, "Nên gờ nờ nờ có thể gặp khó, và ta ưu tiên định tuyến chúng sang lờ lờ mờ.",
-             Create(g.edges),
-             LaggedStart(*[GrowFromCenter(d) for d in g.nodes.values()], lag_ratio=0.06),
-             run_time=1.8)
+             LaggedStart(*[Indicate(d, color=ACCENT, scale_factor=1.2)
+                           for d in g.nodes.values()], lag_ratio=0.05),
+             run_time=1.5)
         beat(self, "Màu nót là lớp thật của nó.")
 
         # --- tập được route -----------------------------------------------------
@@ -482,9 +503,12 @@ class S2_04_Density(GlanceScene):
         ])
         k_note = mono("K = number of classes", size=17, color=C_ROUTER)
         k_note.to_edge(RIGHT, buff=0.5).shift(DOWN * 1.75)
+        # Câu kết bằng hai chuỗi chữ cái liền nhau ("lờ lờ mờ, gờ nờ nờ") nên bị
+        # đọc méo; sinh lại nhanh hơn cho giọng ổn định.
         beat(self, "Tiêu chí thứ hai là mật độ xê, được kế thừa từ lờ lờ mờ, gờ nờ nờ.",
              FadeIn(head), FadeIn(sub), Create(graph_edges),
-             LaggedStart(*[GrowFromCenter(p) for p in points], lag_ratio=0.04), run_time=1.6)
+             LaggedStart(*[GrowFromCenter(p) for p in points], lag_ratio=0.04),
+             run_time=1.6, speed=1.15)
         beat(self, "Mật độ xê ở đây không phải mật độ cạnh hay số tam giác xung quanh nót.",
              FadeOut(graph_edges), Create(axes),
              FadeIn(topology_group), run_time=1.3)
@@ -498,8 +522,9 @@ class S2_04_Density(GlanceScene):
         near_ring = Circle(radius=0.19, color=C_ROUTER, stroke_width=3).move_to(near_node)
         near_line = DashedLine(near_node.get_center(), near_centroid.get_center(),
                                color=C_ROUTER, stroke_width=2.5, dash_length=0.12)
+        # Hai công thức xuống thấp thêm một chút để rời hẳn khỏi dải điểm dữ liệu.
         distance = MathTex(r"d_i=\lVert x_i-x_{CC_i}\rVert", font_size=30,
-                           color=INK).move_to(LEFT * 0.25 + DOWN * 1.98)
+                           color=INK).move_to(LEFT * 0.25 + DOWN * 2.35)
         beat(self, "Với mỗi nót, ta đo khoảng cách từ véc-tơ của nó đến tâm cụm gần nhất.",
              Create(near_ring), Create(near_line), Write(distance), run_time=1.3)
 
@@ -521,7 +546,7 @@ class S2_04_Density(GlanceScene):
             r"\operatorname{C\!\text{-}\!Density}(v_i)="
             r"\frac{1}{1+\lVert x_{v_i}-x_{CC_{v_i}}\rVert}",
             font_size=30, color=INK,
-        ).move_to(DOWN * 2.15)
+        ).move_to(DOWN * 2.55)
         density_box = panel(density_formula, color=C_ROUTER, buff=0.18, fill_opacity=0.1)
         formula_group = VGroup(density_box, density_formula)
         with self.voiceover(text=(
@@ -562,7 +587,7 @@ class S2_04_Density(GlanceScene):
         beat(self, "Trong thí nghiệm của gờ lans, các nót có mật độ xê thấp nhất được định tuyến sang lờ lờ mờ.",
              FadeOut(feature_phase), FadeIn(route_items),
              LaggedStart(*[GrowArrow(a) for a in route_arrows], lag_ratio=0.25),
-             FadeIn(route_note), run_time=1.4)
+             FadeIn(route_note), run_time=1.4, speed=1.15)
 
         outcome_title = heading("Same C-density, different outcomes", color=ACCENT)
         outcome_title.to_edge(UP, buff=1.0)
@@ -643,30 +668,99 @@ class S2_05_Uncertainty(GlanceScene):
         nlab = mono("node v", size=17, color=MUTED).next_to(node, DOWN, buff=0.28)
         counter = mono("forward pass 1 / 4", size=18, color=MUTED)
         counter.next_to(VGroup(axis, ylab), UP, buff=0.4)
-        arrow = Arrow(node.get_right(), axis.get_left() + LEFT * 0.15, buff=0.3,
-                      stroke_width=3, color=C_EDGE, max_tip_length_to_length_ratio=0.12)
+        # Mũi tên đi NGANG đúng cao độ của nót: bản cũ trỏ chéo xuống mép trái
+        # trục nên nhìn như bị méo, lại thêm đầu mũi tên quá to.
+        arrow = Arrow(
+            node.get_right(),
+            np.array([axis.get_left()[0] - 0.2, node.get_center()[1], 0.0]),
+            buff=0.3, stroke_width=2.4, color=C_EDGE,
+            tip_length=0.12, max_tip_length_to_length_ratio=0.06,
+        )
 
         beat(self, "Cuối cùng là lốc gin.", FadeIn(head), FadeIn(sub), run_time=0.8)
-        beat(self, "Công trình này dùng gờ nờ nờ uncertainty làm tiêu chí định tuyến.")
+        # "gờ nờ nờ uncertainty" — chuỗi chữ cái rời ghép ngay vào một từ tiếng
+        # Anh nên bị đọc méo; dùng "độ bất định của gờ nờ nờ" và đọc nhanh hơn.
+        beat(self, "Công trình này dùng độ bất định của gờ nờ nờ làm tiêu chí định tuyến.",
+             speed=1.15)
         beat(self, "Mô hình chạy nhiều lần lượt truyền xuôi với đờ-róp-ao bật.",
              GrowFromCenter(node), FadeIn(nlab), GrowArrow(arrow), Create(axis),
              FadeIn(ticks), FadeIn(ylab), FadeIn(counter), FadeIn(bars), run_time=1.3)
         beat(self, "Mỗi lần, một phần neuron bị tắt ngẫu nhiên.")
-        for i, vals in enumerate(passes[1:], start=2):
-            self.play(Transform(bars, make_bars(vals)),
-                      Transform(counter, mono(f"forward pass {i} / 4", size=18,
-                                              color=MUTED).move_to(counter)),
-                      run_time=0.7)
-        beat(self, "Dự đoán dao động nhiều thì nót đó bị coi là không chắc chắn.")
+
+        # Ba lượt truyền xuôi còn lại chạy TRONG lúc đọc câu kế, và mỗi lượt để
+        # lại một phân phối thu nhỏ ở hàng dưới. Bản cũ chỉ thay tại chỗ nên
+        # xem xong không còn gì để so sánh — mà "dao động" thì phải thấy nhiều
+        # mẫu cạnh nhau mới cảm được.
+        sample_slots = [LEFT * 4.3 + DOWN * 2.25, LEFT * 2.65 + DOWN * 2.25,
+                        LEFT * 1.0 + DOWN * 2.25]
+        samples = VGroup()
+        with self.voiceover(
+            text="Dự đoán dao động nhiều thì nót đó bị coi là không chắc chắn."
+        ) as tracker:
+            for (i, vals), slot in zip(enumerate(passes[1:], start=2), sample_slots):
+                self.play(
+                    Transform(bars, make_bars(vals)),
+                    Transform(counter, mono(f"forward pass {i} / 4", size=18,
+                                            color=MUTED).move_to(counter)),
+                    run_time=0.55,
+                )
+                snap_bars = make_bars(vals).scale(0.34)
+                snap_label = mono(f"pass {i}", size=13, color=MUTED)
+                snapshot = VGroup(snap_bars, snap_label).arrange(DOWN, buff=0.14).move_to(slot)
+                samples.add(snapshot)
+                self.play(TransformFromCopy(bars, snap_bars), FadeIn(snap_label), run_time=0.4)
 
         verdict = VGroup(panel(txt("high uncertainty", size=20, color=ACCENT), buff=0.24),
                          txt("high uncertainty", size=20, color=ACCENT))
         verdict.next_to(VGroup(axis, ticks), DOWN, buff=0.7)
+
+        # --- Bốn câu dưới đây trước kia đọc chay trên hình cũ. Dựng một dải so
+        # sánh ba tiêu chí, rồi chỉ ra đúng chỗ hụt của độ bất định. ------------
+        def criterion_card(name, note, color, dim=False):
+            inner = VGroup(
+                mono(name, size=19, color=MUTED if dim else color),
+                txt(note, size=15, color=MUTED),
+            ).arrange(DOWN, buff=0.14)
+            frame = panel(inner, color=MUTED if dim else color, buff=0.26,
+                          fill_opacity=0.05 if dim else 0.12)
+            return VGroup(frame, inner)
+
+        criteria = VGroup(
+            criterion_card("degree", "counts neighbours", C_GNN, dim=True),
+            criterion_card("C-density", "distance in feature space", C_ROUTER, dim=True),
+            criterion_card("GNN uncertainty", "reads the model's own state", ACCENT),
+        ).arrange(RIGHT, buff=0.55).move_to(UP * 0.75)
+
         beat(self, "So với bậc và mật độ, độ bất định trực tiếp hơn hẳn.",
              FadeIn(verdict), run_time=0.7)
-        beat(self, "Vì nó phản ánh trạng thái của chính mô hình gờ nờ nờ.")
-        beat(self, "Nhưng độ bất định cao chỉ nói rằng gờ nờ nờ đang gặp khó.")
-        beat(self, "Nó không đảm bảo lờ lờ mờ sẽ làm tốt hơn.")
+        beat(self, "Vì nó phản ánh trạng thái của chính mô hình gờ nờ nờ.",
+             FadeOut(VGroup(node, nlab, arrow, axis, ticks, ylab, counter, bars,
+                            samples, verdict)),
+             FadeIn(criteria, shift=UP * 0.12),
+             run_time=1.2)
+
+        gnn_source = labeled_box("GNN", C_GNN, width=1.9, height=0.72).move_to(DOWN * 1.45)
+        to_uncertainty = Arrow(
+            gnn_source.get_top(), criteria[2].get_bottom(), buff=0.18,
+            color=ACCENT, stroke_width=2.2, tip_length=0.12,
+            max_tip_length_to_length_ratio=0.06,
+        )
+        struggling = VGroup(
+            cross(color=C_BAD, size=0.22),
+            txt("GNN is struggling here", size=19, color=C_BAD, weight=BOLD),
+        ).arrange(RIGHT, buff=0.2).move_to(DOWN * 2.5)
+        beat(self, "Nhưng độ bất định cao chỉ nói rằng gờ nờ nờ đang gặp khó.",
+             FadeIn(gnn_source), GrowArrow(to_uncertainty),
+             FadeIn(struggling, shift=UP * 0.1), run_time=1.3)
+
+        llm_guess = labeled_box("LLM does better?", C_LLM, width=3.4, height=0.72)
+        llm_guess.move_to(RIGHT * 3.9 + DOWN * 2.5)
+        maybe_link = DashedLine(struggling.get_right(), llm_guess.get_left(),
+                                dash_length=0.12, color=MUTED, stroke_width=2)
+        not_implied = txt("not implied", size=15, color=MUTED)
+        not_implied.next_to(maybe_link, UP, buff=0.12)
+        beat(self, "Nó không đảm bảo lờ lờ mờ sẽ làm tốt hơn.",
+             Create(maybe_link), FadeIn(not_implied), FadeIn(llm_guess), run_time=1.2)
 
         self.clear_scene(keep=(bnr,))
 
@@ -715,9 +809,9 @@ class S2_05_Uncertainty(GlanceScene):
         warn = txt("Cutting hard edges can cut useful information too.",
                    size=22, color=C_BAD).next_to(e, DOWN, buff=1.0)
 
-        beat(self, "Ngoài ra, lốc gin còn dùng lờ lờ mờ để nối lại cạnh đồ thị.",
+        beat(self, "Ngoài ra, lốc gin còn dùng độ bất định để cắt bớt cạnh của đồ thị.",
              Create(e), GrowFromCenter(a), GrowFromCenter(b), FadeIn(elab), run_time=1.0)
-        beat(self, "Tức là chỉnh sửa hoặc loại bỏ những cạnh khó.")
+        beat(self, "Tức là loại bỏ những cạnh bị coi là gây khó, chứ không nối thêm cạnh mới.")
         beat(self, "Việc này có rủi ro riêng.", Create(cut),
              e.animate.set_stroke(color=C_BAD, opacity=0.25), run_time=0.8)
         beat(self, "Nó có thể xoá nhầm cạnh dị phối vẫn đang mang thông tin.",
@@ -729,7 +823,9 @@ class S2_05_Uncertainty(GlanceScene):
             txt("But it cannot read the LLM.", size=24, color=ACCENT, weight=BOLD),
         ).arrange(DOWN, buff=0.26)
         beat(self, "độ bất định đọc được trạng thái của gờ nờ nờ.", Write(punch), run_time=1.5)
-        beat(self, "Nhưng nó không đọc được lờ lờ mờ.")
+        # Câu ngắn kết thúc ngay sau chuỗi "lờ lờ mờ" nên bị đọc méo; kéo dài câu
+        # cho có đà và sinh lại nhanh hơn một chút.
+        beat(self, "Nhưng nó không nói được gì về phía lờ lờ mờ.", speed=1.15)
 
 
 # ===========================================================================
@@ -782,8 +878,8 @@ class S2_06_Setup(GlanceScene):
 
         beat(self, "Thí nghiệm chạy trên cô ra, pắp mét và ác xíp hai ba.",
              FadeIn(cfg[0]), run_time=0.7)
-        beat(self, "Hai mô hình nền: gờ xê en là mô hình cơ sở, gờ xê en hai mạnh hơn.",
-             FadeIn(cfg[1]), run_time=0.7)
+        beat(self, "Hai mô hình nền: gờ xê en là mô hình cơ sở, còn gờ xê en hai là mô hình hiện đại hơn.",
+             FadeIn(cfg[1]), run_time=0.7, speed=1.15)
         beat(self, "Hai loại đặc trưng: gốc, và tăng cường sinh bởi quy en ba tám bi.",
              FadeIn(cfg[2]), run_time=0.7)
         # Bảng 1 chỉ báo cáo cột tăng cường. Nói rõ ở đây, nếu không khán giả sẽ
@@ -835,14 +931,16 @@ class S2_07_NCS(GlanceScene):
                   "GNN right, LLM makes it wrong.\nA HARMFUL correction.", C_BAD, cross())
         defs = VGroup(wc, cw).arrange(RIGHT, buff=0.6, aligned_edge=UP).shift(DOWN * 0.3)
 
-        beat(self, "Để đo chất lượng tập nót được định tuyến, bài báo dùng điểm sửa ròng.",
+        beat(self, "Để đo chất lượng tập nót được định tuyến, bài báo dùng điểm hiệu chỉnh thuần.",
              FadeIn(head), FadeIn(sub), run_time=0.9)
         beat(self, "Viết tắt là en xi ét. Ý tưởng rất trực quan.")
         beat(self, "gờ nờ nờ sai mà lờ lờ mờ sửa thành đúng: một lần sửa có lợi.",
              FadeIn(wc, shift=RIGHT * 0.3), run_time=1.0)
-        beat(self, "Tập này gọi là đắp-bờ-liu xi, sai thành đúng.")
+        # Ba câu quanh đây toàn chuỗi chữ cái đánh vần liền nhau nên giọng đọc bị
+        # méo; đọc nhanh hơn một nhịp cho liền mạch.
+        beat(self, "Tập này gọi là đắp-bờ-liu xi, tức là sai thành đúng.", speed=1.15)
         beat(self, "gờ nờ nờ đúng mà lờ lờ mờ làm thành sai: một lần sửa có hại.",
-             FadeIn(cw, shift=LEFT * 0.3), run_time=1.0)
+             FadeIn(cw, shift=LEFT * 0.3), run_time=1.0, speed=1.15)
         beat(self, "Tập này gọi là xi đắp-bờ-liu, đúng thành sai.")
 
         formula = MathTex(r"\mathrm{NCS} \;=\; \frac{|WC| - |CW|}{|R|}",
@@ -905,9 +1003,41 @@ class S2_07_NCS(GlanceScene):
         beat(self, "Cách đọc en xi ét như sau.", FadeIn(shead), Create(axis), run_time=1.1)
         beat(self, "en xi ét dương nghĩa là lờ lờ mờ tạo ra lợi ích ròng.",
              Create(pos), FadeIn(l_pos), run_time=0.9)
+        # Trường hợp en xi ét bằng không được dựng thành hình: hai hàng ô bằng
+        # nhau (sửa được / làm hỏng) triệt tiêu lẫn nhau, và chi phí gọi lờ lờ mờ
+        # bị gạch bỏ. Hai câu này trước kia đọc chay trên cái thang đo tĩnh.
+        zero_dot = Dot(axis.n2p(0), radius=0.10, color=MUTED)
+        fixed_row = VGroup(*[
+            Square(0.17, fill_color=C_GOOD, fill_opacity=0.9, stroke_width=0)
+            for _ in range(12)
+        ]).arrange(RIGHT, buff=0.07)
+        broken_row = VGroup(*[
+            Square(0.17, fill_color=C_BAD, fill_opacity=0.9, stroke_width=0)
+            for _ in range(12)
+        ]).arrange(RIGHT, buff=0.07)
+        balance = VGroup(
+            VGroup(fixed_row, mono("fixed", size=15, color=C_GOOD)).arrange(DOWN, buff=0.14),
+            mono("=", size=26, color=MUTED),
+            VGroup(broken_row, mono("broken", size=15, color=C_BAD)).arrange(DOWN, buff=0.14),
+        ).arrange(RIGHT, buff=0.55).move_to(DOWN * 2.45)
+
+        cost_inner = mono("cost paid:  100 LLM calls", size=19, color=C_LLM)
+        cost_chip = VGroup(panel(cost_inner, color=C_LLM, buff=0.22, fill_opacity=0.1), cost_inner)
+        cost_chip.move_to(UP * 2.6)
+        strike = Line(cost_chip.get_left() + RIGHT * 0.12, cost_chip.get_right() + LEFT * 0.12,
+                      color=C_BAD, stroke_width=3)
+        nothing_back = mono("net gain: 0", size=19, color=C_BAD, weight=BOLD)
+        nothing_back.next_to(cost_chip, RIGHT, buff=0.45)
+
         beat(self, "en xi ét bằng không: số nót sửa được đúng bằng số nót bị làm hỏng.",
-             FadeIn(l_zero), run_time=0.7)
-        beat(self, "Toàn bộ chi phí gọi lờ lờ mờ coi như đổ sông đổ biển.")
+             FadeIn(l_zero), FadeIn(zero_dot, scale=0.6),
+             FadeIn(balance, shift=UP * 0.12), FadeIn(cost_chip), run_time=1.3)
+        beat(self, "Toàn bộ chi phí bỏ ra để gọi lờ lờ mờ coi như đổ sông đổ biển.",
+             Create(strike), cost_chip.animate.set_opacity(0.45),
+             FadeIn(nothing_back, shift=LEFT * 0.12),
+             LaggedStart(*[c.animate.set_opacity(0.3)
+                           for c in [*fixed_row, *broken_row]], lag_ratio=0.02),
+             run_time=1.4, speed=1.15)
         beat(self, "Còn en xi ét âm nghĩa là định tuyến gây hại nhiều hơn có lợi.",
              Create(neg), FadeIn(l_neg), run_time=0.9)
 
@@ -982,12 +1112,11 @@ class S2_08_Table1(GlanceScene):
         sub = mono("greener = more benefit  ·  redder = more harm", size=17,
                    color=MUTED).next_to(head, DOWN, buff=0.16)
         hm = build_heatmap().scale(0.88).move_to(LEFT * 0.9 + DOWN * 0.7)
-        stamp = source(SRC_T1)
 
         beat(self, "Đây là Bảng 1 của bài báo, trình bày lại dưới dạng bản đồ nhiệt.",
              FadeIn(head), FadeIn(sub), run_time=0.9)
         beat(self, "Mỗi ô là một giá trị en xi ét.",
-             FadeIn(hm.header), FadeIn(stamp), run_time=0.7)
+             FadeIn(hm.header), run_time=0.7)
         beat(self, "Ô càng xanh thì lợi ích càng cao, càng đỏ thì càng gây hại.",
              LaggedStart(*[FadeIn(hm.block(bb)) for bb in ["GCN", "GCNII"]], lag_ratio=0.3),
              run_time=1.7)
@@ -1075,7 +1204,6 @@ class S2_09_PubmedVsCora(GlanceScene):
         lab_cora = txt("Cora", size=21, color=C_BAD, weight=BOLD)
         lab_pub.move_to([pub_bars.get_center()[0], lab_y, 0])
         lab_cora.move_to([cora_bars.get_center()[0], lab_y, 0])
-        stamp = source(SRC_T1)
 
         # Mốc ngẫu nhiên trên cô ra. Random đổi theo từng mức k (-0.02 / -0.06 /
         # -0.04), nên phải vẽ ba đoạn riêng: một đường ngang duy nhất sẽ khiến
@@ -1092,7 +1220,7 @@ class S2_09_PubmedVsCora(GlanceScene):
         rand_lab.next_to(rand_marks[-1], RIGHT, buff=0.18)
 
         beat(self, "Tách riêng độ bất định ra, đặt hai bộ dữ liệu cạnh nhau.",
-             FadeIn(head), FadeIn(sub), FadeIn(chart.axes), FadeIn(stamp), run_time=1.0)
+             FadeIn(head), FadeIn(sub), FadeIn(chart.axes), run_time=1.0)
         beat(self, "Trên pắp mét, tiêu chí này cho en xi ét dương ở cả ba mức.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3)],
                          lag_ratio=0.15), FadeIn(lab_pub), run_time=1.5)
@@ -1131,8 +1259,7 @@ class S2_10_DegreeDensity(GlanceScene):
         self.banner()
         head = heading("What about degree and density?", color=ACCENT).to_edge(UP, buff=0.8)
         hm = build_heatmap().scale(0.88).move_to(LEFT * 0.9 + DOWN * 0.7)
-        stamp = source(SRC_T1)
-        self.add(head, hm, stamp)
+        self.add(head, hm)
 
         unc = VGroup(*[hm.row[(bb, "Uncertainty")] for bb in ["GCN", "GCNII"]],
                      *[hm.row_lab[(bb, "Uncertainty")] for bb in ["GCN", "GCNII"]])
@@ -1168,7 +1295,8 @@ class S2_10_DegreeDensity(GlanceScene):
         ).arrange(DOWN, buff=0.26)
         beat(self, "Thuộc tính cấu trúc đơn giản có thể hữu ích đôi lúc.",
              Write(punch), run_time=1.6)
-        beat(self, "Nhưng không đủ để xác định chắc chắn nót nào cần lờ lờ mờ.")
+        beat(self, "Nhưng vẫn không đủ để xác định chắc chắn nót nào mới cần tới lờ lờ mờ.",
+             speed=1.15)
 
 
 # ===========================================================================
@@ -1195,10 +1323,9 @@ class S2_11_Backbone(GlanceScene):
         l_gcnii = txt("GCNII", size=22, color=C_ROUTER, weight=BOLD)
         l_gcn.next_to(VGroup(*[chart.bars[i] for i in range(3)]), UP, buff=0.75)
         l_gcnii.next_to(VGroup(*[chart.bars[i] for i in range(3, 6)]), UP, buff=0.75)
-        stamp = source(SRC_T1)
 
         beat(self, "Còn một quan sát nữa, và nó khá tinh tế.",
-             FadeIn(head), FadeIn(sub), FadeIn(chart.axes), FadeIn(stamp), run_time=1.0)
+             FadeIn(head), FadeIn(sub), FadeIn(chart.axes), run_time=1.0)
         beat(self, "Hiệu quả định tuyến thay đổi khi mô hình nền thay đổi.")
         beat(self, "Trên pắp mét, độ bất định với gờ xê en đạt en xi ét từ không chấm một bảy đến không chấm hai không.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3)],
@@ -1266,8 +1393,8 @@ class S2_12_Limits(GlanceScene):
         grp = VGroup(adv, note).arrange(DOWN, buff=0.4)
 
         self.play(FadeOut(lims), FadeOut(head), run_time=0.6)
-        beat(self, "Trong khi đó, thứ bộ định tuyến thật sự cần ước lượng là lợi thế của lờ lờ mờ.",
-             Write(adv), run_time=1.8)
+        beat(self, "Trong khi đó, thứ mà bộ định tuyến thật sự cần ước lượng chính là lợi thế mà lờ lờ mờ mang lại.",
+             Write(adv), run_time=1.8, speed=1.15)
         beat(self, "Tức phần hàm mất mát tiết kiệm được khi dùng lờ lờ mờ so với chỉ dùng gờ nờ nờ.",
              FadeIn(note), run_time=0.7)
 
@@ -1324,7 +1451,10 @@ class S2_13_Bridge(GlanceScene):
         line2 = txt("So which signal is the right one?", size=28, color=ACCENT, weight=BOLD)
         grp = VGroup(line1, line2).arrange(DOWN, buff=0.32)
 
-        # Câu cầu nối chốt trong plan.md, đọc y nguyên.
+        # Một nhịp lặng trước khi vào câu cầu nối: scene trước vừa dứt, nói ngay
+        # nghe như bị chèn. Chỉ chèn khoảng lặng ở ĐẦU scene, không đụng lời thoại
+        # (câu cầu nối đã chốt trong plan.md, đọc y nguyên).
+        self.wait(0.7)
         beat(self, "Heuristic thủ công không ổn định.", Write(line1), run_time=1.3)
         beat(self, "Vậy tín hiệu nào mới đúng?", Write(line2), run_time=1.3)
         self.wait(0.8)
