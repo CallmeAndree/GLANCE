@@ -70,6 +70,19 @@ STEP2_BOX = (5.20, 2.80, np.array([3.00, 1.45, 0.0]))
 STEP3_BOX = (11.20, 2.45, np.array([0.10, -2.00, 0.0]))
 CORRIDOR_Y = -0.50
 TEXT_LINE_Y = -0.60
+# Left compartment of the step 3 frame, reserved for the un-routed branch.
+NO_LLM_X = -4.55
+NO_LLM_PREDICTION_POS = np.array([-3.75, -1.90, 0.0])
+# The divider only draws the split; it deliberately does NOT drive the sizes
+# below, so nudging it leaves both compartments' contents where they are.
+NO_LLM_DIVIDER_X = -2.45
+STEP3_CONTENT_W = 8.10
+STEP3_CONTENT_X = 1.85
+REFINER_SHRINK = 0.92
+# Straight drop from the step 2 strips into Z_L(A): nudged right of Z_L(A)'s
+# axis, and held clear of both embeddings so it reads as a link, not a stem.
+LLM_ARROW_DX = 0.10
+LLM_ARROW_GAP = 0.13
 
 
 def _dashed_box(width, height, color=C_EDGE, stroke_width=1.7):
@@ -281,7 +294,7 @@ class S4_02_EndToEnd(GlanceMovingScene):
             ORIGIN,
             LEFT * 5.35 + UP * 2.05, LEFT * 4.15 + UP * 0.15, LEFT * 5.15 + DOWN * 1.60,
             LEFT * 2.75 + UP * 2.15, LEFT * 2.9 + UP * 0.95, LEFT * 3.3 + DOWN * 0.95,
-            LEFT * 2.3 + DOWN * 2.00, LEFT * 1.05 + UP * 1.55, LEFT * 0.95 + DOWN * 1.30,
+            LEFT * 3.3 + DOWN * 1.85, LEFT * 1.05 + UP * 1.55, LEFT * 0.95 + DOWN * 1.30,
             RIGHT * 1.35 + UP * 1.65, RIGHT * 1.7 + UP * 0.55, RIGHT * 1.2 + DOWN * 1.60,
             RIGHT * 3.2 + UP * 2.00, RIGHT * 3.1 + UP * 0.45, RIGHT * 3.4 + DOWN * 1.20,
             RIGHT * 5.1 + UP * 1.35, RIGHT * 4.8 + DOWN * 0.25, RIGHT * 5.25 + DOWN * 1.85,
@@ -358,6 +371,33 @@ class S4_02_EndToEnd(GlanceMovingScene):
         self.wait(0.3)
 
         # ----------------------------------------------------------------
+        # Reach the final label right here, while the black-box output is
+        # still on screen -- Step 3 lands on this same [0.12, 0.73, 0.15],
+        # so re-deriving "class 2" a second time after the pipeline walk-
+        # through would just repeat this beat with extra ceremony.
+        # ----------------------------------------------------------------
+        self.camera.frame.save_state()
+        self.play(
+            self.camera.frame.animate.set(width=probability.width * 1.7).move_to(probability.get_center()),
+            FadeOut(graph_group), FadeOut(graph_to_glance), FadeOut(glance),
+            run_time=0.9,
+        )
+
+        p_equation = mt(r"p_A=[0.12,0.73,0.15]", 48).move_to(UP * 0.65)
+        decision = mt(r"\hat y_A=\underset{k\in\{1,2,3\}}{\arg\max}\ p_{A,k}=2", 52).move_to(DOWN * 0.55)
+        with self.voiceover(text="Hệ thống chọn lớp có xác suất lớn nhất bằng phép argmax.") as tracker:
+            self.play(
+                FadeOut(glance_to_p),
+                self.camera.frame.animate.restore(),
+                ReplacementTransform(probability, p_equation),
+                run_time=0.85,
+            )
+            self.play(Write(decision), run_time=0.9)
+
+        self.say("Do đó, trong ví dụ này, nót a được dự đoán thuộc lớp thứ hai.")
+        self.wait(0.6)
+
+        # ----------------------------------------------------------------
         # Now pull back and cut into the full pipeline. The intro graph is
         # never morphed mid-scene; the pipeline gets its own fresh copy for
         # the TAG input.
@@ -368,7 +408,7 @@ class S4_02_EndToEnd(GlanceMovingScene):
         ) as tracker:
             self.play(
                 self.camera.frame.animate.scale(1.08),
-                FadeOut(graph_group), FadeOut(graph_to_glance), FadeOut(glance), FadeOut(glance_to_p), FadeOut(probability),
+                FadeOut(p_equation), FadeOut(decision),
                 run_time=0.75,
             )
         self.camera.frame.restore()
@@ -465,8 +505,8 @@ class S4_02_EndToEnd(GlanceMovingScene):
             stroke_width=2.1,
             buff=0.06,
         )
-        route_label = VGroup(txt("ROUTE", 14, INK, BOLD), mt(r"v\in R", 18)).arrange(RIGHT, buff=0.12)
-        route_label.next_to(route_arrow, UP, buff=0.14)
+        # Just `v ∈ R`: the word ROUTE sat on top of the router glyph.
+        route_label = mt(r"v\in R", 18).next_to(route_arrow, UP, buff=0.14)
         text_to_llm = _corner_arrow(
             [
                 (raw_text.get_right()[0], raw_text.get_center()[1], 0.0),
@@ -513,18 +553,45 @@ class S4_02_EndToEnd(GlanceMovingScene):
         step3_row = VGroup(refined, refiner, fusion_inputs).arrange(RIGHT, buff=0.92)
         step3_equation = mt(r"p_{C,A}=\operatorname{softmax}\!\left(C([z_G(A)\Vert Z_L(A)])\right)", 23)
         step3_content = VGroup(step3_title, step3_row, step3_equation).arrange(DOWN, buff=0.24)
-        _fit_into(step3_content, step3_w - 0.40, step3_h - 0.40).move_to(step3_c)
+        # The frame is split: a left compartment for the un-routed branch, and
+        # the refiner pipeline in the wider right one.
+        _fit_into(step3_content, STEP3_CONTENT_W, step3_h - 0.40)
+        step3_content.move_to([STEP3_CONTENT_X, step3_c[1], 0.0])
+        # Shrunk after arranging, not before: changing its declared width would
+        # re-flow the whole row and undo the placement above. The connecting
+        # arrows are built from its edges below, so they lengthen to suit.
+        refiner.scale(REFINER_SHRINK)
+        no_llm_divider = Line(
+            [NO_LLM_DIVIDER_X, step3_c[1] + step3_h / 2 - 0.22, 0.0],
+            [NO_LLM_DIVIDER_X, step3_c[1] - step3_h / 2 + 0.22, 0.0],
+            color=C_EDGE, stroke_width=1.5,
+        )
+        no_llm_label = txt("NO LLM", 15, MUTED, BOLD).move_to(
+            [NO_LLM_X, step3_c[1] + step3_h / 2 - 0.30, 0.0]
+        )
+        # The un-routed branch is not a dead end: it keeps the GNN head's own
+        # prediction p_{H,A}, so show that outcome instead of an empty box.
+        # Same numbers as S4_08's initial prediction, so the two scenes agree.
+        no_llm_prediction = probability_bars(
+            r"p_{H,A}", [0.45, 0.40, 0.15], width=1.20, math_label=True,
+        ).scale(0.92)
+        no_llm_prediction.move_to(NO_LLM_PREDICTION_POS)
+        no_llm_caption = txt("GNN-only prediction", 12, MUTED).next_to(
+            no_llm_prediction, DOWN, buff=0.16
+        )
         step3_inner_arrows = VGroup(
             small_arrow(fusion_inputs.get_left(), refiner.get_right(), color=MUTED, stroke_width=1.7, buff=0.14),
             small_arrow(refiner.get_left(), refined.get_right(), color=MUTED, stroke_width=1.7, buff=0.14),
         )
 
+        # Un-routed nodes bypass the LLM entirely: the arrow lands in the empty
+        # left compartment rather than in the refiner's input row.
         skip_arrow = _corner_arrow(
             [
                 tuple(router.get_bottom()),
                 (router.get_center()[0], CORRIDOR_Y, 0.0),
-                (gnn_side.get_center()[0], CORRIDOR_Y, 0.0),
-                (gnn_side.get_center()[0], gnn_side.get_top()[1], 0.0),
+                (NO_LLM_X + 0.55, CORRIDOR_Y, 0.0),
+                (NO_LLM_X + 0.55, step3_c[1] + step3_h / 2 - 0.10, 0.0),
             ],
             color=MUTED, stroke_width=2.0, tip="down",
         )
@@ -537,33 +604,35 @@ class S4_02_EndToEnd(GlanceMovingScene):
         skip_label.move_to([router.get_center()[0], CORRIDOR_Y + 0.30, 0.0])
         skip_label.shift(LEFT * (skip_label.width / 2 + 0.18))
 
-        llm_source = strips.get_bottom()
+        # One straight drop, not a dog-leg: the strips sit right of Z_L(A)'s
+        # axis, so the line runs just right of it and still starts well
+        # inside the strips' own width.
+        llm_arrow_x = llm_side.get_center()[0] + LLM_ARROW_DX
         llm_arrow = _corner_arrow(
             [
-                tuple(llm_source),
-                (llm_source[0], CORRIDOR_Y, 0.0),
-                (llm_side.get_center()[0], CORRIDOR_Y, 0.0),
-                (llm_side.get_center()[0], llm_side.get_top()[1], 0.0),
+                (llm_arrow_x, strips.get_bottom()[1] - LLM_ARROW_GAP, 0.0),
+                (llm_arrow_x, llm_side.get_top()[1] + LLM_ARROW_GAP, 0.0),
             ],
             color=MUTED, stroke_width=2.0, tip="down",
         )
-        llm_label = txt("LLM EMBEDDINGS", 12, MUTED, BOLD).move_to([llm_source[0], CORRIDOR_Y + 0.30, 0.0])
-        llm_label.shift(LEFT * (llm_label.width / 2 + 0.18))
-        # Clamp inside step2's dashed border -- centering on llm_source pushed
-        # the label's right edge past the box, overlapping the dashed line.
-        step2_right_margin = step2_c[0] + step2_w / 2 - 0.18
-        if llm_label.get_right()[0] > step2_right_margin:
-            llm_label.shift(LEFT * (llm_label.get_right()[0] - step2_right_margin))
 
         with self.voiceover(
             text="Bước ba: bộ tinh chỉnh kết hợp véc-tơ biểu diễn của gờ nờ nờ với véc-tơ biểu diễn của lờ lờ mờ để tạo ra "
             "một dự đoán đã được tinh chỉnh."
         ) as tracker:
-            self.play(Create(step3_box), FadeIn(step3_title), run_time=0.55)
+            self.play(
+                Create(step3_box), FadeIn(step3_title),
+                Create(no_llm_divider), FadeIn(no_llm_label),
+                run_time=0.55,
+            )
             self.play(
                 Create(skip_arrow), FadeIn(skip_label),
-                Create(llm_arrow), FadeIn(llm_label),
+                Create(llm_arrow),
                 run_time=0.55,
+            )
+            self.play(
+                FadeIn(no_llm_prediction, shift=UP * 0.06), FadeIn(no_llm_caption),
+                run_time=0.45,
             )
             self.play(
                 LaggedStart(FadeIn(gnn_side, shift=UP * 0.06), FadeIn(llm_side, shift=UP * 0.06), lag_ratio=0.25),
@@ -573,53 +642,6 @@ class S4_02_EndToEnd(GlanceMovingScene):
             self.play(GrowArrow(step3_inner_arrows[1]), FadeIn(refined, shift=LEFT * 0.08), run_time=0.55)
             self.play(Write(step3_equation), run_time=0.55)
         self.wait(0.5)
-
-        # ----------------------------------------------------------------
-        # Return to the simple page, then zoom into the output to continue.
-        # Silent: input/glance/output were already fully narrated above,
-        # before the pipeline detour.
-        # ----------------------------------------------------------------
-        pipeline_parts = [
-            tag_icon, graph_caption, raw_text, raw_text_caption,
-            tag_trunk_in, tag_trunk, tag_branches,
-            step1_box, step1_content, merge_arrow,
-            route_arrow, route_label, text_to_llm,
-            step2_box, step2_content, step2_inner_arrows,
-            step3_box, step3_content, step3_inner_arrows,
-            skip_arrow, skip_label, llm_arrow, llm_label,
-        ]
-        self.play(
-            *[FadeOut(part) for part in pipeline_parts],
-            FadeIn(graph_group), FadeIn(glance), FadeIn(graph_to_glance), FadeIn(glance_to_p), FadeIn(probability),
-            run_time=0.95,
-        )
-        self.wait(0.3)
-
-        self.camera.frame.save_state()
-        self.play(
-            self.camera.frame.animate.set(width=probability.width * 1.7).move_to(probability.get_center()),
-            FadeOut(graph_group), FadeOut(graph_to_glance), FadeOut(glance),
-            run_time=0.9,
-        )
-
-        p_equation = mt(r"p_A=[0.12,0.73,0.15]", 48).move_to(UP * 0.65)
-        decision = mt(r"\hat y_A=\underset{k\in\{1,2,3\}}{\arg\max}\ p_{A,k}=2", 52).move_to(DOWN * 0.55)
-        with self.voiceover(text="Hệ thống chọn lớp có xác suất lớn nhất bằng phép argmax.") as tracker:
-            self.play(
-                FadeOut(glance_to_p),
-                self.camera.frame.animate.restore(),
-                ReplacementTransform(probability, p_equation),
-                run_time=0.85,
-            )
-            self.play(Write(decision), run_time=0.9)
-
-        with self.voiceover(
-            text="Do đó, trong ví dụ này, nót a được dự đoán thuộc lớp thứ hai."
-        ) as tracker:
-            prediction_note = takeaway_chip("Predicted label for Node A: class 2")
-            self.play(FadeIn(prediction_note, shift=UP * 0.08), run_time=0.45)
-        self.wait(0.6)
-
 
 class S4_15_RouterScore(GlanceMovingScene):
     section, section_name = SECTION, SECTION_NAME
