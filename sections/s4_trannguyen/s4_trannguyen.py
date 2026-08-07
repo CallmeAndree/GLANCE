@@ -274,11 +274,9 @@ class S4_01_TAG(GlanceMovingScene):
         ) as tracker:
             self.play(FadeIn(text_def, shift=UP * 0.08), run_time=0.5)
 
-        takeaway = takeaway_chip("Every paper has graph connections and a text attribute")
-        with self.voiceover(
-            text="Như vậy, mỗi nót đồng thời có hai nguồn thông tin: nội dung của chính nó và mối quan hệ với các nót khác."
-        ) as tracker:
-            self.play(FadeIn(takeaway, shift=UP * 0.08), run_time=0.45)
+        self.say(
+            "Như vậy, mỗi nót đồng thời có hai nguồn thông tin: nội dung của chính nó và mối quan hệ với các nót khác."
+        )
         self.wait(0.4)
 
 
@@ -1330,12 +1328,10 @@ class S4_28_RefinerMLP(GlanceMovingScene):
                 run_time=0.55,
             )
 
-        note = takeaway_chip("The Refiner MLP outputs the refined class distribution")
-        with self.voiceover(
-            text="bộ tinh chỉnh không thay thế gờ nờ nờ hoặc lờ lờ mờ. Nó học cách cân bằng thông tin cấu trúc từ gờ nờ nờ "
+        self.say(
+            "bộ tinh chỉnh không thay thế gờ nờ nờ hoặc lờ lờ mờ. Nó học cách cân bằng thông tin cấu trúc từ gờ nờ nờ "
             "với thông tin ngữ nghĩa từ lờ lờ mờ để tạo ra dự đoán phù hợp hơn cho được định tuyến nót."
-        ) as tracker:
-            self.play(FadeIn(note, shift=UP * 0.08), run_time=0.38)
+        )
         self.wait(0.8)
 
 
@@ -1349,16 +1345,18 @@ class S4_29_RefinedDistribution(GlanceMovingScene):
 
         transition_equation = mt(
             r"p_{H,A}\xrightarrow{\ +\,Z_L(A)\ }p_{C,A}", 45,
-        ).move_to(UP * 2.12)
+        ).move_to(UP * 1.92)
 
         # Keep both distributions on one centered baseline and preserve a clear
-        # transition corridor between the two panels.
+        # transition corridor between the two panels. Dropped closer to the
+        # frame's optical centre -- the original placement left dead space
+        # under the panels.
         before = probability_chart(
             [0.45, 0.40, 0.15], r"p_{H,A}", CLASS_NAMES, width=6.15,
-        ).scale(0.79).move_to(LEFT * 3.28 + DOWN * 0.15)
+        ).scale(0.79).move_to(LEFT * 3.28 + DOWN * 0.35)
         after = probability_chart(
             [0.15, 0.80, 0.05], r"p_{C,A}", CLASS_NAMES, width=6.15,
-        ).scale(0.79).move_to(RIGHT * 3.28 + DOWN * 0.15)
+        ).scale(0.79).move_to(RIGHT * 3.28 + DOWN * 0.35)
 
         before_note = txt("GNN-ONLY", 20, MUTED, BOLD).next_to(
             before, DOWN, buff=0.28,
@@ -1460,19 +1458,19 @@ class S4_30_FinalPrediction(GlanceMovingScene):
         ) as tracker:
             self.play(FadeIn(result, shift=UP * 0.08), run_time=0.50)
 
-        closing = takeaway_chip(
-            "GNN-first · LLM-on-demand · two explicit inference flows"
-        )
-        with self.voiceover(
-            text="Tóm lại, gờ lans có thể được mô tả bằng ba ý chính: gờ nờ nờ được sử dụng trước để xử lý "
+        self.say(
+            "Tóm lại, gờ lans có thể được mô tả bằng ba ý chính: gờ nờ nờ được sử dụng trước để xử lý "
             "toàn bộ đồ thị. bộ định tuyến lựa chọn những nót thực sự cần hỗ trợ. Và lờ lờ mờ chỉ được gọi theo "
             "nhu cầu để bổ sung thông tin ngữ nghĩa cho các trường hợp khó. Thiết kế này giúp gờ lans "
             "kết hợp được khả năng khai thác cấu trúc của gờ nờ nờ với khả năng hiểu văn bản của lờ lờ mờ, "
             "nhưng vẫn kiểm soát được chi phí tính toán."
-        ) as tracker:
-            self.play(FadeIn(closing, shift=UP * 0.08), run_time=0.40)
+        )
 
         self.wait(0.6)
+        # Required section-closing transition line, per TASK.md.
+        self.say(
+            "bộ định tuyến không khả vi. Vậy huấn luyện nó kiểu gì, và có thật sự hiệu quả?"
+        )
         self.say(
             "bộ định tuyến không khả vi. Vậy huấn luyện nó kiểu gì, và có thật sự hiệu quả?"
         )
