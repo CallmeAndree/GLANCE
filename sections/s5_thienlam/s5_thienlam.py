@@ -191,9 +191,9 @@ VO = {
     # --- S5_09 Controls ---
     "ctrl_intro": "Bằng chứng mạnh nhất không phải là thêm lờ lờ mờ, mà là chọn đúng nốt để gọi.",
     "ctrl_all": (
-        "định tuyến hết mọi nốt trên pắp mét: hai nhóm khó tăng, tổng thể thậm chí nhích lên cộng một "
-        "phẩy năm điểm — nhưng đổi lại, hai nhóm dễ sụp gần hai mươi điểm; con số tổng che mất cái giá "
-        "phải trả đó."
+        "định tuyến hết mọi nốt trên cô ra: nhóm khó nhất tăng nhẹ, nhóm giữa tăng mạnh tới mười bốn "
+        "phẩy năm điểm — nhưng nhóm dễ lại giảm, kéo tổng thể tụt một phẩy hai điểm dù tốn gần gấp ba "
+        "số lượt gọi lờ lờ mờ."
     ),
     "ctrl_random": (
         "Giữ nguyên lờ lờ mờ và bộ tinh chỉnh nhưng định tuyến ngẫu nhiên trên cô ra: chỉ còn tám mươi sáu "
@@ -610,7 +610,7 @@ class S5_05_JointObjective(GlanceScene):
         ).arrange(DOWN, buff=0.12).move_to([0, -2.25, 0])
         with self.voiceover(text=VO["obj_hparam"]) as tracker:
             self.play(FadeIn(hparam, shift=UP * 0.06), run_time=min(1.6, tracker.duration))
-        self.add(source("Appendix C.4, tr.17"))
+        self.add(source("Appendix C.4, tr.18–19"))
 
         with self.voiceover(text=VO["obj_question"]) as tracker:
             self.wait(tracker.duration)
@@ -671,7 +671,7 @@ class S5_06_Setup(GlanceScene):
                 run_time=1.2,
             )
             self.play(FadeIn(budget, shift=LEFT * 0.1), run_time=min(1.4, tracker.duration))
-        self.add(source("§6.1, tr.7"))
+        self.add(source("§6.1, tr.8"))
         self.wait(0.5)
 
 
@@ -831,7 +831,7 @@ class S5_08_RouterLearned(GlanceScene):
         banner.move_to([0, -3.2, 0])
         with self.voiceover(text=VO["router_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
-        self.add(source("§6.3, tr.8–9"))
+        self.add(source("§6.3, tr.9"))
         self.wait(0.4)
 
 
@@ -847,11 +847,11 @@ class S5_09_RoutingControls(GlanceScene):
             self.play(Write(head), run_time=1.4)
 
         left = panel(Rectangle(width=5.6, height=2.7), color=C_BAD).move_to([-3.2, 0.3, 0])
-        left_title = txt("ROUTE HẾT · PUBMED", size=SMALL_SIZE - 4, color=C_BAD, weight=BOLD)
+        left_title = txt("ROUTE HẾT · CORA", size=SMALL_SIZE - 4, color=C_BAD, weight=BOLD)
         left_title.next_to(left, UP, buff=0.12)
-        hard_row = VGroup(pill("+10.9", C_GOOD, width=1.4), pill("+13.3", C_GOOD, width=1.4)).arrange(RIGHT, buff=0.2)
-        easy_row = VGroup(pill("−18.3", C_BAD, width=1.4), pill("−19.7", C_BAD, width=1.4)).arrange(RIGHT, buff=0.2)
-        overall_pill = pill("Δ TỔNG THỂ  +1.5  (bị che bởi nhóm dễ sụp)", C_LLM, width=5.0, size=SMALL_SIZE - 6)
+        hard_row = VGroup(pill("+2.8", C_GOOD, width=1.4), pill("+14.5", C_GOOD, width=1.4)).arrange(RIGHT, buff=0.2)
+        easy_row = VGroup(pill("−2.8", C_BAD, width=1.4), pill("−1.2", C_BAD, width=1.4)).arrange(RIGHT, buff=0.2)
+        overall_pill = pill("Δ TỔNG THỂ  −1.2  (âm dù nhóm giữa tăng mạnh)", C_LLM, width=5.0, size=SMALL_SIZE - 6)
         left_body = VGroup(
             txt("nhóm khó", size=SMALL_SIZE - 5, color=MUTED), hard_row,
             txt("nhóm dễ", size=SMALL_SIZE - 5, color=MUTED), easy_row,
@@ -896,7 +896,7 @@ class S5_09_RoutingControls(GlanceScene):
         banner.move_to([0, -1.6, 0])
         with self.voiceover(text=VO["ctrl_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
-        self.add(source("Bảng 10–12, Phụ lục F"))
+        self.add(source("Bảng 10–12, Phụ lục F, tr.23–24"))
         self.wait(0.4)
 
 
@@ -942,7 +942,7 @@ class S5_10_Scale(GlanceScene):
         banner.move_to([0, -2.7, 0])
         with self.voiceover(text=VO["scale_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
-        self.add(source("Bảng 5, tr.9"))
+        self.add(source("Bảng 5, tr.9–10"))
         self.wait(0.4)
 
 
