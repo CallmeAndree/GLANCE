@@ -374,8 +374,8 @@ class S5_03_CounterfactualLoss(GlanceScene):
         # panel() bọc thêm buff=0.4 quanh Rectangle, nên hai khung 1.5 cao đặt
         # ở y=±0.7 (bản cũ) thực chất chồng lên nhau ở dải giữa. Thu buff còn
         # 0.26 và tách tâm ra ±1.15 để hai panel rời hẳn, không đè.
-        upper = panel(Rectangle(width=7.0, height=1.35), buff=0.26).move_to([0.1, 1.15, 0])
-        lower = panel(Rectangle(width=7.0, height=1.35), color=C_LLM, buff=0.26).move_to([0.1, -0.95, 0])
+        upper = panel(Rectangle(width=7.0, height=1.35), buff=0.26).move_to([-0.1, 1.15, 0])
+        lower = panel(Rectangle(width=7.0, height=1.35), color=C_LLM, buff=0.26).move_to([-0.1, -0.95, 0])
         up_text = txt("KHÔNG GỌI LLM  ·  GNN → đầu H → p_H  ·  ℓᵥᴳᴺᴺ = CE(yᵥ, p_H)",
                        size=SMALL_SIZE - 3, color=C_GNN).move_to(upper).scale_to_fit_width(6.4)
         low_text = txt("ĐÃ GỌI LLM  ·  GNN + LLM → refiner C → p_C  ·  ℓᵥᴸᴸᴹ = CE(yᵥ, p_C)",
@@ -390,13 +390,15 @@ class S5_03_CounterfactualLoss(GlanceScene):
         # Đồng hồ loss bên phải mỗi nhánh: số chạy sống + thanh dài dần tới giá trị thật.
         gnn_value, llm_value = ValueTracker(0.0), ValueTracker(0.0)
         gnn_num = DecimalNumber(0, num_decimal_places=2, color=C_GNN, font_size=BODY_SIZE - 4)
-        gnn_num.add_updater(lambda m: m.set_value(gnn_value.get_value())).move_to([5.9, 1.15, 0])
+        # Cột thanh loss đẩy hẳn sang phải (track x=5.0, số x=6.3) để không dính
+        # vào mép phải panel (mép ~3.66 sau khi panel lùi trái).
+        gnn_num.add_updater(lambda m: m.set_value(gnn_value.get_value())).move_to([6.3, 1.15, 0])
         llm_num = DecimalNumber(0, num_decimal_places=2, color=C_LLM, font_size=BODY_SIZE - 4)
-        llm_num.add_updater(lambda m: m.set_value(llm_value.get_value())).move_to([5.9, -0.95, 0])
+        llm_num.add_updater(lambda m: m.set_value(llm_value.get_value())).move_to([6.3, -0.95, 0])
         gnn_track = RoundedRectangle(width=1.5, height=0.20, corner_radius=0.05,
-                                      stroke_color=C_GNN, stroke_width=1.4, fill_opacity=0).move_to([4.55, 1.15, 0])
+                                      stroke_color=C_GNN, stroke_width=1.4, fill_opacity=0).move_to([5.0, 1.15, 0])
         llm_track = RoundedRectangle(width=1.5, height=0.20, corner_radius=0.05,
-                                      stroke_color=C_LLM, stroke_width=1.4, fill_opacity=0).move_to([4.55, -0.95, 0])
+                                      stroke_color=C_LLM, stroke_width=1.4, fill_opacity=0).move_to([5.0, -0.95, 0])
         gnn_fill = RoundedRectangle(width=1.5 * 2.30 / 2.50, height=0.20, corner_radius=0.05,
                                      fill_color=C_GNN, fill_opacity=0.85, stroke_width=0)
         gnn_fill.move_to(gnn_track.get_center()).align_to(gnn_track, LEFT)
