@@ -64,20 +64,25 @@ def _banner(self):
 # Private layout helpers, used only by S4_02's full-pipeline overview.
 # --------------------------------------------------------------------------
 
-INPUT_X = -6.15
-STEP1_BOX = (5.20, 2.80, np.array([-2.80, 1.45, 0.0]))
-STEP2_BOX = (5.20, 2.80, np.array([3.00, 1.45, 0.0]))
-STEP3_BOX = (11.20, 2.45, np.array([0.10, -2.00, 0.0]))
-CORRIDOR_Y = -0.50
+INPUT_X = -5.85
+STEP1_BOX = (5.20, 2.70, np.array([-2.40, 1.58, 0.0]))
+STEP2_BOX = (5.20, 2.46, np.array([3.69, 1.60, 0.0]))
+STEP3_BOX = (11.20, 2.21, np.array([0.80, -1.84, 0.0]))
+CORRIDOR_Y = -0.32
 TEXT_LINE_Y = -0.60
+# Node text feeds step 2 from directly underneath instead of travelling the
+# whole width of the frame from the input column.
+NODE_TEXT_POS = np.array([2.66, -0.04, 0.0])
 # Left compartment of the step 3 frame, reserved for the un-routed branch.
-NO_LLM_X = -4.55
-NO_LLM_PREDICTION_POS = np.array([-3.75, -1.90, 0.0])
+NO_LLM_X = -4.21
+NO_LLM_PREDICTION_POS = np.array([-3.51, -1.80, 0.0])
 # The divider only draws the split; it deliberately does NOT drive the sizes
 # below, so nudging it leaves both compartments' contents where they are.
-NO_LLM_DIVIDER_X = -2.45
-STEP3_CONTENT_W = 8.10
-STEP3_CONTENT_X = 1.85
+NO_LLM_DIVIDER_X = -2.16
+STEP3_CONTENT_W = 7.70
+STEP3_CONTENT_X = 1.88
+# Nudged off the router's centre line so it clears the route arrow above it.
+SKIP_LABEL_X = -1.52
 REFINER_SHRINK = 0.92
 # Straight drop from the step 2 strips into Z_L(A): nudged right of Z_L(A)'s
 # axis, and held clear of both embeddings so it reads as a link, not a stem.
@@ -122,6 +127,21 @@ def _mini_strip(color, n=4, cell=0.17):
         )
         for index in range(n)
     ]).arrange(RIGHT, buff=0.025)
+
+
+def _feature_row(text_value):
+    marker = Square(side_length=0.09, fill_color=MUTED, fill_opacity=1, stroke_width=0)
+    return VGroup(marker, txt(text_value, 14, MUTED)).arrange(RIGHT, buff=0.12)
+
+
+def _mini_module(name):
+    box = RoundedRectangle(
+        width=1.0, height=0.40, corner_radius=0.07,
+        stroke_color=MUTED, stroke_width=1.6, fill_color=BG, fill_opacity=1,
+    )
+    label = fit_width(txt(name, 14, INK, BOLD), box.width - 0.14)
+    label.move_to(box)
+    return VGroup(box, label)
 
 
 def _emb_below(label_tex, colors, cells_per_segment, cell_size=0.17):
@@ -290,10 +310,10 @@ class S4_02_EndToEnd(GlanceMovingScene):
 
         positions = [
             ORIGIN,
-            LEFT * 5.35 + UP * 2.05, LEFT * 4.15 + UP * 0.15, LEFT * 5.15 + DOWN * 1.60,
-            LEFT * 2.75 + UP * 2.15, LEFT * 2.9 + UP * 0.95, LEFT * 3.3 + DOWN * 0.95,
-            LEFT * 3.3 + DOWN * 1.85, LEFT * 1.05 + UP * 1.55, LEFT * 0.95 + DOWN * 1.30,
-            RIGHT * 1.35 + UP * 1.65, RIGHT * 1.7 + UP * 0.55, RIGHT * 1.2 + DOWN * 1.60,
+            LEFT * 5.2 + UP * 1.85, LEFT * 4.5 + UP * 0.45, LEFT * 5.0 + DOWN * 1.45,
+            LEFT * 3.0 + UP * 2.10, LEFT * 2.8 + UP * 0.80, LEFT * 3.2 + DOWN * 0.75,
+            LEFT * 3.3 + DOWN * 1.85, LEFT * 0.9 + UP * 1.75, LEFT * 0.8 + DOWN * 1.45,
+            RIGHT * 1.2 + UP * 1.85, RIGHT * 1.5 + UP * 0.55, RIGHT * 1.2 + DOWN * 1.60,
             RIGHT * 3.2 + UP * 2.00, RIGHT * 3.1 + UP * 0.45, RIGHT * 3.4 + DOWN * 1.20,
             RIGHT * 5.1 + UP * 1.35, RIGHT * 4.8 + DOWN * 0.25, RIGHT * 5.25 + DOWN * 1.85,
         ]
@@ -314,10 +334,13 @@ class S4_02_EndToEnd(GlanceMovingScene):
             Line(all_centers[i], all_centers[j], buff=0.17 if i and j else 0.27, color=C_EDGE, stroke_width=1.55)
             for i, j in edge_pairs
         ])
-        graph_group = VGroup(dense_edges, other_nodes, target_A).move_to(DOWN * 0.05)
+        # move_to() centres on the bounding box, so nudging any single node
+        # drags the whole graph. Compensated here to keep the other nodes where
+        # they were when node 7 moved left.
+        graph_group = VGroup(dense_edges, other_nodes, target_A).move_to(UP * 0.026)
         graph_label = VGroup(
-            txt("COMPLEX TEXT-ATTRIBUTED GRAPH", 18, MUTED, BOLD),
-            txt("target: node A", 19, INK, BOLD),
+            txt("COMPLEX TEXT-ATTRIBUTED GRAPH", 22, MUTED, BOLD),
+            txt("target: Node A", 23, INK, BOLD),
         ).arrange(DOWN, buff=0.15).next_to(graph_group, DOWN, buff=0.20)
 
         with self.voiceover(
@@ -326,15 +349,12 @@ class S4_02_EndToEnd(GlanceMovingScene):
             self.play(
                 Create(dense_edges),
                 LaggedStart(*[GrowFromCenter(n) for n in other_nodes], lag_ratio=0.025),
-                run_time=1.25,
+                run_time=max(1.25, tracker.duration),
             )
         with self.voiceover(text="Ở đây, chúng ta tập trung vào nót a.") as tracker:
-            self.play(GrowFromCenter(target_A), FadeIn(graph_label), run_time=0.55)
+            self.play(GrowFromCenter(target_A), FadeIn(graph_label), run_time=max(0.55, tracker.duration))
         self.wait(0.3)
 
-        # Input -> GLANCE -> output, narrated fully before the pipeline
-        # detour: talk about the input, then the GLANCE box, then the
-        # output, in that order.
         glance = module_box("GLANCE", "graph + text evidence", width=2.65, height=1.25, emphasized=True).move_to(UP * 0.15)
         probability = probability_bars(r"p_A", [0.12, 0.73, 0.15], width=2.9, math_label=True)
         # Center GLANCE at true horizontal center and give both connecting
@@ -351,7 +371,7 @@ class S4_02_EndToEnd(GlanceMovingScene):
             self.play(
                 FadeOut(graph_label),
                 graph_group.animate.scale(0.38).move_to(LEFT * Xg + UP * 0.15),
-                run_time=0.85,
+                run_time=max(0.85, tracker.duration),
             )
         graph_to_glance = small_arrow(graph_group.get_right(), glance.get_left(), color=MUTED, stroke_width=2.1, buff=0.14)
         glance_to_p = small_arrow(glance.get_right(), probability.get_left(), color=MUTED, stroke_width=2.1, buff=0.14)
@@ -364,7 +384,7 @@ class S4_02_EndToEnd(GlanceMovingScene):
         ) as tracker:
             self.play(
                 FadeOut(pulse), GrowArrow(glance_to_p), FadeIn(probability, shift=RIGHT * 0.10),
-                run_time=0.7,
+                run_time=max(0.7, tracker.duration),
             )
         self.wait(0.3)
 
@@ -396,9 +416,10 @@ class S4_02_EndToEnd(GlanceMovingScene):
         self.wait(0.6)
 
         # ----------------------------------------------------------------
-        # Now pull back and cut into the full pipeline. The intro graph is
-        # never morphed mid-scene; the pipeline gets its own fresh copy for
-        # the TAG input.
+        # Middle beat: pull back slightly, then cut straight into the full
+        # pipeline. The intro graph is never morphed mid-scene; the pipeline
+        # gets its own fresh copy for the TAG input. This detour is bonus
+        # visual content beyond the presentation script's Cảnh 2 text.
         # ----------------------------------------------------------------
         self.camera.frame.save_state()
         with self.voiceover(
@@ -407,67 +428,103 @@ class S4_02_EndToEnd(GlanceMovingScene):
             self.play(
                 self.camera.frame.animate.scale(1.08),
                 FadeOut(p_equation), FadeOut(decision),
-                run_time=0.75,
+                run_time=max(0.75, tracker.duration),
             )
         self.camera.frame.restore()
 
-        tag_icon = graph_group.copy().scale_to_fit_width(1.10).move_to([INPUT_X, 1.95, 0.0])
-        graph_caption = txt("TAG", 16, MUTED, BOLD).move_to([INPUT_X, 1.42, 0.0])
+        tag_icon = graph_group.copy().scale_to_fit_width(1.10).move_to([INPUT_X, 1.58, 0.0])
+        graph_caption = txt("TAG", 16, MUTED, BOLD).move_to([INPUT_X, 1.06, 0.0])
         raw_text = VGroup(*[doc_icon(0.75) for _ in range(3)]).arrange(RIGHT, buff=0.08)
-        raw_text.move_to([INPUT_X, 0.62, 0.0])
-        raw_text_caption = txt("NODE TEXT", 13, MUTED, BOLD).move_to([INPUT_X, 0.14, 0.0])
+        raw_text.move_to(NODE_TEXT_POS)
+        raw_text_caption = txt("NODE TEXT", 13, MUTED, BOLD).next_to(raw_text, DOWN, buff=0.14)
         self.play(
             FadeIn(tag_icon), FadeIn(graph_caption), FadeIn(raw_text, shift=UP * 0.06), FadeIn(raw_text_caption),
             run_time=0.50,
         )
 
-        # --- Step 1: the routing feature handed over by section 3 ---------
-        # Năm signal đã được dựng đủ ở section 3 (S3_07…S3_19), nên ở đây chỉ
-        # nhắc lại f_v thành một bundle rồi đi thẳng sang router.
+        # --- Step 1: routing features, sourced from three modules ---------
         step1_w, step1_h, step1_c = STEP1_BOX
         step1_box = _dashed_box(step1_w, step1_h).move_to(step1_c)
         step1_title = txt("STEP 1 · ROUTING FEATURES", 16, MUTED, BOLD)
 
-        bundle = equation_card(
-            r"f_v=[z_G(v)\Vert u_v\Vert\hat h_v\Vert x_v\Vert d_v]",
-            "five routing signals, built in section 3",
-            width=4.55, height=1.20, emphasized=True,
-        )
-        router = router_glyph().scale(0.52)
-        router_score = mt(r"a_v\in[0,1]", 19)
-        router_column = VGroup(router, router_score).arrange(DOWN, buff=0.14)
+        gnn_rows = VGroup(*[
+            _feature_row(name)
+            for name in ["Node embedding", "Node uncertainty", "Homophily estimate"]
+        ]).arrange(DOWN, aligned_edge=LEFT, buff=0.14)
+        mlp_row = _feature_row("Node features")
+        degree_row = _feature_row("Degree")
+        feature_rows = VGroup(gnn_rows, mlp_row, degree_row).arrange(DOWN, aligned_edge=LEFT, buff=0.40)
 
-        step1_visual = VGroup(bundle, router_column).arrange(RIGHT, buff=0.62)
-        step1_content = VGroup(step1_title, step1_visual).arrange(DOWN, buff=0.30)
+        gnn_module = _mini_module("GNN").next_to(gnn_rows, LEFT, buff=0.50)
+        mlp_module = _mini_module("MLP").next_to(mlp_row, LEFT, buff=0.50)
+        graph_module = _mini_module("GRAPH").next_to(degree_row, LEFT, buff=0.50)
+        mlp_module.align_to(gnn_module, LEFT)
+        graph_module.align_to(gnn_module, LEFT)
+        modules_col = VGroup(gnn_module, mlp_module, graph_module)
+
+        module_arrows = VGroup(*[
+            small_arrow(gnn_module.get_right(), row.get_left(), color=MUTED, stroke_width=1.3, buff=0.07)
+            for row in gnn_rows
+        ], small_arrow(mlp_module.get_right(), mlp_row.get_left(), color=MUTED, stroke_width=1.3, buff=0.07),
+           small_arrow(graph_module.get_right(), degree_row.get_left(), color=MUTED, stroke_width=1.3, buff=0.07))
+
+        # Frame the five signals as one bundle: they are the router's single
+        # input vector f_v, not five separate arrows into it.
+        feature_frame = RoundedRectangle(
+            width=feature_rows.width + 0.44, height=feature_rows.height + 0.30,
+            corner_radius=0.12, stroke_color=MUTED, stroke_width=1.4, fill_opacity=0,
+        ).move_to(feature_rows)
+        feature_bundle = VGroup(feature_frame, feature_rows)
+
+        router = router_glyph().scale(0.52)
+        # Score above the glyph: below it the label sat on the route arrow.
+        router_score = mt(r"a_v\in[0,1]", 19)
+        router_column = VGroup(router_score, router).arrange(DOWN, buff=0.14)
+        router_column.next_to(feature_bundle, RIGHT, buff=0.55)
+        router.set_y(feature_rows.get_center()[1])
+        router_score.next_to(router, UP, buff=0.14)
+
+        step1_visual = VGroup(modules_col, module_arrows, feature_bundle, router_column)
+        step1_content = VGroup(step1_title, step1_visual).arrange(DOWN, buff=0.20)
         _fit_into(step1_content, step1_w - 0.40, step1_h - 0.40).move_to(step1_c)
 
-        merge_arrow = small_arrow(bundle.get_right(), router.get_left(), color=MUTED, stroke_width=1.7, buff=0.12)
+        merge_arrow = small_arrow(feature_frame.get_right(), router.get_left(), color=MUTED, stroke_width=1.7, buff=0.12)
 
-        input_right_x = max(tag_icon.get_right()[0], raw_text.get_right()[0])
-        input_mid_y = (tag_icon.get_center()[1] + raw_text_caption.get_center()[1]) / 2
+        # Only the graph feeds step 1 now; the node text runs straight up into
+        # step 2 from below, so it no longer shares this trunk.
+        input_right_x = tag_icon.get_right()[0]
+        input_mid_y = tag_icon.get_center()[1]
         branch_x = input_right_x + 0.55
         tag_trunk_in = Line([input_right_x + 0.12, input_mid_y, 0.0], [branch_x, input_mid_y, 0.0], color=MUTED, stroke_width=1.9)
         tag_trunk = Line(
-            [branch_x, input_mid_y, 0.0],
-            [branch_x, bundle.get_center()[1], 0.0],
+            [branch_x, gnn_module.get_center()[1], 0.0],
+            [branch_x, graph_module.get_center()[1], 0.0],
             color=MUTED, stroke_width=1.9,
         )
-        tag_branches = VGroup(
-            small_arrow([branch_x, bundle.get_center()[1], 0.0], bundle.get_left(),
-                        color=MUTED, stroke_width=1.6, buff=0.08),
-        )
+        tag_branches = VGroup(*[
+            small_arrow([branch_x, m.get_center()[1], 0.0], m.get_left(), color=MUTED, stroke_width=1.6, buff=0.08)
+            for m in (gnn_module, mlp_module, graph_module)
+        ])
 
+        # Explicit "at the first step" framing: this overview only recaps the
+        # five signals (each gets its own deep-dive scene later, S4_03
+        # onward), so the phrasing here stays high-level on purpose.
         with self.voiceover(
-            text="Bước một: từ năm tín hiệu đã dựng ở phần trước, mỗi nót đã có một đặc trưng định tuyến "
-            "ép phẩy vê. Gờ lans học một bộ định tuyến ánh xạ ép phẩy vê thành lợi ích dự kiến "
-            "của việc gọi lờ lờ mờ."
+            text="Ở bước đầu tiên, gờ lans dùng gờ nờ nờ, mờ lờ bê và cấu trúc đồ thị để tạo đặc trưng cho "
+            "bộ định tuyến."
         ) as tracker:
             self.play(Create(step1_box), FadeIn(step1_title), run_time=0.55)
             self.play(Create(tag_trunk_in), Create(tag_trunk), run_time=0.40)
             self.play(
                 LaggedStart(*[GrowArrow(b) for b in tag_branches], lag_ratio=0.16),
-                FadeIn(bundle, shift=RIGHT * 0.06),
-                run_time=0.80,
+                LaggedStart(*[FadeIn(m, scale=0.85) for m in modules_col], lag_ratio=0.16),
+                run_time=0.65,
+            )
+            self.play(
+                LaggedStart(*[GrowArrow(a) for a in module_arrows], lag_ratio=0.09),
+                LaggedStart(*[FadeIn(row, shift=RIGHT * 0.06) for row in feature_rows], lag_ratio=0.09),
+                Create(feature_frame),
+                run_time=0.85,
             )
             self.play(GrowArrow(merge_arrow), FadeIn(router, scale=0.85), run_time=0.50)
             self.play(Write(router_score), run_time=0.42)
@@ -487,9 +544,11 @@ class S4_02_EndToEnd(GlanceMovingScene):
             _mini_strip(C_LLM),
             _mini_strip(C_LLM_DEEP),
         ).arrange(DOWN, buff=0.28)
-        step2_body = VGroup(prompts, llm, strips).arrange(RIGHT, buff=0.56)
+        strips_label = txt("LLM EMBEDDINGS", 12, MUTED, BOLD)
+        strips_column = VGroup(strips_label, strips).arrange(DOWN, buff=0.14)
+        step2_body = VGroup(prompts, llm, strips_column).arrange(RIGHT, buff=0.50)
         step2_equation = mt(r"Z_L(A)=[z_{L,0}\Vert z_{L,1}\Vert z_{L,2}]", 19)
-        step2_content = VGroup(step2_title, step2_body, step2_equation).arrange(DOWN, buff=0.24)
+        step2_content = VGroup(step2_title, step2_body, step2_equation).arrange(DOWN, buff=0.18)
         _fit_into(step2_content, step2_w - 0.40, step2_h - 0.40).move_to(step2_c)
         step2_inner_arrows = VGroup(
             small_arrow(prompts.get_right(), llm.get_left(), color=MUTED, stroke_width=1.7, buff=0.12),
@@ -505,13 +564,12 @@ class S4_02_EndToEnd(GlanceMovingScene):
         )
         # Just `v ∈ R`: the word ROUTE sat on top of the router glyph.
         route_label = mt(r"v\in R", 18).next_to(route_arrow, UP, buff=0.14)
+        # Short hop straight up from the node text, now parked under step 2.
         text_to_llm = _corner_arrow(
             [
-                (raw_text.get_right()[0], raw_text.get_center()[1], 0.0),
-                (input_right_x + 0.85, raw_text.get_center()[1], 0.0),
-                (input_right_x + 0.85, TEXT_LINE_Y, 0.0),
-                (2.10, TEXT_LINE_Y, 0.0),
-                (2.10, step2_c[1] - step2_h / 2, 0.0),
+                (raw_text.get_right()[0] + 0.10, raw_text.get_center()[1], 0.0),
+                (NODE_TEXT_POS[0] + 1.05, raw_text.get_center()[1], 0.0),
+                (NODE_TEXT_POS[0] + 1.05, step2_c[1] - step2_h / 2, 0.0),
             ],
             color=C_EDGE,
             stroke_width=1.5,
@@ -532,6 +590,7 @@ class S4_02_EndToEnd(GlanceMovingScene):
             self.play(GrowArrow(step2_inner_arrows[0]), FadeIn(llm), run_time=0.50)
             self.play(
                 GrowArrow(step2_inner_arrows[1]),
+                FadeIn(strips_label),
                 LaggedStart(*[FadeIn(strip, shift=RIGHT * 0.06) for strip in strips], lag_ratio=0.14),
                 run_time=0.60,
             )
@@ -545,12 +604,21 @@ class S4_02_EndToEnd(GlanceMovingScene):
         step3_title = txt("STEP 3 · REFINE THE GNN PREDICTION", 16, MUTED, BOLD)
         gnn_side = _emb_below(r"z_G(A)", [C_GNN], 4, cell_size=0.17)
         llm_side = _emb_below(r"Z_L(A)", [C_LLM_LIGHT, C_LLM, C_LLM_DEEP], 2, cell_size=0.17)
-        fusion_inputs = VGroup(gnn_side, llm_side).arrange(RIGHT, buff=0.50)
+        fusion_inputs = VGroup(gnn_side, llm_side).arrange(RIGHT, buff=0.70)
+        # Concatenation symbol between the two embeddings, matching the "‖"
+        # in the equation below. Aligned to the cell row, not the group's
+        # overall centre, which would sit between the cells and the labels.
+        concat_symbol = mt(r"\Vert", 24).move_to([
+            (gnn_side.get_right()[0] + llm_side.get_left()[0]) / 2,
+            gnn_side[0].get_center()[1],
+            0.0,
+        ])
+        fusion_inputs.add(concat_symbol)
         refiner = module_box("Refiner MLP", "late fusion", width=2.35, height=0.95, emphasized=True)
         refined = probability_bars(r"p_{C,A}", [0.12, 0.73, 0.15], width=1.35, math_label=True)
-        step3_row = VGroup(refined, refiner, fusion_inputs).arrange(RIGHT, buff=0.92)
+        step3_row = VGroup(refined, refiner, fusion_inputs).arrange(RIGHT, buff=0.85)
         step3_equation = mt(r"p_{C,A}=\operatorname{softmax}\!\left(C([z_G(A)\Vert Z_L(A)])\right)", 23)
-        step3_content = VGroup(step3_title, step3_row, step3_equation).arrange(DOWN, buff=0.24)
+        step3_content = VGroup(step3_title, step3_row, step3_equation).arrange(DOWN, buff=0.18)
         # The frame is split: a left compartment for the un-routed branch, and
         # the refiner pipeline in the wider right one.
         _fit_into(step3_content, STEP3_CONTENT_W, step3_h - 0.40)
@@ -593,17 +661,12 @@ class S4_02_EndToEnd(GlanceMovingScene):
             ],
             color=MUTED, stroke_width=2.0, tip="down",
         )
-        # Labels sit beside their arrow's vertical segment, not centered on
-        # it -- centering put the line through the text (it runs the full
-        # height from the box above down to CORRIDOR_Y).
         skip_label = VGroup(
             txt("KEEP GNN", 12, MUTED, BOLD), mt(r"v\notin R", 16, MUTED),
-        ).arrange(RIGHT, buff=0.10)
-        skip_label.move_to([router.get_center()[0], CORRIDOR_Y + 0.30, 0.0])
-        skip_label.shift(LEFT * (skip_label.width / 2 + 0.18))
+        ).arrange(RIGHT, buff=0.10).move_to([SKIP_LABEL_X, CORRIDOR_Y + 0.30, 0.0])
 
-        # One straight drop, not a dog-leg: the strips sit right of Z_L(A)'s
-        # axis, so the line runs just right of it and still starts well
+        # One straight drop, not a dog-leg: the strips sit 0.17 right of Z_L(A),
+        # so the line runs just right of Z_L(A)'s axis and still starts well
         # inside the strips' own width.
         llm_arrow_x = llm_side.get_center()[0] + LLM_ARROW_DX
         llm_arrow = _corner_arrow(
@@ -633,13 +696,14 @@ class S4_02_EndToEnd(GlanceMovingScene):
                 run_time=0.45,
             )
             self.play(
-                LaggedStart(FadeIn(gnn_side, shift=UP * 0.06), FadeIn(llm_side, shift=UP * 0.06), lag_ratio=0.25),
+                LaggedStart(FadeIn(gnn_side, shift=UP * 0.06), FadeIn(concat_symbol), FadeIn(llm_side, shift=UP * 0.06), lag_ratio=0.25),
                 run_time=0.62,
             )
             self.play(GrowArrow(step3_inner_arrows[0]), FadeIn(refiner), run_time=0.50)
             self.play(GrowArrow(step3_inner_arrows[1]), FadeIn(refined, shift=LEFT * 0.08), run_time=0.55)
             self.play(Write(step3_equation), run_time=0.55)
         self.wait(0.5)
+
 
 class S4_15_RouterScore(GlanceMovingScene):
     section, section_name = SECTION, SECTION_NAME
