@@ -733,15 +733,20 @@ def fit_width(mobject, width):
 
 
 def avatar_node(label, target=False, radius=0.30):
-    """A labelled circle standing in for one example node, e.g. avatar_node("A")."""
+    """A labelled circle standing in for one example node, e.g. avatar_node("A").
+
+    Outlined, not filled: dark disc behind a light ring. `target=True` brightens
+    and thickens the ring instead of switching hue, so the focus node still reads
+    first on a still frame without spending one of the palette's meanings on it.
+    """
     circle = Circle(
         radius=radius,
-        fill_color=C_HIGHLIGHT if target else MUTED,
+        fill_color=BG,
         fill_opacity=1,
-        stroke_color=C_HIGHLIGHT if target else MUTED,
-        stroke_width=2,
+        stroke_color=INK if target else MUTED,
+        stroke_width=2.6 if target else 1.8,
     )
-    label_mob = txt(label, size=20, color=BG if target else INK, weight=BOLD).move_to(circle)
+    label_mob = txt(label, size=20, color=INK if target else MUTED, weight=BOLD).move_to(circle)
     return VGroup(circle, label_mob)
 
 
@@ -943,9 +948,13 @@ def probability_chart(values, title_tex, class_names, width=5.15):
     """A small titled bar list, one row per class probability."""
     title = MathTex(title_tex, font_size=31, color=INK)
     rows = VGroup()
-    for class_name, value in zip(class_names, values):
-        name = txt(class_name, size=19, color=MUTED, weight=BOLD)
-        name_slot = Rectangle(width=1.82, height=0.26, stroke_opacity=0, fill_opacity=0)
+    # The name slot has to clear the *widest* label, not a guessed constant: a
+    # VGroup takes the union of its parts, so a label wider than its slot grows
+    # the column and pushes that row's bar right, leaving the bars ragged.
+    names = [txt(n, size=19, color=MUTED, weight=BOLD) for n in class_names]
+    slot_width = max(1.82, max(n.width for n in names) + 0.06)
+    for name, value in zip(names, values):
+        name_slot = Rectangle(width=slot_width, height=0.26, stroke_opacity=0, fill_opacity=0)
         name.move_to(name_slot).align_to(name_slot, LEFT)
         name_column = VGroup(name_slot, name)
         track = RoundedRectangle(
