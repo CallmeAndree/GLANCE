@@ -285,8 +285,18 @@ class S4_02_EndToEnd(GlanceMovingScene):
             RIGHT * 1.35 + UP * 1.65, RIGHT * 1.7 + UP * 0.55, RIGHT * 1.2 + DOWN * 1.60,
             RIGHT * 3.2 + UP * 2.00, RIGHT * 3.1 + UP * 0.45, RIGHT * 3.4 + DOWN * 1.20,
             RIGHT * 5.1 + UP * 1.35, RIGHT * 4.8 + DOWN * 0.25, RIGHT * 5.25 + DOWN * 1.85,
+            # Hàng dưới cùng: lấp dải trống ~2 đơn vị dưới đáy đồ thị, giữ mật độ
+            # cạnh tương đương phần trên để đồ thị vẫn đọc ra là một khối liền.
+            LEFT * 3.95 + DOWN * 2.85, LEFT * 1.40 + DOWN * 2.95,
+            RIGHT * 0.45 + DOWN * 2.60, RIGHT * 2.50 + DOWN * 2.95,
+            RIGHT * 4.60 + DOWN * 2.75,
         ]
         target_A = avatar_node("A", target=True, radius=0.34).move_to(positions[0])
+        # Nót A có mặt trong đồ thị ngay từ đầu dưới dạng một nót thường, nên tám
+        # cạnh ở tâm không chụm vào một lỗ trống. Nhãn "A" và màu nhấn để dành cho
+        # nhịp sau: lúc đó nót chỉ được tô sáng lên chứ không mọc ra từ chỗ trống.
+        node_A, label_A = target_A
+        node_A.set_fill(C_EDGE, opacity=1).set_stroke(color=MUTED, width=1.5, opacity=1)
         other_nodes = VGroup(*[
             Circle(radius=0.13, fill_color=C_EDGE, fill_opacity=1, stroke_color=MUTED, stroke_width=1.5).move_to(pos)
             for pos in positions[1:]
@@ -298,6 +308,8 @@ class S4_02_EndToEnd(GlanceMovingScene):
             (4, 5), (4, 8), (5, 8), (5, 9), (6, 7), (6, 9), (8, 10), (8, 11),
             (9, 12), (10, 11), (10, 13), (11, 13), (11, 14), (11, 15), (12, 15),
             (13, 14), (13, 16), (14, 16), (14, 17), (15, 17), (15, 18), (16, 17), (17, 18),
+            (3, 19), (7, 19), (19, 20), (7, 20), (9, 20), (20, 21), (12, 21),
+            (21, 22), (15, 22), (22, 23), (18, 23),
         ]
         dense_edges = VGroup(*[
             Line(all_centers[i], all_centers[j], buff=0.17 if i and j else 0.27, color=C_EDGE, stroke_width=1.55)
@@ -309,16 +321,36 @@ class S4_02_EndToEnd(GlanceMovingScene):
             txt("target: node A", 19, INK, BOLD),
         ).arrange(DOWN, buff=0.15).next_to(graph_group, DOWN, buff=0.20)
 
+        # Đồ thị đứng sẵn ở dạng phác nhạt ngay từ đầu, rồi được tô màu quét từ
+        # trái sang phải. Khán giả thấy trọn hình dạng đồ thị trước khi nó sáng
+        # lên, thay vì phải chờ từng nót mọc ra từ khung trống.
+        for edge in dense_edges:
+            edge.set_stroke(color=MUTED, opacity=0.16)
+        for node in [*other_nodes, node_A]:
+            node.set_fill(C_EDGE, opacity=0.10).set_stroke(color=MUTED, opacity=0.30)
+        self.add(dense_edges, other_nodes, node_A)
+
+        def paint(mob):
+            if isinstance(mob, Line):
+                return mob.animate.set_stroke(color=C_EDGE, opacity=1.0)
+            return mob.animate.set_fill(C_EDGE, opacity=1.0).set_stroke(color=MUTED, opacity=1.0)
+
+        # Quét theo hoành độ nên nét tô chạy thành một làn liên tục.
+        sweep = sorted([*dense_edges, *other_nodes, node_A], key=lambda m: m.get_center()[0])
         with self.voiceover(
             text="Từ một đồ thị tương đối phức tạp, mục tiêu của gờ lans là dự đoán nhãn cho từng nót."
         ) as tracker:
             self.play(
-                Create(dense_edges),
-                LaggedStart(*[GrowFromCenter(n) for n in other_nodes], lag_ratio=0.025),
-                run_time=1.25,
+                LaggedStart(*[paint(m) for m in sweep], lag_ratio=0.012),
+                run_time=min(2.4, tracker.duration),
             )
         with self.voiceover(text="Ở đây, chúng ta tập trung vào nót a.") as tracker:
-            self.play(GrowFromCenter(target_A), FadeIn(graph_label), run_time=0.55)
+            self.play(
+                node_A.animate.set_fill(C_HIGHLIGHT, opacity=1).set_stroke(color=C_HIGHLIGHT, opacity=1),
+                FadeIn(label_A),
+                FadeIn(graph_label),
+                run_time=0.55,
+            )
         self.wait(0.3)
 
         # Input -> GLANCE -> output, narrated fully before the pipeline

@@ -945,13 +945,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         pred_arrows = VGroup(*[small_arrow(pred_p[i].get_bottom(), pred_p[i+1].get_top()) for i in range(3)])
         pred_group = VGroup(predictor_title, VGroup(pred_p, pred_arrows)).arrange(DOWN, buff=0.35).scale(0.88).move_to(RIGHT * 3.5 + UP * 0.1)
 
-        with self.narrated_caption(["các phương pháp hiện nay chia thành hai hướng:", "lờ lờ mờ làm bộ tăng cường và lờ lờ mờ-as-predictor."]):
+        with self.narrated_caption(["các phương pháp hiện nay chia thành hai hướng:", "lờ lờ mờ ass èn han xờ và lờ lờ mờ ass prì đích tờ."]):
             self.play(Write(title), run_time=0.7)
             self.play(FadeIn(enh_group), FadeIn(pred_group), run_time=1.0)
 
         # Enhancer deep-dive
         noisy_nbhd = create_target_neighborhood(kind="noisy", scale=0.9).move_to(RIGHT * 2.8 + DOWN * 0.2)
-        with self.narrated_caption(["lờ lờ mờ làm bộ tăng cường tạo véc-tơ ngữ nghĩa giàu hơn,", "rồi gờ nờ nờ tiếp tục truyền thông tin và dự đoán."]):
+        with self.narrated_caption(["lờ lờ mờ ass èn han xờ tạo véc-tơ ngữ nghĩa giàu hơn,", "rồi gờ nờ nờ tiếp tục truyền thông tin và dự đoán."]):
             self.play(
                 FadeOut(pred_group),
                 enh_group.animate.scale(1.08).shift(RIGHT * 1.2),
@@ -1012,7 +1012,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             
         # Predictor deep-dive
         token_text = t("Prompt Token Count: 128", size=30, color=MID).move_to(LEFT * 2.8 + DOWN * 0.4)
-        with self.narrated_caption(["lờ lờ mờ-as-predictor đổi toàn bộ thông tin", "thành một câu lệnh văn bản dài."]):
+        with self.narrated_caption(["lờ lờ mờ ass prì đích tờ đổi toàn bộ thông tin", "thành một câu lệnh văn bản dài."]):
             pred_group.move_to(RIGHT * 2.5 + DOWN * 0.1).scale(1.08)
             self.play(
                 FadeOut(noisy_nbhd), FadeOut(noisy_msgs), FadeOut(blackout2), FadeOut(bias_text),

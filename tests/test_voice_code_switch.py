@@ -130,6 +130,28 @@ class TimedTTSServiceTest(unittest.TestCase):
                 b"fake-mp3",
             )
 
+    def test_wrap_reuses_cache_without_duplicate_entries(self):
+        with tempfile.TemporaryDirectory() as cache_dir:
+            service = TimedTTSService(
+                endpoint="https://tts.example/v1/audio/speech",
+                token="secret-token",
+                voice="longkhongphainong",
+                cache_dir=cache_dir,
+            )
+            with patch(
+                "glance_style.urlrequest.urlopen",
+                return_value=FakeResponse(b"fake-mp3"),
+            ) as urlopen:
+                first = service._wrap_generate_from_text("Xin chào.")
+                second = service._wrap_generate_from_text("Xin chào.")
+
+            cache = json.loads(
+                (pathlib.Path(cache_dir) / "cache.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(urlopen.call_count, 1)
+            self.assertEqual(len(cache), 1)
+            self.assertEqual(first["original_audio"], second["original_audio"])
+
     def test_requires_token(self):
         with self.assertRaisesRegex(ValueError, "Thiếu API key"):
             TimedTTSService(endpoint="https://tts.example", token="")
