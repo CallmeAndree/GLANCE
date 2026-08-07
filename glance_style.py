@@ -32,7 +32,7 @@ import manimpango
 
 
 DEFAULT_TIMED_TTS_URL = (
-    "https://gig-largest-submissions-pending.trycloudflare.com/v1/audio/speech"
+    "https://thunder-proceeding-paul-acknowledge.trycloudflare.com/v1/audio/speech"
 )
 DEFAULT_TIMED_TTS_VOICE = "longkhongphainong"
 DEFAULT_TIMED_TTS_KEY_FILE = ".run/api.key"
