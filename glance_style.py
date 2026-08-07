@@ -396,8 +396,8 @@ BG = ManimColor("#08111F")        # nền chính toàn video
 INK = ManimColor("#F1F5F9")       # chữ chính (off-white)
 MUTED = ManimColor("#94A3B8")     # chữ phụ / chú thích (blue gray)
 
-C_GNN = ManimColor("#3B82F6")     # GNN / cấu trúc graph (electric blue)
-C_LLM = ManimColor("#F59E0B")     # LLM / semantic content (amber orange)
+C_GNN = ManimColor("#4F8CFF")     # GNN / cấu trúc graph (blue)
+C_LLM = ManimColor("#56C596")     # LLM / semantic content (green)
 C_ROUTER = ManimColor("#8B5CF6")  # Router / GLANCE (violet)
 C_GOOD = ManimColor("#34D399")    # đúng / improvement (mint green)
 C_BAD = ManimColor("#FB7185")     # khó / heterophily / sai (coral red)
@@ -420,11 +420,12 @@ SECTION_COLORS = {
     "5": C_GNN,
 }
 
-# Light/deep variants of the LLM accent, for sections that need to distinguish
-# several LLM-derived signals (e.g. ego / 1-hop / 2-hop context embeddings)
-# while keeping them recognisably in the same "LLM = amber" family.
-C_LLM_LIGHT = ManimColor("#FBBF24")
-C_LLM_DEEP = ManimColor("#B45309")
+# Distinct-hue variants for sections that need to tell several LLM-derived
+# signals apart at a glance (e.g. ego / 1-hop / 2-hop context embeddings):
+# purple for ego, C_LLM's green for 1-hop, orange for 2-hop. Matched to the
+# reference render in video_GM/glance_30_scenes_clean/script.py.
+C_LLM_LIGHT = ManimColor("#9B7BFF")
+C_LLM_DEEP = ManimColor("#F2A65A")
 
 TITLE_SIZE = 44
 HEAD_SIZE = 34
@@ -839,15 +840,20 @@ def fit_width(mobject, width):
 
 
 def avatar_node(label, target=False, radius=0.30):
-    """A labelled circle standing in for one example node, e.g. avatar_node("A")."""
+    """A labelled circle standing in for one example node, e.g. avatar_node("A").
+
+    Outlined, not filled: dark disc behind a light ring. `target=True` brightens
+    and thickens the ring instead of switching hue, so the focus node still reads
+    first on a still frame without spending one of the palette's meanings on it.
+    """
     circle = Circle(
         radius=radius,
-        fill_color=C_HIGHLIGHT if target else MUTED,
+        fill_color=BG,
         fill_opacity=1,
-        stroke_color=C_HIGHLIGHT if target else MUTED,
-        stroke_width=2,
+        stroke_color=INK if target else MUTED,
+        stroke_width=2.6 if target else 1.8,
     )
-    label_mob = txt(label, size=20, color=BG if target else INK, weight=BOLD).move_to(circle)
+    label_mob = txt(label, size=20, color=INK if target else MUTED, weight=BOLD).move_to(circle)
     return VGroup(circle, label_mob)
 
 
@@ -1049,9 +1055,13 @@ def probability_chart(values, title_tex, class_names, width=5.15):
     """A small titled bar list, one row per class probability."""
     title = MathTex(title_tex, font_size=31, color=INK)
     rows = VGroup()
-    for class_name, value in zip(class_names, values):
-        name = txt(class_name, size=19, color=MUTED, weight=BOLD)
-        name_slot = Rectangle(width=1.82, height=0.26, stroke_opacity=0, fill_opacity=0)
+    # The name slot has to clear the *widest* label, not a guessed constant: a
+    # VGroup takes the union of its parts, so a label wider than its slot grows
+    # the column and pushes that row's bar right, leaving the bars ragged.
+    names = [txt(n, size=19, color=MUTED, weight=BOLD) for n in class_names]
+    slot_width = max(1.82, max(n.width for n in names) + 0.06)
+    for name, value in zip(names, values):
+        name_slot = Rectangle(width=slot_width, height=0.26, stroke_opacity=0, fill_opacity=0)
         name.move_to(name_slot).align_to(name_slot, LEFT)
         name_column = VGroup(name_slot, name)
         track = RoundedRectangle(
