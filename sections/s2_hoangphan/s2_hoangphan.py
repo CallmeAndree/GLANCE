@@ -43,15 +43,35 @@ PAPER_ASSETS = [
 # --------------------------------------------------------------------------
 
 
-def beat(scene, text, *anims, run_time=1.0, speed=None):
+def beat(scene, text, *anims, run_time=1.0, speed=None, steps=None,
+         min_step=0.3, tail=0.2):
     """Một nhịp nói: chạy animation trong lúc đọc, rồi giữ hình cho hết câu.
 
     `speed` đọc riêng câu này nhanh/chậm hơn (audio sinh mới ở tốc độ đó, tốc độ
     nằm trong cache key), dùng cho các chuỗi chữ cái đọc rời rạc.
+
+    `steps` chia nhịp thành nhiều bước nối tiếp và tự giãn cho kín câu nói: mỗi
+    phần tử là một list animation, hoặc tuple `(list animation, trọng số)`. Dùng
+    khi một câu cần diễn nhiều bước ví dụ — trước đây những câu này chỉ có một
+    animation ngắn rồi hình đứng im chờ hết audio. Tổng run_time luôn nhỏ hơn
+    `tracker.duration` nên hình không chạy lố sang câu sau.
     """
+    plan = []
+    for step in steps or ():
+        step_anims, weight = step if isinstance(step, tuple) else (step, 1.0)
+        step_anims = [a for a in step_anims if a is not None]
+        if step_anims:
+            plan.append((step_anims, float(weight)))
+
     with scene.tts_speed(speed):
         with scene.voiceover(text=text) as tracker:
-            if anims:
+            if plan:
+                budget = max(tracker.duration - tail, min_step * len(plan))
+                total = sum(w for _, w in plan)
+                for step_anims, weight in plan:
+                    scene.play(*step_anims,
+                               run_time=max(min_step, budget * weight / total))
+            elif anims:
                 scene.play(*anims, run_time=min(run_time, tracker.duration))
 
 
@@ -166,6 +186,36 @@ def edge_mobjs(graph, pred):
 def deg_label(graph, n, color=ACCENT):
     return mono(f"deg {DEG[n]}", size=17, color=color).next_to(
         graph.nodes[n], UP, buff=0.2).set_z_index(4)
+
+
+def msg_flash(graph, target, sources=None, color=C_HIGHLIGHT, width=5.0,
+              time_width=0.55):
+    """Xung sáng chạy dọc cạnh, hướng VỀ `target`: hình ảnh truyền thông điệp.
+
+    Trả về list animation, mỗi cạnh kề một xung; `sources` giới hạn danh sách
+    hàng xóm. Dùng ShowPassingFlash nên mobject tạm tự dọn, không phải fade out.
+    """
+    out = []
+    for u, v in S2_EDGES:
+        if target not in (u, v):
+            continue
+        other = v if u == target else u
+        if sources is not None and other not in sources:
+            continue
+        path = Line(graph.nodes[other].get_center(), graph.nodes[target].get_center(),
+                    stroke_width=width, color=color)
+        out.append(ShowPassingFlash(path, time_width=time_width))
+    return out
+
+
+def class_legend(graph):
+    """Chú giải màu lớp, đọc thẳng màu từ node nên luôn khớp tag_graph()."""
+    rows = VGroup()
+    for label, sample in (("A", "S1"), ("B", "N1")):
+        swatch = Dot(radius=0.11, color=graph.nodes[sample].get_color())
+        rows.add(VGroup(swatch, mono(f"class {label}", size=16, color=MUTED))
+                 .arrange(RIGHT, buff=0.18))
+    return rows.arrange(DOWN, buff=0.18, aligned_edge=LEFT)
 
 
 # ===========================================================================
@@ -344,21 +394,48 @@ class S2_03_Degree(GlanceScene):
         g = s2_graph().scale(0.9).move_to(DOWN * 0.4)
         ring_r = g.nodes["H"].radius * 1.9
 
+        # Hai nót mẫu cho phần định nghĩa: D3 bậc 5 trong cụm dày, S1 bậc 1 ở
+        # chuỗi thưa. Cặp này diễn luôn cả định nghĩa lẫn hệ quả "bậc thấp nhận
+        # ít thông điệp", nên không cần chạm tới hub — hub để dành cho phản ví dụ.
+        deg_hi, deg_lo = "D3", "S1"
+        tag_hi = deg_label(g, deg_hi, MUTED)
+        tag_lo = deg_label(g, deg_lo, ACCENT)
+        legend = class_legend(g).to_corner(UL, buff=0.55).shift(DOWN * 0.8)
+
         beat(self, "Đầu tiên là e lờ lờ a gờ nờ nờ.",
              FadeIn(head), FadeIn(sub), run_time=0.8, speed=1.3)
         # Đồ thị lên ngay từ câu thứ hai, đúng lúc bắt đầu nói về nót bậc — bản
         # cũ để khán giả nghe ba câu liền trên nền trống rồi mới vẽ.
-        beat(self, "Công trình này dùng nót bậc làm tiêu chí định tuyến.",
-             Create(g.edges),
-             LaggedStart(*[GrowFromCenter(d) for d in g.nodes.values()], lag_ratio=0.06),
-             run_time=1.6)
-        beat(self, "bậc là số hàng xóm nối với nót đó.")
-        beat(self, "nót bậc thấp nhận ít thông tin qua truyền thông điệp.")
+        beat(self, "Công trình này dùng nót bậc làm tiêu chí định tuyến.", steps=[
+            ([Create(g.edges)], 1.0),
+            ([LaggedStart(*[GrowFromCenter(d) for d in g.nodes.values()],
+                          lag_ratio=0.06)], 1.2),
+        ])
+        # Đếm bậc ngay trên hình: xung sáng chạy về nót rồi mới hiện nhãn "deg".
+        beat(self, "bậc là số hàng xóm nối với nót đó.", steps=[
+            (msg_flash(g, deg_hi, color=MUTED) + [FadeIn(tag_hi)], 1.3),
+            (msg_flash(g, deg_lo, color=ACCENT) + [FadeIn(tag_lo)], 1.0),
+        ])
+        beat(self, "nót bậc thấp nhận ít thông tin qua truyền thông điệp.", steps=[
+            (msg_flash(g, deg_hi, color=MUTED, time_width=0.35), 1.0),
+            (msg_flash(g, deg_lo, color=ACCENT, time_width=0.35)
+             + [Indicate(g.nodes[deg_lo], color=ACCENT, scale_factor=1.35)], 1.0),
+        ])
         beat(self, "Nên gờ nờ nờ có thể gặp khó, và ta ưu tiên định tuyến chúng sang lờ lờ mờ.",
-             LaggedStart(*[Indicate(d, color=ACCENT, scale_factor=1.2)
-                           for d in g.nodes.values()], lag_ratio=0.05),
-             run_time=1.5)
-        beat(self, "Màu nót là lớp thật của nó.")
+             steps=[
+                 ([LaggedStart(*[Indicate(d, color=ACCENT, scale_factor=1.2)
+                                 for d in g.nodes.values()], lag_ratio=0.05)], 1.4),
+                 ([FadeOut(tag_hi), FadeOut(tag_lo)]
+                  + [Indicate(g.nodes[n], color=C_ROUTER, scale_factor=1.4)
+                     for n in LOW_DEGREE], 1.0),
+             ])
+        # Chú giải màu lớp hiện theo từng lớp, kèm nháy đúng nhóm nót của lớp đó.
+        beat(self, "Màu nót là lớp thật của nó.", steps=[
+            [FadeIn(legend[0])] + [Indicate(d, color=d.get_color(), scale_factor=1.25)
+                                   for n, d in g.nodes.items() if S2_LABELS[n] == "A"],
+            [FadeIn(legend[1])] + [Indicate(d, color=d.get_color(), scale_factor=1.25)
+                                   for n, d in g.nodes.items() if S2_LABELS[n] == "B"],
+        ])
 
         # --- tập được route -----------------------------------------------------
         rings = VGroup(*[
@@ -370,37 +447,80 @@ class S2_03_Degree(GlanceScene):
                       txt("Routed to the LLM", size=19, color=C_ROUTER))
         chip.to_corner(UR, buff=0.6)
 
-        beat(self, "Đây là hai nót bậc thấp nhất, chúng sẽ được định tuyến.",
-             LaggedStart(*[Create(r) for r in rings], lag_ratio=0.15),
-             LaggedStart(*[FadeIn(t) for t in tags], lag_ratio=0.15),
-             FadeIn(chip), run_time=1.6)
+        beat(self, "Đây là hai nót bậc thấp nhất, chúng sẽ được định tuyến.", steps=[
+            ([LaggedStart(*[Create(r) for r in rings], lag_ratio=0.15),
+              LaggedStart(*[FadeIn(t) for t in tags], lag_ratio=0.15)], 1.3),
+            ([FadeIn(chip, shift=LEFT * 0.25)], 1.0),
+        ])
 
         # --- phản ví dụ 1: bậc thấp nhất nhưng dễ --------------------------------
         # Giữ sáng cả vùng thưa để thấy rõ nó chỉ có một lớp duy nhất.
         keep = set(SPARSE)
         dim_nodes = VGroup(*[d for i, d in g.nodes.items() if i not in keep])
         dim_edges = edge_mobjs(g, lambda u, v: not ({u, v} <= keep))
+        sparse_nodes = VGroup(*[g.nodes[n] for n in SPARSE])
+        sparse_edges = edge_mobjs(g, lambda u, v: {u, v} <= keep)
+        focus = DashedVMobject(
+            SurroundingRectangle(sparse_nodes, color=ACCENT, stroke_width=2.2, buff=0.34),
+            num_dashes=48)
         ok = check(size=0.5).next_to(g.nodes[EASY_LOW_DEG], RIGHT, buff=0.45).set_z_index(4)
         msg1 = txt("The whole region is one class. The GNN was already right.",
                    size=21, color=C_GOOD).to_edge(DOWN, buff=0.45)
+        waste_inner = txt("Wasted LLM call", size=18, color=C_BAD)
+        waste = VGroup(panel(waste_inner, color=C_BAD, buff=0.22, fill_opacity=0.12),
+                       waste_inner).to_corner(DL, buff=0.55)
 
-        beat(self, "Nhưng hãy nhìn kỹ vùng bên trái này.",
-             dim_nodes.animate.set_opacity(0.15), dim_edges.animate.set_opacity(0.15),
-             run_time=1.2)
+        beat(self, "Nhưng hãy nhìn kỹ vùng bên trái này.", steps=[
+            [dim_nodes.animate.set_opacity(0.15), dim_edges.animate.set_opacity(0.15)],
+            [Create(focus)],
+        ])
         beat(self, "Hàng xóm duy nhất của nó cùng lớp, và cả vùng cũng chỉ có một lớp.",
-             Create(ok), FadeIn(msg1), run_time=1.0)
-        beat(self, "truyền thông điệp chỉ đưa vào tín hiệu đồng thuận.")
-        beat(self, "gờ nờ nờ vốn đã đúng ở đây. Gọi lờ lờ mờ chỉ là lãng phí tiền.")
+             steps=[
+                 (msg_flash(g, EASY_LOW_DEG, color=C_GOOD, time_width=0.7)
+                  + [Create(ok)], 1.0),
+                 ([LaggedStart(*[Indicate(d, color=C_GOOD, scale_factor=1.3)
+                                 for d in sparse_nodes], lag_ratio=0.12),
+                   FadeIn(msg1)], 1.3),
+             ])
+        # Tín hiệu đồng thuận: xung xanh chạy dọc chuỗi thưa, không còn đứng im.
+        beat(self, "truyền thông điệp chỉ đưa vào tín hiệu đồng thuận.", steps=[
+            [LaggedStart(*[ShowPassingFlash(
+                e.copy().set_stroke(C_GOOD, width=5), time_width=0.6)
+                for e in sparse_edges], lag_ratio=0.2)],
+            [Indicate(sparse_edges, color=C_GOOD, scale_factor=1.0)],
+        ])
+        beat(self, "gờ nờ nờ vốn đã đúng ở đây. Gọi lờ lờ mờ chỉ là lãng phí tiền.", steps=[
+            ([Indicate(rings[LOW_DEGREE.index(EASY_LOW_DEG)],
+                       color=C_ROUTER, scale_factor=1.25)], 1.0),
+            ([FadeIn(waste, shift=UP * 0.2)], 1.0),
+            ([Indicate(waste, color=C_BAD, scale_factor=1.05)], 1.0),
+        ])
 
         self.play(dim_nodes.animate.set_opacity(1), dim_edges.animate.set_opacity(1),
-                  FadeOut(ok), FadeOut(msg1), run_time=0.7)
+                  FadeOut(ok), FadeOut(msg1), FadeOut(focus), FadeOut(waste),
+                  run_time=0.7)
 
         # --- phản ví dụ 2: bậc cao nhất nhưng khó --------------------------------
         hub_nb = neighbors_of(HARD_HIGH_DEG)
         keep2 = {HARD_HIGH_DEG, *hub_nb}
         dim2_nodes = VGroup(*[d for i, d in g.nodes.items() if i not in keep2])
         dim2_edges = edge_mobjs(g, lambda u, v: not ({u, v} <= keep2))
-        hub_edges = edge_mobjs(g, lambda u, v: HARD_HIGH_DEG in (u, v))
+        # Tách 6 cạnh khác lớp khỏi 1 cạnh cùng lớp: đúng con số trong lời thoại,
+        # và tô lần lượt thì khán giả đếm được thay vì thấy cả chùm đỏ cùng lúc.
+        hub_conflict = edge_mobjs(
+            g, lambda u, v: HARD_HIGH_DEG in (u, v) and S2_LABELS[u] != S2_LABELS[v])
+        hub_same = edge_mobjs(
+            g, lambda u, v: HARD_HIGH_DEG in (u, v) and S2_LABELS[u] == S2_LABELS[v])
+        conflict_nb = [n for n in hub_nb if S2_LABELS[n] != S2_LABELS[HARD_HIGH_DEG]]
+        same_nb = [n for n in hub_nb if S2_LABELS[n] == S2_LABELS[HARD_HIGH_DEG]]
+        # Nhãn phải nằm dưới hẳn dòng `sub` và không thò sang trái quá mép phải của
+        # nó: đặt buff nhỏ hoặc để chữ dài là dính ngay vào phụ đề tiêu đề.
+        skip_lbl = mono("highest degree → never routed", size=16, color=MUTED)
+        skip_lbl.scale_to_fit_width(3.4).next_to(chip, DOWN, buff=0.62).align_to(chip, RIGHT)
+        want_ring = Circle(radius=ring_r * 1.25, color=C_ROUTER,
+                           stroke_width=3).move_to(g.nodes[HARD_HIGH_DEG])
+        msg3 = txt("The node that actually needs the LLM is never routed.",
+                   size=21, color=C_ROUTER).to_edge(DOWN, buff=0.45)
         hub_tag = VGroup(
             panel(mono("degree = 7", size=17, color=C_BAD), buff=0.18, fill_opacity=0.95),
             mono("degree = 7", size=17, color=C_BAD),
@@ -409,17 +529,39 @@ class S2_03_Degree(GlanceScene):
         msg2 = txt("Degree 7, but 6 of 7 neighbors are a different class.",
                    size=21, color=C_BAD).to_edge(DOWN, buff=0.45)
 
-        beat(self, "Bây giờ ngược lại, hãy nhìn nót giữa hình.",
-             dim2_nodes.animate.set_opacity(0.15), dim2_edges.animate.set_opacity(0.15),
-             rings.animate.set_opacity(0.15), tags.animate.set_opacity(0.15),
-             FadeIn(hub_tag), run_time=1.2)
-        beat(self, "bậc của nó cao nhất đồ thị, nên tiêu chí bỏ qua.")
-        beat(self, "Nhưng sáu trong bảy hàng xóm lại khác lớp với nó.",
-             hub_edges.animate.set_stroke(color=C_BAD, width=3.2),
-             FadeIn(msg2), run_time=1.2)
+        beat(self, "Bây giờ ngược lại, hãy nhìn nót giữa hình.", steps=[
+            [dim2_nodes.animate.set_opacity(0.15), dim2_edges.animate.set_opacity(0.15),
+             rings.animate.set_opacity(0.15), tags.animate.set_opacity(0.15)],
+            [FadeIn(hub_tag), Indicate(g.nodes[HARD_HIGH_DEG], color=ACCENT,
+                                       scale_factor=1.4)],
+        ])
+        # Bậc cao nhất: xung sáng chạy về hub trên cả 7 cạnh, rồi mới nói nó bị bỏ qua.
+        beat(self, "bậc của nó cao nhất đồ thị, nên tiêu chí bỏ qua.", steps=[
+            (msg_flash(g, HARD_HIGH_DEG, color=ACCENT, time_width=0.45), 1.3),
+            ([FadeIn(skip_lbl), Indicate(chip, color=MUTED, scale_factor=1.04)], 1.0),
+        ])
+        beat(self, "Nhưng sáu trong bảy hàng xóm lại khác lớp với nó.", steps=[
+            ([LaggedStart(*[e.animate.set_stroke(color=C_BAD, width=3.2)
+                            for e in hub_conflict], lag_ratio=0.18)], 1.4),
+            ([hub_same.animate.set_stroke(color=C_GOOD, width=3.2),
+              FadeIn(msg2)], 1.0),
+        ])
+        # Thông điệp mâu thuẫn thật sự chạy vào hub trước khi dấu X hiện ra.
         beat(self, "truyền thông điệp trộn tín hiệu mâu thuẫn, gờ nờ nờ dự đoán sai.",
-             Create(bad), run_time=0.8)
-        beat(self, "Đây mới đúng là nót cần lờ lờ mờ, nhưng nó không được chọn.")
+             steps=[
+                 (msg_flash(g, HARD_HIGH_DEG, sources=conflict_nb, color=C_BAD,
+                            time_width=0.45)
+                  + msg_flash(g, HARD_HIGH_DEG, sources=same_nb, color=C_GOOD,
+                              time_width=0.45), 1.4),
+                 ([Indicate(g.nodes[HARD_HIGH_DEG], color=C_BAD, scale_factor=1.5),
+                   Create(bad)], 1.0),
+             ])
+        # Vòng tím hiện lên rồi tan: nót đáng được định tuyến mà tiêu chí không chọn.
+        beat(self, "Đây mới đúng là nót cần lờ lờ mờ, nhưng nó không được chọn.", steps=[
+            ([Create(want_ring), ReplacementTransform(msg2, msg3)], 1.2),
+            ([FadeOut(want_ring, scale=0.7), Indicate(skip_lbl, color=C_BAD,
+                                                      scale_factor=1.06)], 1.0),
+        ])
 
         # --- chốt --------------------------------------------------------------
         self.clear_scene()
@@ -427,9 +569,16 @@ class S2_03_Degree(GlanceScene):
             txt("Degree measures the AMOUNT of structural information,", size=24, color=INK),
             txt("not the QUALITY of that information.", size=24, color=ACCENT, weight=BOLD),
         ).arrange(DOWN, buff=0.26)
-        beat(self, "bậc chỉ đo số lượng thông tin cấu trúc.", Write(punch), run_time=1.6)
-        beat(self, "Nó không đo chất lượng của thông tin đó.")
-        beat(self, "bậc thấp cũng không đảm bảo văn bản của nót đủ rõ cho lờ lờ mờ.")
+        tail = txt("Low degree ≠ node text clear enough for the LLM",
+                   size=20, color=MUTED).next_to(punch, DOWN, buff=0.6)
+        beat(self, "bậc chỉ đo số lượng thông tin cấu trúc.",
+             Write(punch[0]), run_time=1.6)
+        beat(self, "Nó không đo chất lượng của thông tin đó.",
+             Write(punch[1]), run_time=1.3)
+        beat(self, "bậc thấp cũng không đảm bảo văn bản của nót đủ rõ cho lờ lờ mờ.", steps=[
+            ([FadeIn(tail, shift=UP * 0.2)], 1.0),
+            ([Indicate(tail, color=ACCENT, scale_factor=1.04)], 1.0),
+        ])
 
 
 # ===========================================================================
