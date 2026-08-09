@@ -93,13 +93,13 @@ VO = {
         "quyết định lại nhảy đột ngột từ có sang không."
     ),
     "topk_block": (
-        "Vì phép chọn tốp ca không liên tục, gờ ra điên không truyền được xuyên qua nó — "
+        "Vì phép chọn tốp ca không liên tục, gra-đi-en không truyền được xuyên qua nó — "
         "hàm mất mát cuối không thể dạy trực tiếp cho bộ định tuyến."
     ),
     # --- S5_03 Counterfactual ---
     "cf_intro": "Thay vì đạo hàm qua tốp ca, gờ lans chấm kết quả của từng quyết định bằng phần thưởng.",
     "cf_branch": (
-        "Với một nốt được định tuyến, gờ lans dựng hai thế giới đối chứng: thế giới không gọi lờ lờ mờ, "
+        "Với một nót được định tuyến, gờ lans dựng hai thế giới đối chứng: thế giới không gọi lờ lờ mờ, "
         "dùng đầu dự đoán hắc có sẵn của gờ nờ nờ; và thế giới đã gọi lờ lờ mờ, đi qua bộ tinh chỉnh xi."
     ),
     "cf_same_label": (
@@ -130,8 +130,8 @@ VO = {
         "quá sớm, còn khám phá các lựa chọn khác."
     ),
     "obj_pred": (
-        "hàm mất mát dự đoán rẽ nhánh theo việc nốt có nằm trong tốp ca hay không: nốt được định tuyến "
-        "dùng hàm mất mát của nhánh gờ nờ nờ cộng lờ lờ mờ, nốt còn lại dùng hàm mất mát của riêng gờ nờ nờ."
+        "hàm mất mát dự đoán rẽ nhánh theo việc nót có nằm trong tốp ca hay không: nót được định tuyến "
+        "dùng hàm mất mát của nhánh gờ nờ nờ cộng lờ lờ mờ, nót còn lại dùng hàm mất mát của riêng gờ nờ nờ."
     ),
     "obj_total": (
         "hàm mất mát tổng cộng gộp hàm mất mát dự đoán với hàm mất mát của bộ định tuyến có trọng số — vừa dạy dự đoán đúng, "
@@ -154,7 +154,7 @@ VO = {
     ),
     "setup_data": (
         "Sân thử gồm ba đồ thị chuẩn — cô ra, pắp mét, ác xíp hai ba — cùng hai đồ thị cực lớn: "
-        "ác xíp dia và ô gi bi pró đắc."
+        "ác xíp ia và ô gi bi pró đắc."
     ),
     "setup_baseline": (
         "Đối thủ đều mạnh: các gờ nờ nờ kinh điển gờ xê en, gráp xây giơ, gờ xê en hai chạy trên "
@@ -162,7 +162,7 @@ VO = {
         "gờ gờ xê en, gờ bê ca gờ en en."
     ),
     "setup_budget": (
-        "Mấu chốt: mặc định gờ lans chỉ gọi lờ lờ mờ cho mười hai trên ba mươi hai nốt mỗi bát — "
+        "Mấu chốt: mặc định gờ lans chỉ gọi lờ lờ mờ cho mười hai trên ba mươi hai nót mỗi bát — "
         "nó phải thắng trong khi gọi lờ lờ mờ ít hơn hẳn đối thủ."
     ),
     # --- S5_07 Balanced results ---
@@ -173,23 +173,23 @@ VO = {
     ),
     "res_margin": "Nhưng khoảng cách tổng thể chỉ dưới một điểm, nên đó chưa phải điều quan trọng nhất.",
     "res_hardbin": (
-        "Chia nốt theo hô mô phi li cục bộ thành các nhóm, ở nhóm khó nhất của cô ra gờ lans đạt "
+        "Chia nót theo hô mô phi li cục bộ thành các nhóm, ở nhóm khó nhất của cô ra gờ lans đạt "
         "bốn mươi sáu chấm bốn — cao hơn mô hình tốt kế tiếp tới mười ba điểm."
     ),
     "res_rank": (
         "Trung bình trên toàn bộ các nhóm, gờ lans xếp hạng hai chấm bốn — tốt nhất, bỏ xa á quân "
         "bốn chấm bảy, mà nhóm dễ vẫn giữ gần như tuyệt đối."
     ),
-    "res_verdict": "Con số tổng thể che chênh lệch ở nốt khó; hô mô phi li làm nó lộ ra.",
+    "res_verdict": "Con số tổng thể che chênh lệch ở nót khó; hô mô phi li làm nó lộ ra.",
     # --- S5_08 Router learned ---
     "router_question": "Vậy bộ định tuyến có thật sự học đúng chỗ không?",
     "router_hist": (
-        "Khi soi các nốt được định tuyến, khối lượng dồn hẳn về vùng hô mô phi li thấp — đúng vùng mà "
+        "Khi soi các nót được định tuyến, khối lượng dồn hẳn về vùng hô mô phi li thấp — đúng vùng mà "
         "gờ nờ nờ hay sai còn lờ lờ mờ có thể sửa."
     ),
     "router_graph": (
-        "Nhìn trên đồ thị mẫu, nốt chín — hô mô phi li thấp, hàng xóm khác lớp — là kiểu nốt "
-        "bộ định tuyến ưu tiên gọi lờ lờ mờ; nốt bốn thì hầu như không cần."
+        "Nhìn trên đồ thị mẫu, nót chín — hô mô phi li thấp, hàng xóm khác lớp — là kiểu nót "
+        "bộ định tuyến ưu tiên gọi lờ lờ mờ; nót bốn thì hầu như không cần."
     ),
     "router_budget": (
         "Tăng ngân sách ca giúp nhiều nhất ở vùng hô mô phi li thấp; vùng hô mô phi li cao gần như "
@@ -201,9 +201,9 @@ VO = {
     ),
     "router_verdict": "Chính tín hiệu hô mô phi li dạy bộ định tuyến biết khi nào nên gọi lờ lờ mờ.",
     # --- S5_09 Controls ---
-    "ctrl_intro": "Bằng chứng mạnh nhất không phải là thêm lờ lờ mờ, mà là chọn đúng nốt để gọi.",
+    "ctrl_intro": "Bằng chứng mạnh nhất không phải là thêm lờ lờ mờ, mà là chọn đúng nót để gọi.",
     "ctrl_all": (
-        "định tuyến hết mọi nốt trên cô ra: nhóm khó nhất tăng nhẹ, nhóm giữa tăng mạnh tới mười bốn "
+        "định tuyến hết mọi nót trên cô ra: nhóm khó nhất tăng nhẹ, nhóm giữa tăng mạnh tới mười bốn "
         "chấm năm điểm — nhưng nhóm dễ lại giảm, kéo tổng thể tụt một chấm hai điểm dù tốn gần gấp ba "
         "số lượt gọi lờ lờ mờ."
     ),
@@ -212,31 +212,31 @@ VO = {
         "chấm bốn, thua cả bây xơ lai gờ xê en hai tám mươi bảy chấm bảy."
     ),
     "ctrl_same_set": (
-        "Trên đúng tập nốt mà bộ định tuyến đã chọn, nhánh gờ nờ nờ cộng lờ lờ mờ qua bộ tinh chỉnh đạt tám "
+        "Trên đúng tập nót mà bộ định tuyến đã chọn, nhánh gờ nờ nờ cộng lờ lờ mờ qua bộ tinh chỉnh đạt tám "
         "mươi bảy chấm sáu — cao hơn hẳn nếu để gờ xê en hai tự xử lý."
     ),
-    "ctrl_verdict": "định tuyến hết thì hại nốt dễ; định tuyến bừa thì thua bây xơ lai — giá trị nằm ở sự chọn lọc học được.",
+    "ctrl_verdict": "định tuyến hết thì hại nót dễ; định tuyến bừa thì thua bây xơ lai — giá trị nằm ở sự chọn lọc học được.",
     # --- S5_10 Scale ---
     "scale_setup": (
-        "Trên ô gi bi pró đắc — hai chấm bốn năm triệu nốt, gần sáu mươi hai triệu cạnh — gờ lans "
-        "chỉ gọi lờ lờ mờ cho khoảng một chấm sáu phần trăm nốt, tức một nốt trong mỗi sáu mươi tư."
+        "Trên ô gi bi pró đắc — hai chấm bốn năm triệu nót, gần sáu mươi hai triệu cạnh — gờ lans "
+        "chỉ gọi lờ lờ mờ cho khoảng một chấm sáu phần trăm nót, tức một nót trong mỗi sáu mươi tư."
     ),
     "scale_result": (
         "Vậy mà vẫn dẫn đầu: tám mươi hai chấm ba, cao hơn gờ xê en hai tám mươi mốt chấm tám, "
-        "còn gờ gờ xê en thì hết bộ nhớ. Trên ác xíp dia, gờ lans đạt bốn mươi chín chấm tám."
+        "còn gờ gờ xê en thì hết bộ nhớ. Trên ác xíp ia, gờ lans đạt bốn mươi chín chấm tám."
     ),
-    "scale_verdict": "Chọn lọc học được không chỉ cân bằng và chính xác, mà còn rẻ và mở rộng tới quy mô triệu nốt.",
+    "scale_verdict": "Chọn lọc học được không chỉ cân bằng và chính xác, mà còn rẻ và mở rộng tới quy mô triệu nót.",
     # --- S5_11 Callout ---
     "final_reconnect": (
-        "Ở đầu vi đi eo, câu hỏi đặt ra là: có cách nào kết hợp gờ, nờ, nờ và lờ, lờ, mờ mà biết tính "
+        "Ở đầu vi đi eo, câu hỏi đặt ra là: có cách nào kết hợp gờ nờ nờ và lờ lờ mờ mà biết tính "
         "chi phí không? Đây là câu trả lời của gờ lans, gói trong năm ý."
     ),
-    "final_1": "Một: gờ, nờ, nờ và lờ, lờ, mờ giỏi ở những nốt khác nhau; hô mô phi li cục bộ dự báo ai sẽ thắng.",
+    "final_1": "Một: gờ nờ nờ và lờ lờ mờ giỏi ở những nót khác nhau; hô mô phi li cục bộ dự báo ai sẽ thắng.",
     "final_2": "Hai: vì tốp ca không khả vi, phần thưởng chấm điểm từng quyết định để dạy bộ định tuyến.",
-    "final_3": "Ba: chỉ bộ định tuyến và bộ tinh chỉnh được huấn luyện; gờ, nờ, nờ và lờ, lờ, mờ đóng băng.",
+    "final_3": "Ba: chỉ bộ định tuyến và bộ tinh chỉnh được huấn luyện; gờ nờ nờ và lờ lờ mờ đóng băng.",
     "final_4": "Bốn: kết quả là mô hình cân bằng nhất và dẫn đầu tổng thể, nhờ sự chọn lọc học được.",
-    "final_5": "Năm: chỉ định tuyến một phần nhỏ nốt, gờ lans vẫn mở rộng tới đồ thị hàng triệu nốt.",
-    "final_punch": "Tất cả gói trong một câu — đừng dùng nhiều lờ, lờ, mờ hơn, hãy dùng lờ, lờ, mờ đúng chỗ.",
+    "final_5": "Năm: chỉ định tuyến một phần nhỏ nót, gờ lans vẫn mở rộng tới đồ thị hàng triệu nót.",
+    "final_punch": "Tất cả gói trong một câu — đừng dùng nhiều lờ lờ mờ hơn, hãy dùng lờ lờ mờ đúng chỗ.",
 }
 
 
@@ -634,10 +634,15 @@ class S5_05_JointObjective(GlanceScene):
                       Indicate(modules[2], color=C_GOOD, scale_factor=1.08),
                       Indicate(modules[3], color=C_ROUTER, scale_factor=1.08),
                       run_time=min(1.6, tracker.duration))
+            # Đặt vị trí status_labels TĨNH trước khi play. Nếu vừa
+            # `.animate.move_to` vừa `FadeIn` cùng một mobject trong một play,
+            # hai animation xung đột: move_to bị bỏ qua, các pill kẹt ở vị trí
+            # cũ dưới đáy còn dòng hparam chèn vào giữa. Đặt tĩnh rồi chỉ FadeIn
+            # thì pill về đúng ngay dưới module (y=-1.12).
+            status_labels.move_to([0, -1.12, 0])
             self.play(
                 FadeOut(VGroup(update_label, to_refiner, to_router)),
                 modules.animate.move_to([0, -0.25, 0]),
-                status_labels.animate.move_to([0, -1.12, 0]),
                 FadeIn(status_labels, shift=UP * 0.1),
                 run_time=0.7,
             )
