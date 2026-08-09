@@ -416,7 +416,7 @@ class S2_03_Degree(GlanceScene):
              FadeIn(head), FadeIn(sub), run_time=0.8, speed=1.3)
         # Đồ thị lên ngay từ câu thứ hai, đúng lúc bắt đầu nói về nót bậc — bản
         # cũ để khán giả nghe ba câu liền trên nền trống rồi mới vẽ.
-        beat(self, "Công trình này dùng nót bậc làm tiêu chí định tuyến.", steps=[
+        beat(self, "Công trình này dùng bậc của nót làm tiêu chí định tuyến.", steps=[
             ([Create(g.edges)], 1.0),
             ([LaggedStart(*[GrowFromCenter(d) for d in g.nodes.values()],
                           lag_ratio=0.06)], 1.2),
@@ -426,7 +426,7 @@ class S2_03_Degree(GlanceScene):
             (msg_flash(g, deg_hi, color=MUTED) + [FadeIn(tag_hi)], 1.3),
             (msg_flash(g, deg_lo, color=ACCENT) + [FadeIn(tag_lo)], 1.0),
         ])
-        beat(self, "nót bậc thấp nhận ít thông tin qua truyền thông điệp.", steps=[
+        beat(self, "bậc của nót thấp nhận ít thông tin qua truyền thông điệp.", steps=[
             (msg_flash(g, deg_hi, color=MUTED, time_width=0.35), 1.0),
             (msg_flash(g, deg_lo, color=ACCENT, time_width=0.35)
              + [Indicate(g.nodes[deg_lo], color=ACCENT, scale_factor=1.35)], 1.0),
@@ -1003,8 +1003,8 @@ class S2_05_Uncertainty(GlanceScene):
         beat(self, "Tức là loại bỏ những cạnh bị coi là gây khó, chứ không nối thêm cạnh mới.")
         beat(self, "Việc này có rủi ro riêng.", Create(cut),
              e.animate.set_stroke(color=C_BAD, opacity=0.25), run_time=0.8)
-        beat(self, "Nó có thể xoá nhầm cạnh dị phối vẫn đang mang thông tin.",
-             FadeIn(warn), run_time=0.7)
+        beat(self, "Nó có thể xoá nhầm cạnh dị phối vẫn đang mang thông tin hữu ích.",
+             FadeIn(warn), run_time=1.0)
 
         self.clear_scene()
         punch = VGroup(
@@ -1023,13 +1023,14 @@ class S2_06_Setup(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("How do we evaluate a heuristic fairly?",
+        head = heading("How GLANCE evaluates prior heuristics",
                        color=ACCENT).to_edge(UP, buff=0.9)
 
-        beat(self, "Vậy đánh giá một tiêu chí định tuyến thế nào cho công bằng?",
+        beat(self, "Đến đây, ta rời ba công trình trước và quay lại bài báo gờ lans.",
              Write(head), run_time=1.4)
-        beat(self, "bài báo không chỉ nhìn độ chính xác của gờ nờ nờ trên nhóm nót bị coi là khó.")
-        beat(self, "Thay vào đó, kiểm tra thẳng điều gì xảy ra sau khi định tuyến.")
+        beat(self, "Nhóm tác giả đặt cả ba tiêu chí vào cùng một thí nghiệm để so sánh công bằng.")
+        beat(self, "Họ không chỉ nhìn độ chính xác của gờ nờ nờ trên nhóm nót bị coi là khó.")
+        beat(self, "Họ kiểm tra trực tiếp điều gì xảy ra sau khi định tuyến sang lờ lờ mờ.")
 
         flow = pipeline([
             ("Graph", C_EDGE),
@@ -1065,11 +1066,11 @@ class S2_06_Setup(GlanceScene):
         ).arrange(RIGHT, buff=0.55).next_to(frozen, DOWN, buff=0.6)
         cfg.scale_to_fit_width(12.2)
 
-        beat(self, "Thí nghiệm chạy trên cô ra, pắp mét và ác xíp hai ba.",
+        beat(self, "Thí nghiệm chạy trên cô ra, pắp mét và a xíp hai ba.",
              FadeIn(cfg[0]), run_time=0.7)
         beat(self, "Hai mô hình nền: gờ xê en là mô hình cơ sở, còn gờ xê en hai là mô hình hiện đại hơn.",
              FadeIn(cfg[1]), run_time=0.7, speed=1.15)
-        beat(self, "Hai loại đặc trưng: gốc, và tăng cường sinh bởi quy en ba tám bi.",
+        beat(self, "Hai loại đặc trưng: gốc, và tăng cường sinh bởi Qwen ba tám B.",
              FadeIn(cfg[2]), run_time=0.7)
         # Bảng 1 chỉ báo cáo cột tăng cường. Nói rõ ở đây, nếu không khán giả sẽ
         # đi tìm hàng "gốc" trong bản đồ nhiệt ở S2_08 và không thấy.
@@ -1120,7 +1121,7 @@ class S2_07_NCS(GlanceScene):
                   "GNN right, LLM makes it wrong.\nA HARMFUL correction.", C_BAD, cross())
         defs = VGroup(wc, cw).arrange(RIGHT, buff=0.6, aligned_edge=UP).shift(DOWN * 0.3)
 
-        beat(self, "Để đo chất lượng tập nót được định tuyến, bài báo dùng điểm hiệu chỉnh thuần.",
+        beat(self, "Để đo chất lượng tập nót được định tuyến, bài báo dùng một metric được gọi là en xi ét.",
              FadeIn(head), FadeIn(sub), run_time=0.9)
         beat(self, "Viết tắt là en xi ét. Ý tưởng rất trực quan.")
         beat(self, "gờ nờ nờ sai mà lờ lờ mờ sửa thành đúng: một lần sửa có lợi.",
@@ -1618,16 +1619,23 @@ class S2_12_Limits(GlanceScene):
         # --- trả lời câu hỏi thứ ba đã đặt ở S2_01 -------------------------------
         self.clear_scene()
         punch = VGroup(
-            txt("GLANCE keeps all three signals, as INPUTS to a router.",
-                size=23, color=INK),
-            txt("What it drops: letting any single one make the DECISION.",
+            txt("GLANCE reuses DEGREE and UNCERTAINTY as inputs.",
+                size=22, color=INK),
+            txt("C-density is not retained directly.",
+                size=21, color=MUTED),
+            txt("No single signal makes the DECISION.",
                 size=23, color=C_BAD, weight=BOLD),
         ).arrange(DOWN, buff=0.26)
 
         beat(self, "Vậy quay lại câu hỏi ban đầu: gờ lans kế thừa được gì từ ba công trình này?")
-        beat(self, "Nó giữ lại cả ba tín hiệu, nhưng chỉ dùng làm đầu vào cho một bộ định tuyến.",
-             Write(punch), run_time=1.8)
-        beat(self, "Và bỏ hẳn cách để một tín hiệu đơn lẻ tự quyết định.")
+        beat(self, "Trong kiến trúc sau đó, bậc và độ bất định trở lại như hai đầu vào.",
+             Write(punch[0]), run_time=1.2)
+        beat(self, "Riêng mật độ xê không được giữ trực tiếp.",
+             FadeIn(punch[1]), run_time=0.7)
+        beat(self, "Quan trọng hơn, không tín hiệu đơn lẻ nào còn tự quyết định.",
+             Write(punch[2]), run_time=1.2)
+        beat(self, "gờ lans để một bộ định tuyến học từ nhiều tín hiệu phối hợp.",
+             Circumscribe(punch, color=C_ROUTER, buff=0.2), run_time=1.3)
 
 
 # ===========================================================================
