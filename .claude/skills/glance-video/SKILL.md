@@ -157,7 +157,7 @@ Quy tắc:
 
 | Lệnh | Service | Khi nào dùng |
 |---|---|---|
-| `GLANCE_TTS=timed manim ...` | Speech API | mặc định — URL `/v1/audio/speech`, key ở `.run/api.key`, voice `longkhongphainong`, trả MP3 trực tiếp |
+| `GLANCE_TTS=timed manim ...` | Speech API | mặc định — URL `/api/tts`, key ở `.run/api.key`, voice `longkhongphainong`, trả MP3 trực tiếp |
 | `GLANCE_TTS=gtts manim ...` | gTTS `vi` | dự phòng — free, cần mạng, giọng hơi máy |
 | `GLANCE_TTS=azure manim ...` | Azure `en-US-AvaMultilingualNeural` | dự phòng chất lượng cao — tự code-switch Việt-Anh, cần `AZURE_SUBSCRIPTION_KEY` + `AZURE_SERVICE_REGION` trong `.env` |
 | `GLANCE_TTS=record manim ...` | RecorderService | thu giọng thật qua CLI lúc render (`brew install sox`) |

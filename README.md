@@ -95,7 +95,7 @@ File `.mp4` từng scene nằm trong `media/videos/<tên_file>/<chất_lượng>
    Plugin `manim-voiceover` sinh audio, tự chờ hết câu nói,
    và tự sinh `.srt` — **không** gọi `add_subcaption` nữa (sẽ trùng phụ đề).
    **Giọng đọc chính thức của nhóm là API riêng, tức `GLANCE_TTS=timed`.** Cấu hình
-   URL `/v1/audio/speech` trong `.env`, đặt bearer key tại `.run/api.key`, và dùng
+   URL `/api/tts` trong `.env`, đặt bearer key tại `.run/api.key`, và dùng
    `GLANCE_TIMED_TTS_MODEL=gwen-tts`, `GLANCE_TIMED_TTS_VOICE=longkhongphainong`
    và `GLANCE_TIMED_TTS_SPEED=1.0`. API trả MP3 trực tiếp. Thư mục
    `.run/` đã được Git ignore; không commit key. Bản nộp phải render bằng backend

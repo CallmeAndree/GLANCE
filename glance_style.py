@@ -35,7 +35,7 @@ import manimpango
 
 
 DEFAULT_TIMED_TTS_URL = (
-    "https://sunshine-ten-pvc-merit.trycloudflare.com/v1/audio/speech"
+    "https://sunshine-ten-pvc-merit.trycloudflare.com/api/tts"
 )
 DEFAULT_TIMED_TTS_MODEL = "gwen-tts"
 DEFAULT_TIMED_TTS_VOICE = "longkhongphainong"
@@ -55,6 +55,14 @@ class TimedTTSService(SpeechService):
         audio_format="mp3",
         speed=DEFAULT_TIMED_TTS_SPEED,
         timeout=120,
+        temperature=None,
+        top_k=None,
+        top_p=None,
+        repetition_penalty=None,
+        gap=None,
+        max_tokens=None,
+        language=None,
+        stream=None,
         **kwargs,
     ):
         if not endpoint:
@@ -62,13 +70,25 @@ class TimedTTSService(SpeechService):
         if not token:
             raise ValueError("Thiếu API key cho backend GLANCE_TTS=timed.")
         super().__init__(**kwargs)
-        self.endpoint = endpoint.rstrip("/")
+        endpoint = endpoint.rstrip("/")
+        if endpoint.endswith("/v1/audio/speech"):
+            endpoint = endpoint[:-16] + "/api/tts"
+        self.endpoint = endpoint
         self.token = token
         self.model = model
         self.voice = voice
         self.audio_format = audio_format.lower()
         self.speed = float(speed)
         self.timeout = timeout
+        
+        self.temperature = temperature
+        self.top_k = top_k
+        self.top_p = top_p
+        self.repetition_penalty = repetition_penalty
+        self.gap = gap
+        self.max_tokens = max_tokens
+        self.language = language
+        self.stream = stream
 
     @contextlib.contextmanager
     def speed_override(self, speed):
@@ -87,7 +107,7 @@ class TimedTTSService(SpeechService):
             self.speed = previous
 
     def _cache_input_data(self, input_text):
-        return {
+        data = {
             "input_text": input_text,
             "service": "glance-timed-tts-v1",
             "endpoint": self.endpoint,
@@ -96,6 +116,11 @@ class TimedTTSService(SpeechService):
             "format": self.audio_format,
             "speed": self.speed,
         }
+        for k in ["temperature", "top_k", "top_p", "repetition_penalty", "gap", "max_tokens", "language", "stream"]:
+            v = getattr(self, k, None)
+            if v is not None:
+                data[k] = v
+        return data
 
     def _append_cache_atomic(self, entry):
         """Ghi cache index nguyên tử và không nhân đôi cache hit.
@@ -195,16 +220,30 @@ class TimedTTSService(SpeechService):
         audio_path = path or (
             self.get_audio_basename(input_data) + f".{self.audio_format}"
         )
-        payload = json.dumps(
-            {
+        
+        if self.endpoint.endswith("/api/tts"):
+            payload_dict = {
+                "text": input_text,
+                "format": self.audio_format,
+                "speed": self.speed,
+            }
+            if self.model: payload_dict["model"] = self.model
+            if self.voice: payload_dict["voice"] = self.voice
+            
+            for k in ["temperature", "top_k", "top_p", "repetition_penalty", "gap", "max_tokens", "language", "stream"]:
+                v = getattr(self, k, None)
+                if v is not None:
+                    payload_dict[k] = v
+        else:
+            payload_dict = {
                 "model": self.model,
                 "input": input_text,
                 "voice": self.voice,
                 "response_format": self.audio_format,
                 "speed": self.speed,
-            },
-            ensure_ascii=False,
-        ).encode("utf-8")
+            }
+            
+        payload = json.dumps(payload_dict, ensure_ascii=False).encode("utf-8")
         request = urlrequest.Request(
             self.endpoint,
             data=payload,

@@ -223,7 +223,7 @@ def create_target_neighborhood(kind="clean", label="A", scale=1.0):
     edges = VGroup(*[
         (DashedLine if kind == "noisy" and index in {1, 5} else Line)(
             target.get_center(), neighbor.get_center(), buff=0.26 * scale, color=DARK, stroke_width=1.6
-        )
+        ).set_z_index(-1)
         for index, neighbor in enumerate(neighbors)
     ])
     target.set_z_index(5)
@@ -235,10 +235,10 @@ def create_target_neighborhood(kind="clean", label="A", scale=1.0):
 
 def create_message_vector(start, end, color=BRIGHT, dashed=False):
     arrow = Arrow(start=start, end=end, color=color, buff=0.35, max_stroke_width_to_length_ratio=0, max_tip_length_to_length_ratio=0.15)
-    arrow.set_z_index(-1)
+    arrow.set_z_index(2)
     if dashed:
         arrow = DashedVMobject(arrow, num_dashes=15)
-        arrow.set_z_index(-1)
+        arrow.set_z_index(2)
     return arrow
 
 def create_text_document(title, lines, width=4.0, height=2.35, emphasized=False):
@@ -959,9 +959,9 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             branch_dn = small_arrow(graph.get_right() + DOWN * 0.35, gnn_mod.get_left(),
                                     color=gs.C_GNN, buff=0.18)
             branch_up_lbl = t("node text", size=15, color=gs.C_LLM)
-            branch_up_lbl.next_to(branch_up.get_center(), UP, buff=0.14)
+            branch_up_lbl.next_to(branch_up.get_center(), UL, buff=0.20)
             branch_dn_lbl = t("neighbors", size=15, color=gs.C_GNN)
-            branch_dn_lbl.next_to(branch_dn.get_center(), DOWN, buff=0.14)
+            branch_dn_lbl.next_to(branch_dn.get_center(), DL, buff=0.20)
 
             arr_ls = small_arrow(llm_mod.get_right(), sem_rep[0].get_left(), color=gs.C_LLM)
             arr_gs = small_arrow(gnn_mod.get_right(), struct_rep[0].get_left(), color=gs.C_GNN)
@@ -994,9 +994,9 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                             width=3.7, height=1.05, emphasized=True).move_to(RIGHT * 4.35)
             fusion[0].set_stroke(gs.C_ROUTER)
             fusion[1][0].set_color(gs.C_ROUTER)
-            to_fusion_sem = small_arrow(sem_rep[0].get_bottom(), fusion.get_top() + LEFT * 0.5,
+            to_fusion_sem = small_arrow(sem_rep.get_bottom(), fusion.get_top() + LEFT * 0.5,
                                         color=gs.C_LLM, buff=0.14)
-            to_fusion_struct = small_arrow(struct_rep[0].get_top(), fusion.get_bottom() + LEFT * 0.5,
+            to_fusion_struct = small_arrow(struct_rep.get_top(), fusion.get_bottom() + LEFT * 0.5,
                                            color=gs.C_GNN, buff=0.14)
             self.play(
                 FadeOut(VGroup(branch_up, branch_dn, branch_labels, arr_ls, arr_gs,
@@ -1050,7 +1050,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             easy_inner = VGroup(
                 gs.check(color=gs.C_GOOD, size=0.18),
                 t("GNN correct · 96% confidence", size=16, color=gs.C_GOOD, weight=BOLD),
-            ).arrange(RIGHT, buff=0.14)
+            ).arrange(RIGHT, buff=0.25)
             easy_bg = RoundedRectangle(
                 width=easy_inner.width + 0.32, height=easy_inner.height + 0.24,
                 corner_radius=0.12, fill_color=gs.BG, fill_opacity=0.95,
@@ -1058,7 +1058,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             )
             easy_inner.move_to(easy_bg)
             easy_tag = VGroup(easy_bg, easy_inner).set_z_index(30)
-            easy_tag.next_to(easy_node, UP, buff=0.55)
+            easy_tag.next_to(easy_node, UP, buff=0.85)
             # Nót G nằm gần mép phải nên nhãn dễ tràn ra ngoài khung: kéo lại cho
             # nằm trọn trong khung hình.
             limit_x = 6.45 - easy_tag.width / 2
@@ -1080,8 +1080,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                             fill_opacity=0.35, stroke_width=0).set_z_index(60)
             question = t("Does every node really need the LLM?",
                          size=30, color=INK, weight=BOLD).set_z_index(70)
-            cost_line = t("Accuracy ↔ Computational cost",
-                          size=20, color=gs.C_ROUTER).set_z_index(70)
+            cost_line = t("Accuracy <-> Computational cost",
+                          size=24, color=gs.C_ROUTER).set_z_index(70)
             closing = VGroup(question, cost_line).arrange(DOWN, aligned_edge=LEFT, buff=0.26)
             fit(closing, 6.4)
             closing.to_corner(DL, buff=0.8)
@@ -1229,8 +1229,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
 
             # Dự đoán đổi theo — ghi rõ là ví dụ minh hoạ, không phải số đo.
             shift_rows = VGroup(
-                t("A:  0.78  →  0.39", size=20, color=gs.C_BAD, weight=BOLD),
-                t("B:  0.17  →  0.55", size=20, color=gs.C_BAD, weight=BOLD),
+                t("A:  0.78  ->  0.39", size=20, color=gs.C_BAD, weight=BOLD),
+                t("B:  0.17  ->  0.55", size=20, color=gs.C_BAD, weight=BOLD),
                 t("Schematic example", size=13, color=MID),
             ).arrange(DOWN, buff=0.14).move_to(RIGHT * 4.75 + DOWN * 2.35)
             self.play(FadeIn(shift_rows, shift=UP * 0.1), run_time=0.7)
@@ -1341,14 +1341,23 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(LaggedStart(*anims, lag_ratio=0.05), run_time=run_time)
 
         def context_card(nodes_value, prompt_value, prompt_color=LIGHT):
+            col_left = VGroup(
+                t("Nodes", size=18, color=MID),
+                t("Prompt", size=18, color=MID)
+            ).arrange(DOWN, buff=0.15, aligned_edge=LEFT)
+            
+            col_right = VGroup(
+                t(nodes_value, size=18, color=LIGHT, weight=BOLD),
+                t(prompt_value, size=18, color=prompt_color, weight=BOLD)
+            ).arrange(DOWN, buff=0.15, aligned_edge=LEFT)
+            
+            grid = VGroup(col_left, col_right).arrange(RIGHT, buff=0.4)
+            
             rows = VGroup(
                 t("CONTEXT SIZE", size=16, color=MID, weight=BOLD),
-                VGroup(t("Nodes", size=18, color=MID),
-                       t(nodes_value, size=18, color=LIGHT, weight=BOLD)).arrange(RIGHT, buff=0.30),
-                VGroup(t("Prompt", size=18, color=MID),
-                       t(prompt_value, size=18, color=prompt_color, weight=BOLD)).arrange(RIGHT, buff=0.30),
+                grid,
                 t("Schematic example", size=12, color=MID),
-            ).arrange(DOWN, buff=0.11)
+            ).arrange(DOWN, buff=0.15)
             frame = panel(rows.width + 0.5, rows.height + 0.4, fill=BG, stroke=DIM)
             rows.move_to(frame)
             return VGroup(frame, rows).move_to(CARD_POS).set_z_index(92)
@@ -1456,7 +1465,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "Và nếu làm điều này cho mọi nót thì sao?",
         ]):
             punch_group = VGroup(
-                t("MORE NEIGHBORS  →  MORE TEXT  →  MORE LLM COST",
+                t("MORE NEIGHBORS  ->  MORE TEXT  ->  MORE LLM COST",
                   size=30, color=BRIGHT, weight=BOLD),
                 t("each query carries the whole neighborhood", size=20, color=gs.C_BAD),
             # Punchline nằm ở khoảng trống bên PHẢI, dưới dải chuỗi: đặt giữa
@@ -1488,13 +1497,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         self.play(FadeOut(self.sec5_objects), run_time=0.5)
 
         # ── Beat 1 (0:00–0:08): mọi nót đi qua cùng một khối Fixed Fusion ──
-        node_a = node("A", radius=0.34).move_to(LEFT * 5.4 + UP * 2.0)
-        node_b = node("B", radius=0.34).move_to(LEFT * 5.4 + ORIGIN)
-        node_c = node("C", radius=0.34).move_to(LEFT * 5.4 + DOWN * 2.0)
+        node_a = node("A", radius=0.28).move_to(LEFT * 4.6 + UP * 2.0)
+        node_b = node("B", radius=0.28).move_to(LEFT * 4.6 + ORIGIN)
+        node_c = node("C", radius=0.28).move_to(LEFT * 4.6 + DOWN * 2.0)
         nodes = VGroup(node_a, node_b, node_c)
 
         fusion = module("Static Fusion", "one rule for every node", width=3.5, height=1.25,
-                        emphasized=True).move_to(RIGHT * 2.3 + UP * 0.1)
+                        emphasized=True).move_to(RIGHT * 1.5 + UP * 0.1)
         fusion[0].set_stroke(gs.C_ROUTER)
         fusion[1][0].set_color(gs.C_ROUTER)
         src = VGroup(
@@ -1514,7 +1523,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         ])
         # Cả cụm to lên và căn vào giữa khung: bản cũ hàng nót dạt sát mép trái
         # còn khối hợp nhất lệch phải, nhìn trống một bên.
-        VGroup(nodes, fusion, src, arrows).scale(1.14).move_to(UP * 0.1)
+        VGroup(nodes, fusion, src, arrows).scale(1.14).move_to(LEFT * 0.0 + UP * 0.1)
         with self.narrated_caption([
             "Tuy nhiên, phần lớn các hệ thống lai hiện nay",
             "vẫn áp dụng một chiến lược hợp nhất duy nhất cho tất cả các nót trong đồ thị.",
@@ -1534,8 +1543,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(Indicate(fusion, color=gs.C_ROUTER, scale_factor=1.06), run_time=0.8)
 
         # ── Beat 3 (0:17–0:27): nhu cầu mỗi nót khác nhau ──
-        need_a = t("needs GNN", size=15, color=gs.C_GNN).next_to(node_a, UP, buff=0.16)
-        need_c = t("needs LLM", size=15, color=gs.C_LLM).next_to(node_c, DOWN, buff=0.16)
+        need_a = t("needs GNN", size=16, color=gs.C_GNN).next_to(node_a, UP, buff=0.16)
+        need_c = t("needs LLM", size=16, color=gs.C_LLM).next_to(node_c, DOWN, buff=0.16)
         with self.narrated_caption([
             "Nhưng các nót không giống nhau: có nót được gờ nờ nờ xử lý tốt nhờ cấu trúc lân cận rõ ràng,",
             "trong khi nót khác hưởng lợi nhiều hơn từ khả năng suy luận ngữ nghĩa của lờ lờ mờ.",
@@ -1561,35 +1570,42 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(Indicate(fusion, color=gs.C_ROUTER, scale_factor=1.04), run_time=0.6)
             self.play(FadeIn(warn, shift=UP * 0.1), run_time=0.6)
 
-        # ── Beat 5 (0:34–0:42): Fixed Fusion → Node-Aware Router + câu hỏi ──
-        router = module("Node-Aware Router", "decide per node", width=3.6, height=1.25,
-                        emphasized=True).move_to(fusion)
-        router[0].set_stroke(gs.C_ROUTER)
-        router[1][0].set_color(gs.C_ROUTER)
-        # Hai nhánh xuất phát từ hai cao độ khác nhau trên cạnh phải, và nhãn lùi
-        # ra xa hơn (buff 0.18) để đầu mũi tên không chạm vào chữ.
-        r_arr_g = small_arrow(router.get_right() + UP * 0.22,
-                              router.get_right() + RIGHT * 0.8 + UP * 0.5, color=gs.C_GNN)
-        r_arr_l = small_arrow(router.get_right() + DOWN * 0.22,
-                              router.get_right() + RIGHT * 0.8 + DOWN * 0.5, color=gs.C_LLM)
-        r_g = t("Keep GNN", size=15, color=gs.C_GNN, weight=BOLD).next_to(r_arr_g.get_end(), RIGHT, buff=0.18)
-        r_l = t("Query LLM", size=15, color=gs.C_LLM, weight=BOLD).next_to(r_arr_l.get_end(), RIGHT, buff=0.18)
-        # GLANCE dùng LLM để TINH CHỈNH dự đoán GNN, không thay bằng LLM thuần.
-        r_refine = t("refine GNN", size=12, color=gs.C_ROUTER).next_to(r_l, DOWN, buff=0.12, aligned_edge=LEFT)
-        center = VGroup(
-            t("Different nodes", size=26, color=INK, weight=BOLD),
-            mt(r"\Rightarrow", size=32, color=gs.C_ROUTER),
-            t("Different model utility", size=26, color=gs.C_ROUTER, weight=BOLD),
-        ).arrange(RIGHT, buff=0.28).to_edge(DOWN, buff=1.1)
+        # ── Beat 5 (0:34–0:42): Fixed Fusion -> Node-Aware Router + câu hỏi ──
         with self.narrated_caption([
             "Vậy làm thế nào để quyết định, ở cấp độ từng nót,",
             "khi nào nên tận dụng lờ lờ mờ?",
         ]):
+            left_part = VGroup(nodes, arrows, fusion, need_a, need_c)
             self.play(FadeOut(src), FadeOut(same_rule),
-                      ReplacementTransform(fusion, router), run_time=0.8)
+                      left_part.animate.scale(0.85).shift(LEFT * 1.5),
+                      run_time=0.8)
+
+            router = module("Node-Aware Router", "decide per node", width=3.8, height=1.3, emphasized=True)
+            router[0].set_stroke(gs.C_ROUTER)
+            router[1][0].set_color(gs.C_ROUTER)
+
+            r_arr_g = small_arrow(router.get_right() + UP * 0.22,
+                                  router.get_right() + RIGHT * 1.2 + UP * 0.6, color=gs.C_GNN)
+            r_arr_l = small_arrow(router.get_right() + DOWN * 0.22,
+                                  router.get_right() + RIGHT * 1.2 + DOWN * 0.6, color=gs.C_LLM)
+            r_g = t("Keep GNN", size=18, color=gs.C_GNN, weight=BOLD).next_to(r_arr_g.get_end(), RIGHT, buff=0.18)
+            r_l = t("Query LLM", size=18, color=gs.C_LLM, weight=BOLD).next_to(r_arr_l.get_end(), RIGHT, buff=0.18)
+            r_refine = t("refine GNN", size=14, color=gs.C_ROUTER).next_to(r_l, DOWN, buff=0.12, aligned_edge=LEFT)
+
+            # Khối bên trái đang có scale tổng là 1.14 * 0.85 = 0.969
+            right_part = VGroup(router, r_arr_g, r_arr_l, r_g, r_l, r_refine).scale(1.14 * 0.85)
+            right_part.shift(fusion.get_center() - router.get_center())
+
+            center = VGroup(
+                t("Different nodes", size=26, color=INK, weight=BOLD),
+                mt(r"\Rightarrow", size=32, color=gs.C_ROUTER),
+                t("Different model utility", size=26, color=gs.C_ROUTER, weight=BOLD),
+            ).arrange(RIGHT, buff=0.28).to_edge(DOWN, buff=1.1)
+
+            self.play(ReplacementTransform(fusion, router), run_time=0.6)
             self.play(GrowArrow(r_arr_g), GrowArrow(r_arr_l),
                       FadeIn(r_g), FadeIn(r_l), FadeIn(r_refine), run_time=0.7)
-            self.play(ReplacementTransform(warn, center), run_time=0.7)
+            self.play(FadeOut(warn, shift=UP*0.1), FadeIn(center, shift=UP*0.1), run_time=0.7)
             self.wait(0.4)
 
         # Handoff cho section_7: giữ 3 nót, gom phần còn lại để fade.
@@ -1838,11 +1854,11 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         ]):
             easy_group = VGroup(
                 t("90 easy nodes", size=30, color=gs.C_GNN, weight=BOLD),
-                t("GNN 95%   →   Fusion 94%", size=22, color=LIGHT),
+                t("GNN 95%   ->   Fusion 94%", size=22, color=LIGHT),
             ).arrange(DOWN, buff=0.16).move_to(RIGHT * 3.15 + UP * 2.05)
             hard_group = VGroup(
                 t("10 hard nodes", size=30, color=gs.C_BAD, weight=BOLD),
-                t("GNN 40%   →   Fusion 53%", size=22, color=LIGHT),
+                t("GNN 40%   ->   Fusion 53%", size=22, color=LIGHT),
             ).arrange(DOWN, buff=0.16).move_to(RIGHT * 3.15 + UP * 0.55)
             self.play(FadeIn(easy_group, shift=UP * 0.15), run_time=0.7)
             self.play(
