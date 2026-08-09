@@ -833,7 +833,7 @@ class S4_17_TwoFlows(GlanceMovingScene):
         with self.voiceover(text="Sau bước tốp ca, quy trình được chia thành hai nhánh rõ ràng.") as tracker:
             self.play(FadeIn(router), FadeIn(router_label), run_time=0.45)
         with self.voiceover(
-            text="Nhánh thứ nhất dành cho những nót thuộc tập định tuyến rời, tức là các nót được sử dụng "
+            text="Nhánh thứ nhất dành cho những nót thuộc tập định tuyến rời, tức là các nót được xử lý bằng "
             "lờ lờ mờ. Nhánh thứ hai dành cho những nót không thuộc rời."
         ) as tracker:
             self.play(
@@ -995,7 +995,7 @@ class S4_19_WithLLMContext(GlanceMovingScene):
             self.play(GrowFromCenter(center_A), run_time=0.38)
 
         with self.voiceover(
-            text="Mức thứ hai là 1-hop ngữ cảnh, bổ sung nội dung từ các nót trích dẫn trực tiếp."
+            text="Mức thứ hai là ngữ cảnh một bước, bổ sung nội dung từ các nót trích dẫn trực tiếp."
         ) as tracker:
             self.play(
                 Create(ring_1), Create(hop1_edges),
