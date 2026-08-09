@@ -57,9 +57,6 @@ class TimedTTSService(SpeechService):
         top_p=DEFAULT_TIMED_TTS_TOP_P,
         speed=DEFAULT_TIMED_TTS_SPEED,
         timeout=120,
-        temperature=None,
-        top_k=None,
-        top_p=None,
         repetition_penalty=None,
         gap=None,
         max_tokens=None,
@@ -83,10 +80,6 @@ class TimedTTSService(SpeechService):
         self.top_p = float(top_p)
         self.speed = float(speed)
         self.timeout = timeout
-        
-        self.temperature = temperature
-        self.top_k = top_k
-        self.top_p = top_p
         self.repetition_penalty = repetition_penalty
         self.gap = gap
         self.max_tokens = max_tokens
@@ -224,16 +217,14 @@ class TimedTTSService(SpeechService):
         audio_path = path or (
             self.get_audio_basename(input_data) + f".{self.audio_format}"
         )
-        payload = json.dumps(
-            {
-                "text": input_text,
-                "format": self.audio_format,
-                "temperature": self.temperature,
-                "top_k": self.top_k,
-                "top_p": self.top_p,
-                "speed": self.speed,
-            }
-            
+        payload_dict = {
+            "text": input_text,
+            "format": self.audio_format,
+            "temperature": self.temperature,
+            "top_k": self.top_k,
+            "top_p": self.top_p,
+            "speed": self.speed,
+        }
         payload = json.dumps(payload_dict, ensure_ascii=False).encode("utf-8")
         request = urlrequest.Request(
             self.endpoint,
