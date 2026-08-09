@@ -101,9 +101,8 @@ class TimedTTSServiceTest(unittest.TestCase):
     def test_generates_mp3_without_putting_token_in_cache_metadata(self):
         with tempfile.TemporaryDirectory() as cache_dir:
             service = TimedTTSService(
-                endpoint="https://tts.example/v1/audio/speech",
+                endpoint="https://tts.example/api/tts",
                 token="secret-token",
-                voice="longkhongphainong",
                 cache_dir=cache_dir,
             )
             with patch(
@@ -117,11 +116,12 @@ class TimedTTSServiceTest(unittest.TestCase):
             self.assertEqual(
                 json.loads(request.data.decode("utf-8")),
                 {
-                    "model": "gwen-tts",
-                    "input": "Xin chào.",
-                    "voice": "longkhongphainong",
-                    "response_format": "mp3",
-                    "speed": 1.0,
+                    "text": "Xin chào.",
+                    "format": "mp3",
+                    "temperature": 0.45,
+                    "top_k": 30,
+                    "top_p": 0.85,
+                    "speed": 1.15,
                 },
             )
             self.assertNotIn("secret-token", json.dumps(result))
@@ -133,9 +133,8 @@ class TimedTTSServiceTest(unittest.TestCase):
     def test_wrap_reuses_cache_without_duplicate_entries(self):
         with tempfile.TemporaryDirectory() as cache_dir:
             service = TimedTTSService(
-                endpoint="https://tts.example/v1/audio/speech",
+                endpoint="https://tts.example/api/tts",
                 token="secret-token",
-                voice="longkhongphainong",
                 cache_dir=cache_dir,
             )
             with patch(

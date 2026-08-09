@@ -279,7 +279,7 @@ class S2_01_AdaptiveFusion(GlanceScene):
 
         beat(
             self,
-            "Hướng tiếp cận này được gọi là kết hợp thích ứng.",
+            "Hướng tiếp cận này được gọi là kết hợp thích ứng (adaptive routing).",
             Transform(static_head, adaptive_head), FadeOut(all_arrows),
             FadeOut(static_note), FadeOut(node_label),
             LaggedStart(*[nodes[i].animate.set_opacity(0.28)
