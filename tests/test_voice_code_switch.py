@@ -103,7 +103,6 @@ class TimedTTSServiceTest(unittest.TestCase):
             service = TimedTTSService(
                 endpoint="https://tts.example/api/tts",
                 token="secret-token",
-                voice="longkhongphainong",
                 cache_dir=cache_dir,
             )
             with patch(
@@ -117,11 +116,12 @@ class TimedTTSServiceTest(unittest.TestCase):
             self.assertEqual(
                 json.loads(request.data.decode("utf-8")),
                 {
-                    "model": "gwen-tts",
                     "text": "Xin chào.",
-                    "voice": "longkhongphainong",
                     "format": "mp3",
-                    "speed": 1.0,
+                    "temperature": 0.45,
+                    "top_k": 30,
+                    "top_p": 0.85,
+                    "speed": 1.15,
                 },
             )
             self.assertNotIn("secret-token", json.dumps(result))
@@ -135,7 +135,6 @@ class TimedTTSServiceTest(unittest.TestCase):
             service = TimedTTSService(
                 endpoint="https://tts.example/api/tts",
                 token="secret-token",
-                voice="longkhongphainong",
                 cache_dir=cache_dir,
             )
             with patch(

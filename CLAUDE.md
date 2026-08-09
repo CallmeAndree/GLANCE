@@ -11,6 +11,5 @@ Bốn điều dễ sai nhất:
   không tự mở rộng phạm vi.
 - Số liệu chỉ lấy từ `docs/paper-map.md` hoặc `../GraphDataMining.pdf`, và phải kèm
   `source("Bảng X, tr.Y")` trên hình.
-- **Chạy `python -m unittest discover -s tests -t .` trước khi mở PR.** Nó gác việc
-  phiên âm lời thoại cho TTS, không cần cài gì thêm, mất dưới một giây. Render xong
-  mà chưa chạy test là chưa xong: đã từng có 28 câu chưa phiên âm vào `main` vì vậy.
+- **Chạy `python -m unittest discover -s tests -t .` trước khi mở PR** để kiểm tra
+  hạ tầng TTS và các guard kỹ thuật. Render xong mà chưa chạy test là chưa xong.
