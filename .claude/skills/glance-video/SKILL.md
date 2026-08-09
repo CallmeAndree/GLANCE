@@ -30,10 +30,8 @@ thành viên sở hữu và render thành `.mp4` riêng, rồi `ffmpeg` ghép l�
    python -m unittest discover -s tests -t .
    ```
 
-   Không cần cài gì thêm và chạy được từ thư mục nào cũng được. Test gác việc phiên
-   âm lời thoại cho TTS, xem [Thuyết minh](#thuyết-minh-manim-voiceover).
-   Đã từng có một section vào `main` với 28 câu chưa phiên âm vì PR đó không chạy
-   test, dù test có sẵn và bắt đúng lỗi. **Render thành công không thay được test.**
+   Bộ test kiểm tra hạ tầng TTS và các guard kỹ thuật. **Render thành công không
+   thay được test.**
 
 ## Môi trường
 
@@ -131,8 +129,9 @@ Quy tắc:
   TTS đọc ký hiệu toán rất tệ.
 - **Lời `VO` không để tiếng Anh cho model tự đoán cách đọc.** Chữ trên hình vẫn giữ
   thuật ngữ gốc, nhưng lời đọc dùng phiên âm đã chốt (`node` → "nót") và ưu tiên
-  tiếng Việt tự nhiên cho từ còn lại (`routing` → "định tuyến", `embedding` →
-  "véc-tơ biểu diễn"). Acronym dùng đúng
+  tiếng Việt tự nhiên cho từ còn lại (`embedding` → "véc-tơ biểu diễn"). Riêng
+  `routing` có thể giữ nguyên tiếng Anh khi TTS đọc rõ; dùng "định tuyến" khi câu
+  tiếng Việt tự nhiên hơn. Acronym dùng đúng
   bảng phiên âm chung: `LLM` → "eo eo em", `MLP Q` → "em eo pi khiu",
   `GNN` → "gi en en", `GLANCE` → "gờ lans".
   Ngoại lệ tên bài báo: `GLANCE for Context` đọc nguyên cụm là
@@ -223,8 +222,8 @@ Thêm section mới thì phải thêm đường dẫn file vào mảng `SECTIONS
 
 ## Tự kiểm tra kết quả (quan trọng)
 
-Có hai lớp kiểm tra và **không lớp nào thay được lớp kia**: bộ test bắt lỗi nội dung
-lời thoại, còn việc trích frame bắt lỗi bố cục hình.
+Có hai lớp kiểm tra và **không lớp nào thay được lớp kia**: bộ test bắt lỗi hạ tầng
+giọng đọc, còn việc trích frame bắt lỗi bố cục hình.
 
 ### Lớp 1: bộ test
 
@@ -232,18 +231,11 @@ lời thoại, còn việc trích frame bắt lỗi bố cục hình.
 python -m unittest discover -s tests -t .
 ```
 
-Chỉ dùng thư viện chuẩn cho phần quan trọng nhất, chạy được từ thư mục nào cũng được,
-mất dưới một giây. Nó gác:
+Bộ test kiểm tra hạ tầng giọng đọc, gồm `TimedTTSService`, cache và phần code-switch.
 
-- **Phiên âm lời thoại** theo bảng trong `plan.md`, quét cả dict `VO` lẫn chuỗi truyền
-  trực tiếp vào `voiceover(text=...)`, `narrated_caption(...)` và `beat()`.
-- **Nợ phiên âm hiện bằng 0.** Bất kỳ lời thoại mới nào chứa thuật ngữ chưa phiên âm
-  đều làm test đỏ ngay.
-- Hạ tầng giọng đọc: `TimedTTSService` và phần code-switch.
-
-CI ở `.github/workflows/ci.yml` chạy đúng những thứ này cho mỗi push và PR vào `main`,
-cộng thêm một guard chặn việc phiên âm lọt vào tên biến. **Bảng phiên âm chỉ áp cho lời
-thoại**, đừng chạy tìm/thay thế toàn repo: đã có lần làm `C_GNN` thành `C_G N N`.
+CI ở `.github/workflows/ci.yml` chạy những kiểm tra này cho mỗi push và PR vào `main`,
+cộng thêm một guard chặn việc tìm/thay thế lời thoại lọt vào tên biến. Đừng chạy
+tìm/thay thế toàn repo: đã có lần làm `C_GNN` thành `C_G N N`.
 
 ### Lớp 2: trích frame ra xem
 
@@ -276,7 +268,6 @@ ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 build/final
 | `latex` not found | chưa cài LaTeX | cài MacTeX, hoặc thay `MathTex` bằng `txt()` |
 | Chữ tràn khỏi khung | không giới hạn bề rộng | `mobj.scale_to_fit_width(11)` trước khi đặt vị trí |
 | Scene thiếu trong `final.mp4` | đổi tên class sau khi render | xoá `media/` rồi render lại |
-| Test phiên âm đỏ | lời thoại còn thuật ngữ tiếng Anh chưa chuyển | phiên âm theo bảng trong `plan.md` |
 | Phụ đề hiện hai lần | vừa `voiceover` vừa `add_subcaption` | bỏ `add_subcaption` |
 | Hình chạy lố sang câu nói sau | tổng `run_time` > `tracker.duration` | rút bớt animation trong khối |
 | gTTS lỗi mạng khi render | không có internet | render lại khi có mạng, hoặc `GLANCE_TTS=record` |

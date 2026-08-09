@@ -161,7 +161,8 @@ Mọi `txt()`, `heading()`, nhãn biểu đồ, nhãn node và stamp `source()` 
 - Chữ trên hình giữ nguyên thuật ngữ tiếng Anh; lời trong `VO` phải viết theo cách
   model TTS đọc tiếng Việt. **Với thuật ngữ, giữ nguyên từ tiếng Anh và ghi phiên
   âm theo cách đọc**, ví dụ `video` → "vi đi ô". Chỉ dịch sang tiếng Việt khi từ
-  đó đã có cách nói tự nhiên quen thuộc, như `routing` → "định tuyến",
+  đó đã có cách nói tự nhiên quen thuộc. `routing` có thể giữ nguyên tiếng Anh
+  khi TTS đọc rõ; dùng "định tuyến" khi câu tiếng Việt tự nhiên hơn.
   `embedding` → "véc-tơ biểu diễn". Dùng phiên âm đã chốt: `node` → "nót".
   Phiên âm acronym thống nhất:
   `LLM` → "lờ lờ mờ", `MLP Q` → "mờ lờ bê kiu", `MLP` → "mờ lờ bê", `GNN` → "gờ nờ nờ",

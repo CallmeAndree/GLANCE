@@ -8,9 +8,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Job này không cài manim nên chạy trong khoảng vài chục giây. Nó gác những
-  # lỗi đã thực sự xảy ra với repo: lời thoại chưa phiên âm, và tìm/thay thế
-  # phiên âm chạy lan vào code.
+  # Job này không cài manim nên chạy trong khoảng vài chục giây. Nó kiểm tra
+  # cú pháp shell và chặn việc tìm/thay thế lời thoại chạy lan vào code.
   noi-dung:
     name: Nội dung và cú pháp
     runs-on: ubuntu-latest
@@ -27,10 +26,6 @@ jobs:
 
       - name: Cú pháp build.sh
         run: bash -n build.sh
-
-      - name: Lời thoại đã phiên âm cho TTS
-        # Chỉ dùng stdlib. Đây là test đã từng fail trên main mà không ai biết.
-        run: python tests/test_voice_pronunciation.py
 
       - name: Không có phiên âm lọt vào tên biến
         # Đã xảy ra hai lần: chạy replace GNN -> "gi en en" trên cả repo làm

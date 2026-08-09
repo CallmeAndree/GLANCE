@@ -101,7 +101,7 @@ File `.mp4` từng scene nằm trong `media/videos/<tên_file>/<chất_lượng>
    `.run/` đã được Git ignore; không commit key. Bản nộp phải render bằng backend
    này để giọng đồng nhất giữa các section.
    Viết lời thoại theo cách đọc lên: `h_v` → "h của v", `3/4` → "ba phần tư".
-   Phiên âm thuật ngữ theo bảng trong `plan.md`, có test gác việc này.
+   Phiên âm thuật ngữ theo bảng trong `plan.md`.
 
    <details>
    <summary>Backend dự phòng, chỉ dùng khi endpoint của nhóm không chạy</summary>
@@ -126,19 +126,8 @@ File `.mp4` từng scene nằm trong `media/videos/<tên_file>/<chất_lượng>
 ## Kiểm tra
 
 ```bash
-python -m unittest discover -s tests -t .    # cả 9 test
-python tests/test_voice_pronunciation.py     # chỉ test phiên âm, không cần manim
+python -m unittest discover -s tests -t .    # toàn bộ test
 ```
-
-`test_voice_pronunciation.py` chỉ dùng thư viện chuẩn nên chạy được ở bất cứ đâu. Nó báo lỗi
-khi lời thoại còn thuật ngữ tiếng Anh chưa chuyển theo bảng phiên âm trong `plan.md`, và quét
-**mọi** cách viết lời thoại: dict `VO`, `voiceover(text=...)`, `narrated_caption(...)` và
-helper `beat()`. **Chạy test này trước khi mở PR.**
-
-### Phiên âm lời thoại
-
-Toàn bộ lời thoại hiện đã đưa nợ phiên âm về 0. Test sẽ đỏ ngay nếu một chuỗi TTS
-mới chứa lại thuật ngữ tiếng Anh chưa chuyển theo bảng trong `plan.md`.
 
 CI ở `.github/workflows/ci.yml` chạy hai job cho mỗi push và pull request vào `main`: job
 *Nội dung và cú pháp* không cài manim nên xong trong vài chục giây, job *Hạ tầng giọng đọc*

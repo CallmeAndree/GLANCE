@@ -21,6 +21,12 @@ SECTION_NAME = "Routing heuristic"
 OWNER = "Hoàng Phan"
 ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 
+# Layer order for every node-edge illustration in this section.
+GRAPH_EDGE_Z = 0
+GRAPH_EDGE_FX_Z = 1
+GRAPH_NODE_Z = 2
+GRAPH_LABEL_Z = 4
+
 SRC_T1 = "Table 1, p.4"
 
 ASSET_DIR = pathlib.Path(__file__).resolve().parent / "assets"
@@ -164,7 +170,9 @@ HARD_HIGH_DEG = "H"     # bậc 7, 6/7 hàng xóm khác lớp -> GNN sai, mà kh
 def s2_graph():
     """Đồ thị minh hoạ của section 2. Node to và cạnh dày hơn mặc định cho dễ đọc."""
     g = tag_graph(S2_EDGES, S2_POS, labels=S2_LABELS, radius=0.21)
-    g.edges.set_stroke(width=2.8)
+    g.edges.set_stroke(width=2.8).set_z_index(GRAPH_EDGE_Z)
+    for node in g.nodes.values():
+        node.set_z_index(GRAPH_NODE_Z)
     return g
 
 
@@ -185,7 +193,7 @@ def edge_mobjs(graph, pred):
 
 def deg_label(graph, n, color=ACCENT):
     return mono(f"deg {DEG[n]}", size=17, color=color).next_to(
-        graph.nodes[n], UP, buff=0.2).set_z_index(4)
+        graph.nodes[n], UP, buff=0.2).set_z_index(GRAPH_LABEL_Z)
 
 
 def msg_flash(graph, target, sources=None, color=C_HIGHLIGHT, width=5.0,
@@ -203,7 +211,7 @@ def msg_flash(graph, target, sources=None, color=C_HIGHLIGHT, width=5.0,
         if sources is not None and other not in sources:
             continue
         path = Line(graph.nodes[other].get_center(), graph.nodes[target].get_center(),
-                    stroke_width=width, color=color)
+                    stroke_width=width, color=color, z_index=GRAPH_EDGE_FX_Z)
         out.append(ShowPassingFlash(path, time_width=time_width))
     return out
 
@@ -226,11 +234,13 @@ class S2_01_AdaptiveFusion(GlanceScene):
         # Không dùng title card: scene nối trực tiếp từ câu hỏi ở cuối section 1.
         static_head = heading("Static fusion", color=C_BAD).to_edge(UP, buff=0.75)
         nodes = VGroup(*[
-            Dot(radius=0.18, color=C_GNN)
+            Dot(radius=0.18, color=C_GNN).set_z_index(GRAPH_NODE_Z)
             for _ in range(5)
         ]).arrange(DOWN, buff=0.48).move_to(LEFT * 3.4 + DOWN * 0.2)
         node_label = mono("all nodes", size=17, color=MUTED).next_to(nodes, LEFT, buff=0.35)
-        llm = labeled_box("LLM", C_LLM).move_to(RIGHT * 3.1 + DOWN * 0.2)
+        llm = labeled_box("LLM", C_LLM).move_to(
+            RIGHT * 3.1 + DOWN * 0.2
+        ).set_z_index(GRAPH_NODE_Z)
         # Năm mũi tên cùng chụm vào một cạnh của khối lờ lờ mờ, nên đầu mũi tên
         # mặc định phình to thành một bó nhọn. Ép tip_length nhỏ hẳn và cắm vào
         # năm cao độ rời nhau trên cạnh trái để đọc ra từng đường một.
@@ -242,7 +252,7 @@ class S2_01_AdaptiveFusion(GlanceScene):
                 color=C_EDGE, stroke_width=2.0,
                 tip_length=0.10,
                 max_tip_length_to_length_ratio=0.04,
-            )
+            ).set_z_index(GRAPH_EDGE_FX_Z)
             for node, target in zip(nodes, arrow_targets)
         ])
         static_note = txt("Every node queries the LLM", size=21, color=C_BAD)
@@ -269,7 +279,7 @@ class S2_01_AdaptiveFusion(GlanceScene):
                 color=C_ROUTER, stroke_width=2.6,
                 tip_length=0.11,
                 max_tip_length_to_length_ratio=0.05,
-            )
+            ).set_z_index(GRAPH_EDGE_FX_Z)
             for i, offset in zip(selected, (0.18, -0.18))
         ])
         adaptive_note = txt(
@@ -463,7 +473,9 @@ class S2_03_Degree(GlanceScene):
         focus = DashedVMobject(
             SurroundingRectangle(sparse_nodes, color=ACCENT, stroke_width=2.2, buff=0.34),
             num_dashes=48)
-        ok = check(size=0.5).next_to(g.nodes[EASY_LOW_DEG], RIGHT, buff=0.45).set_z_index(4)
+        ok = check(size=0.5).next_to(
+            g.nodes[EASY_LOW_DEG], RIGHT, buff=0.45
+        ).set_z_index(GRAPH_LABEL_Z)
         msg1 = txt("The whole region is one class. The GNN was already right.",
                    size=21, color=C_GOOD).to_edge(DOWN, buff=0.45)
         waste_inner = txt("Wasted LLM call", size=18, color=C_BAD)
@@ -524,8 +536,10 @@ class S2_03_Degree(GlanceScene):
         hub_tag = VGroup(
             panel(mono("degree = 7", size=17, color=C_BAD), buff=0.18, fill_opacity=0.95),
             mono("degree = 7", size=17, color=C_BAD),
-        ).next_to(g.nodes[HARD_HIGH_DEG], DOWN, buff=0.42).set_z_index(4)
-        bad = cross(size=0.42).next_to(g.nodes[HARD_HIGH_DEG], RIGHT, buff=0.5).set_z_index(4)
+        ).next_to(g.nodes[HARD_HIGH_DEG], DOWN, buff=0.42).set_z_index(GRAPH_LABEL_Z)
+        bad = cross(size=0.42).next_to(
+            g.nodes[HARD_HIGH_DEG], RIGHT, buff=0.5
+        ).set_z_index(GRAPH_LABEL_Z)
         msg2 = txt("Degree 7, but 6 of 7 neighbors are a different class.",
                    size=21, color=C_BAD).to_edge(DOWN, buff=0.45)
 
@@ -603,7 +617,8 @@ class S2_04_Density(GlanceScene):
             [3.05, -1.18, 0], [3.42, -0.28, 0], [4.72, 0.78, 0],
         ]
         points = VGroup(*[
-            Dot(p, radius=0.105, color=MUTED).set_z_index(3) for p in coords
+            Dot(p, radius=0.105, color=MUTED).set_z_index(GRAPH_NODE_Z)
+            for p in coords
         ])
         graph_edges = VGroup(*[
             Line(points[i].get_center(), points[j].get_center(),
@@ -613,13 +628,13 @@ class S2_04_Density(GlanceScene):
                 (5, 6), (5, 7), (6, 8), (7, 9), (8, 9),
                 (10, 11), (10, 12), (11, 13), (12, 14), (13, 14), (14, 15),
             ]
-        ]).set_z_index(1)
+        ]).set_z_index(GRAPH_EDGE_Z)
         axes = VGroup(
             Line(LEFT * 5.35 + DOWN * 1.62, RIGHT * 5.35 + DOWN * 1.62,
                  color=C_EDGE, stroke_width=1.4, stroke_opacity=0.45),
             Line(LEFT * 5.35 + DOWN * 1.62, LEFT * 5.35 + UP * 1.65,
                  color=C_EDGE, stroke_width=1.4, stroke_opacity=0.45),
-        )
+        ).set_z_index(GRAPH_EDGE_Z)
 
         topology_icon = VGroup(
             Triangle(color=MUTED, stroke_width=2).scale(0.32),
@@ -641,12 +656,12 @@ class S2_04_Density(GlanceScene):
             VGroup(
                 Circle(radius=0.20, color=C_ROUTER, stroke_width=2.5),
                 Dot(radius=0.075, color=C_ROUTER),
-            ).move_to(p).set_z_index(4)
+            ).move_to(p).set_z_index(GRAPH_NODE_Z)
             for p in centroid_pos
         ])
         centroid_labels = VGroup(*[
             MathTex(rf"CC_{{{i}}}", font_size=24, color=C_ROUTER).next_to(
-                c, direction, buff=0.14)
+                c, direction, buff=0.14).set_z_index(GRAPH_LABEL_Z)
             for i, (c, direction) in enumerate(
                 zip(centroids, [LEFT, RIGHT, LEFT]), start=1)
         ])
@@ -670,7 +685,8 @@ class S2_04_Density(GlanceScene):
         near_centroid = centroids[1]
         near_ring = Circle(radius=0.19, color=C_ROUTER, stroke_width=3).move_to(near_node)
         near_line = DashedLine(near_node.get_center(), near_centroid.get_center(),
-                               color=C_ROUTER, stroke_width=2.5, dash_length=0.12)
+                               color=C_ROUTER, stroke_width=2.5, dash_length=0.12,
+                               z_index=GRAPH_EDGE_FX_Z)
         # Hai công thức xuống thấp thêm một chút để rời hẳn khỏi dải điểm dữ liệu.
         distance = MathTex(r"d_i=\lVert x_i-x_{CC_i}\rVert", font_size=30,
                            color=INK).move_to(LEFT * 0.25 + DOWN * 2.35)
@@ -681,7 +697,8 @@ class S2_04_Density(GlanceScene):
         far_centroid = centroids[2]
         far_ring = Circle(radius=0.20, color=C_LLM, stroke_width=3.2).move_to(far_node)
         far_line = DashedLine(far_node.get_center(), far_centroid.get_center(),
-                              color=C_ROUTER, stroke_width=2.5, dash_length=0.12)
+                              color=C_ROUTER, stroke_width=2.5, dash_length=0.12,
+                              z_index=GRAPH_EDGE_FX_Z)
         near_note = VGroup(
             mono("Near centroid", size=16, color=MUTED),
             mono("high C-density", size=17, color=C_ROUTER),
@@ -725,9 +742,11 @@ class S2_04_Density(GlanceScene):
         router = labeled_box("Router", C_ROUTER, width=2.0, height=0.9)
         llm = labeled_box("LLM", C_LLM, width=2.0, height=0.9)
         route_items = VGroup(routed_node, router, llm).arrange(RIGHT, buff=1.15)
+        route_items.set_z_index(GRAPH_NODE_Z)
         route_arrows = VGroup(*[
             Arrow(route_items[i].get_right(), route_items[i + 1].get_left(),
-                  buff=0.12, color=C_LLM, stroke_width=4)
+                  buff=0.12, color=C_LLM, stroke_width=4,
+                  z_index=GRAPH_EDGE_FX_Z)
             for i in range(2)
         ])
         route_note = mono("GLANCE: bottom-k% by C-density", size=19,
@@ -745,12 +764,17 @@ class S2_04_Density(GlanceScene):
             centroid = VGroup(
                 Circle(radius=0.17, color=C_ROUTER, stroke_width=2.2),
                 Dot(radius=0.06, color=C_ROUTER),
-            )
-            candidate = Dot(radius=0.10, color=MUTED).shift(RIGHT * 1.15)
+            ).set_z_index(GRAPH_NODE_Z)
+            candidate = Dot(radius=0.10, color=MUTED).shift(
+                RIGHT * 1.15
+            ).set_z_index(GRAPH_NODE_Z)
             measure = DashedLine(centroid.get_center(), candidate.get_center(),
-                                 color=C_ROUTER, stroke_width=2.2, dash_length=0.1)
+                                 color=C_ROUTER, stroke_width=2.2, dash_length=0.1,
+                                 z_index=GRAPH_EDGE_FX_Z)
             measured = VGroup(centroid, candidate, measure)
-            same_d = MathTex(r"d_i=d_j", font_size=25, color=MUTED).next_to(measured, UP, buff=0.15)
+            same_d = MathTex(r"d_i=d_j", font_size=25, color=MUTED).next_to(
+                measured, UP, buff=0.15
+            ).set_z_index(GRAPH_LABEL_Z)
             result = VGroup(
                 txt(left_text, size=20, color=left_color, weight=BOLD),
                 mono("→", size=24, color=MUTED),
@@ -813,7 +837,9 @@ class S2_05_Uncertainty(GlanceScene):
         ylab = mono("P(class)", size=16, color=MUTED).next_to(base + LEFT * 1.9, UP, buff=1.5)
         passes = [[0.42, 0.38, 0.20], [0.24, 0.55, 0.21], [0.51, 0.30, 0.19], [0.29, 0.34, 0.37]]
         bars = make_bars(passes[0])
-        node = Dot(LEFT * 3.2 + DOWN * 0.6, radius=0.26, color=C_GNN)
+        node = Dot(
+            LEFT * 3.2 + DOWN * 0.6, radius=0.26, color=C_GNN
+        ).set_z_index(GRAPH_NODE_Z)
         nlab = mono("node v", size=17, color=MUTED).next_to(node, DOWN, buff=0.28)
         counter = mono("forward pass 1 / 4", size=18, color=MUTED)
         counter.next_to(VGroup(axis, ylab), UP, buff=0.4)
@@ -824,12 +850,12 @@ class S2_05_Uncertainty(GlanceScene):
             np.array([axis.get_left()[0] - 0.2, node.get_center()[1], 0.0]),
             buff=0.3, stroke_width=2.4, color=C_EDGE,
             tip_length=0.12, max_tip_length_to_length_ratio=0.06,
-        )
+        ).set_z_index(GRAPH_EDGE_FX_Z)
 
         beat(self, "Cuối cùng là lốc gin.", FadeIn(head), FadeIn(sub), run_time=0.8)
         # "gờ nờ nờ uncertainty" — chuỗi chữ cái rời ghép ngay vào một từ tiếng
         # Anh nên bị đọc méo; dùng "độ bất định của gờ nờ nờ" và đọc nhanh hơn.
-        beat(self, "Công trình này dùng độ bất định của gờ nờ nờ làm tiêu chí định tuyến.",
+        beat(self, "Công trình này dùng độ bất định (ân certainty) của gờ nờ nờ làm tiêu chí định tuyến.",
              speed=1.15)
         beat(self, "Mô hình chạy nhiều lần lượt truyền xuôi với đờ-róp-ao bật.",
              GrowFromCenter(node), FadeIn(nlab), GrowArrow(arrow), Create(axis),
@@ -888,24 +914,29 @@ class S2_05_Uncertainty(GlanceScene):
              FadeIn(criteria, shift=UP * 0.12),
              run_time=1.2)
 
-        gnn_source = labeled_box("GNN", C_GNN, width=1.9, height=0.72).move_to(DOWN * 1.45)
+        gnn_source = labeled_box("GNN", C_GNN, width=1.9, height=0.72).move_to(
+            DOWN * 1.45
+        ).set_z_index(GRAPH_NODE_Z)
         to_uncertainty = Arrow(
             gnn_source.get_top(), criteria[2].get_bottom(), buff=0.18,
             color=ACCENT, stroke_width=2.2, tip_length=0.12,
             max_tip_length_to_length_ratio=0.06,
-        )
+        ).set_z_index(GRAPH_EDGE_FX_Z)
         struggling = VGroup(
             cross(color=C_BAD, size=0.22),
             txt("GNN is struggling here", size=19, color=C_BAD, weight=BOLD),
-        ).arrange(RIGHT, buff=0.2).move_to(DOWN * 2.5)
+        ).arrange(RIGHT, buff=0.2).move_to(
+            LEFT * 0.35 + DOWN * 2.5
+        ).set_z_index(GRAPH_NODE_Z)
         beat(self, "Nhưng độ bất định cao chỉ nói rằng gờ nờ nờ đang gặp khó.",
              FadeIn(gnn_source), GrowArrow(to_uncertainty),
              FadeIn(struggling, shift=UP * 0.1), run_time=1.3)
 
         llm_guess = labeled_box("LLM does better?", C_LLM, width=3.4, height=0.72)
-        llm_guess.move_to(RIGHT * 3.9 + DOWN * 2.5)
+        llm_guess.move_to(RIGHT * 4.55 + DOWN * 2.5).set_z_index(GRAPH_NODE_Z)
         maybe_link = DashedLine(struggling.get_right(), llm_guess.get_left(),
-                                dash_length=0.12, color=MUTED, stroke_width=2)
+                                dash_length=0.12, color=MUTED, stroke_width=2,
+                                z_index=GRAPH_EDGE_FX_Z)
         not_implied = txt("not implied", size=15, color=MUTED)
         not_implied.next_to(maybe_link, UP, buff=0.12)
         beat(self, "Nó không đảm bảo lờ lờ mờ sẽ làm tốt hơn.",
@@ -950,11 +981,20 @@ class S2_05_Uncertainty(GlanceScene):
         self.clear_scene(keep=(bnr,))
 
         # --- rủi ro rewiring của LOGIN -------------------------------------------
-        a = Dot(LEFT * 1.5 + DOWN * 0.2, radius=0.24, color=C_GNN)
-        b = Dot(RIGHT * 1.5 + DOWN * 0.2, radius=0.24, color=C_LLM)
-        e = Line(a.get_center(), b.get_center(), stroke_color=C_EDGE, stroke_width=4)
-        elab = mono("heterophilous edge", size=17, color=MUTED).next_to(e, UP, buff=0.25)
-        cut = cross(size=0.4).move_to(e).set_z_index(4)
+        a = Dot(LEFT * 1.5 + DOWN * 0.2, radius=0.24, color=C_GNN).set_z_index(
+            GRAPH_NODE_Z
+        )
+        b = Dot(RIGHT * 1.5 + DOWN * 0.2, radius=0.24, color=C_LLM).set_z_index(
+            GRAPH_NODE_Z
+        )
+        e = Line(
+            a.get_center(), b.get_center(), stroke_color=C_EDGE, stroke_width=4,
+            z_index=GRAPH_EDGE_Z,
+        )
+        elab = mono("heterophilous edge", size=17, color=MUTED).next_to(
+            e, UP, buff=0.25
+        ).set_z_index(GRAPH_LABEL_Z)
+        cut = cross(size=0.4).move_to(e).set_z_index(GRAPH_LABEL_Z)
         warn = txt("Cutting hard edges can cut useful information too.",
                    size=22, color=C_BAD).next_to(e, DOWN, buff=1.0)
 
