@@ -7,4 +7,4 @@ Bốn ràng buộc dễ sai nhất:
 - Dùng conda env `graphdm`, không dùng venv.
 - Đọc `sections/<folder>/TASK.md` trước khi sửa section và không tự mở rộng phạm vi.
 - Chỉ lấy số liệu từ `docs/paper-map.md` hoặc `../GraphDataMining.pdf`; số liệu trên hình phải kèm `source("Bảng X, tr.Y")`.
-- Chạy `python -m unittest discover -s tests -t .` trước khi mở PR. Nó gác việc phiên âm lời thoại cho TTS, không cần cài gì thêm. Render xong mà chưa chạy test là chưa xong.
+- Chạy `python -m unittest discover -s tests -t .` trước khi mở PR để kiểm tra hạ tầng TTS và các guard kỹ thuật. Render xong mà chưa chạy test là chưa xong.

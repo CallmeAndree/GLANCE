@@ -35,11 +35,12 @@ import manimpango
 
 
 DEFAULT_TIMED_TTS_URL = (
-    "https://sunshine-ten-pvc-merit.trycloudflare.com/v1/audio/speech"
+    "https://seems-contracting-surprise-toolbar.trycloudflare.com/api/tts"
 )
-DEFAULT_TIMED_TTS_MODEL = "gwen-tts"
-DEFAULT_TIMED_TTS_VOICE = "longkhongphainong"
-DEFAULT_TIMED_TTS_SPEED = 1.0
+DEFAULT_TIMED_TTS_TEMPERATURE = 0.45
+DEFAULT_TIMED_TTS_TOP_K = 30
+DEFAULT_TIMED_TTS_TOP_P = 0.85
+DEFAULT_TIMED_TTS_SPEED = 1.15
 DEFAULT_TIMED_TTS_KEY_FILE = ".run/api.key"
 
 
@@ -50,9 +51,10 @@ class TimedTTSService(SpeechService):
         self,
         endpoint,
         token,
-        model=DEFAULT_TIMED_TTS_MODEL,
-        voice=DEFAULT_TIMED_TTS_VOICE,
         audio_format="mp3",
+        temperature=DEFAULT_TIMED_TTS_TEMPERATURE,
+        top_k=DEFAULT_TIMED_TTS_TOP_K,
+        top_p=DEFAULT_TIMED_TTS_TOP_P,
         speed=DEFAULT_TIMED_TTS_SPEED,
         timeout=120,
         **kwargs,
@@ -64,9 +66,10 @@ class TimedTTSService(SpeechService):
         super().__init__(**kwargs)
         self.endpoint = endpoint.rstrip("/")
         self.token = token
-        self.model = model
-        self.voice = voice
         self.audio_format = audio_format.lower()
+        self.temperature = float(temperature)
+        self.top_k = int(top_k)
+        self.top_p = float(top_p)
         self.speed = float(speed)
         self.timeout = timeout
 
@@ -89,11 +92,12 @@ class TimedTTSService(SpeechService):
     def _cache_input_data(self, input_text):
         return {
             "input_text": input_text,
-            "service": "glance-timed-tts-v1",
+            "service": "glance-timed-tts-v2",
             "endpoint": self.endpoint,
-            "model": self.model,
-            "voice": self.voice,
             "format": self.audio_format,
+            "temperature": self.temperature,
+            "top_k": self.top_k,
+            "top_p": self.top_p,
             "speed": self.speed,
         }
 
@@ -197,10 +201,11 @@ class TimedTTSService(SpeechService):
         )
         payload = json.dumps(
             {
-                "model": self.model,
-                "input": input_text,
-                "voice": self.voice,
-                "response_format": self.audio_format,
+                "text": input_text,
+                "format": self.audio_format,
+                "temperature": self.temperature,
+                "top_k": self.top_k,
+                "top_p": self.top_p,
                 "speed": self.speed,
             },
             ensure_ascii=False,
@@ -1241,13 +1246,19 @@ class GlanceScene(VoiceoverScene):
                     "GLANCE_TIMED_TTS_URL", DEFAULT_TIMED_TTS_URL
                 ),
                 token=_read_tts_key(key_file),
-                model=os.environ.get(
-                    "GLANCE_TIMED_TTS_MODEL", DEFAULT_TIMED_TTS_MODEL
-                ),
-                voice=os.environ.get(
-                    "GLANCE_TIMED_TTS_VOICE", DEFAULT_TIMED_TTS_VOICE
-                ),
                 audio_format=os.environ.get("GLANCE_TIMED_TTS_FORMAT", "mp3"),
+                temperature=float(
+                    os.environ.get(
+                        "GLANCE_TIMED_TTS_TEMPERATURE",
+                        DEFAULT_TIMED_TTS_TEMPERATURE,
+                    )
+                ),
+                top_k=int(
+                    os.environ.get("GLANCE_TIMED_TTS_TOP_K", DEFAULT_TIMED_TTS_TOP_K)
+                ),
+                top_p=float(
+                    os.environ.get("GLANCE_TIMED_TTS_TOP_P", DEFAULT_TIMED_TTS_TOP_P)
+                ),
                 speed=float(
                     os.environ.get("GLANCE_TIMED_TTS_SPEED", DEFAULT_TIMED_TTS_SPEED)
                 ),
