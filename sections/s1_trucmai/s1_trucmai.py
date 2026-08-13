@@ -26,6 +26,7 @@ DIM = gs.C_EDGE
 DARK = gs.C_EDGE
 INK = gs.INK
 PANEL_2 = gs.BG
+TITLE_WEIGHT = HEAVY
 
 def t(text, size=26, color=LIGHT, weight=NORMAL, **kwargs):
     return gs.txt(text, size=size, color=color, weight=weight, **kwargs)
@@ -51,47 +52,59 @@ def panel(width, height, stroke=DIM, fill=PANEL_2, opacity=0.64):
         height=height,
         corner_radius=0.12,
         stroke_color=stroke,
-        stroke_width=1.6,
+        stroke_width=2.4,
         fill_color=fill,
         fill_opacity=opacity,
     )
 
 def module(title, subtitle="", width=2.45, height=1.05, emphasized=False):
-    stroke = BRIGHT if emphasized else DIM
+    semantic = None
+    upper = title.upper()
+    if any(token in upper for token in ("FUSION", "ROUTER", "GLANCE")):
+        semantic = gs.C_ROUTER
+    elif "LLM" in upper:
+        semantic = gs.C_LLM
+    elif "GNN" in upper:
+        semantic = gs.C_GNN
+    stroke = semantic or (BRIGHT if emphasized else DIM)
     box = panel(width, height, stroke=stroke, fill=BG, opacity=0.88)
-    title_m = fit(t(title, 21, BRIGHT if emphasized else LIGHT, BOLD), width - 0.28)
+    title_m = fit(t(title, 21, semantic or (BRIGHT if emphasized else LIGHT), BOLD), width - 0.28)
     parts = VGroup(title_m)
     if subtitle:
-        parts.add(fit(t(subtitle, 14, MID), width - 0.28))
+        parts.add(fit(t(subtitle, 16, INK, SEMIBOLD), width - 0.28))
     parts.arrange(DOWN, buff=0.07).move_to(box)
     return VGroup(box, parts)
 
-def small_arrow(start, end, color=LIGHT, stroke_width=2.0, buff=0.10, dashed=False):
+def small_arrow(start, end, color=gs.C_EDGE, stroke_width=2.6, buff=0.10,
+                dashed=False, snap=True):
     if dashed:
+        start, end = gs._snapped_arrow_points(start, end)
         return DashedLine(start, end, dash_length=0.09, color=color, stroke_width=stroke_width)
-    return Arrow(start, end, buff=buff, color=color, stroke_width=stroke_width, tip_length=0.11)
+    return gs.small_arrow(
+        start, end, buff=buff, color=color, stroke_width=stroke_width,
+        snap=snap,
+    )
+
+
+def boundary_line(source, target, color=gs.C_EDGE, stroke_width=2.6, buff=0.02):
+    """Straight connector trimmed to the visible boundaries of two mobjects."""
+    return gs.boundary_line(
+        source, target, color=color, stroke_width=stroke_width,
+        buff=buff, z_index=-1,
+    )
+
+
+def boundary_arrow(source, target, color=gs.C_EDGE, stroke_width=2.8, buff=0.06):
+    """Arrow from outer boundary to outer boundary, including grouped graphs."""
+    return gs.boundary_arrow(
+        source, target, color=color, stroke_width=stroke_width,
+        buff=buff,
+    )
 
 def node(label="", target=False, radius=0.20):
-    circle = Circle(
-        radius=radius,
-        stroke_color=BRIGHT if target else LIGHT,
-        stroke_width=2.6 if target else 1.5,
-        fill_color=BRIGHT if target else BG,
-        fill_opacity=0.22 if target else 1,
-    )
-    
-    parts = VGroup()
-    if target:
-        bg_circle = Circle(radius=radius, fill_color=BG, fill_opacity=1, stroke_width=0)
-        parts.add(bg_circle)
-    parts.add(circle)
-    
-    if label:
-        label_m = fit(t(str(label), max(11, int(radius * 60)), LIGHT, BOLD), radius * 1.2)
-        label_m.move_to(circle)
-        parts.add(label_m)
-        
-    return parts
+    # Reuse the same outlined target-node identity as Sections 3–5.  Semantic
+    # state is shown with rings/flash effects, never by replacing the base fill.
+    return gs.avatar_node(str(label), target=target, radius=radius)
 
 def doc_icon(title="Document", lines=None, width=3.0, height=2.0, emphasized=False):
     lines = lines or ["Title and abstract", "Methods and evidence", "Topic and context"]
@@ -99,23 +112,26 @@ def doc_icon(title="Document", lines=None, width=3.0, height=2.0, emphasized=Fal
         width=width,
         height=height,
         corner_radius=0.08,
-        stroke_color=BRIGHT if emphasized else DIM,
-        stroke_width=1.8,
-        fill_color=BG,
-        fill_opacity=0.92,
+        stroke_color=BRIGHT if emphasized else gs.C_EDGE,
+        stroke_width=3.0,
+        fill_color=gs.C_PANEL,
+        fill_opacity=1.0,
     )
     fold = Polygon(
         box.get_corner(UR) + LEFT * 0.34,
         box.get_corner(UR) + DOWN * 0.34,
         box.get_corner(UR),
-        stroke_color=DIM,
-        fill_color=BG,
+        stroke_color=BRIGHT if emphasized else gs.C_EDGE,
+        stroke_width=2.4,
+        fill_color=gs.C_PANEL,
         fill_opacity=1,
     )
-    heading = fit(t(title, 20, BRIGHT if emphasized else LIGHT, BOLD), width - 0.48)
-    body = VGroup(*[fit(t(line, 16, LIGHT), width - 0.52) for line in lines])
-    body.arrange(DOWN, aligned_edge=LEFT, buff=0.14)
-    content = VGroup(heading, body).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+    heading = fit(t(title, 20, BRIGHT if emphasized else INK, HEAVY), width - 0.48)
+    body = VGroup(*[
+        fit(t(line, 16, INK, SEMIBOLD), width - 0.52) for line in lines
+    ])
+    body.arrange(DOWN, aligned_edge=LEFT, buff=0.18)
+    content = VGroup(heading, body).arrange(DOWN, aligned_edge=LEFT, buff=0.27)
     content.move_to(box).shift(LEFT * 0.04)
     result = VGroup(box, fold, content)
     result.heading = heading
@@ -180,34 +196,41 @@ def cross_mark(size=0.18, color=BRIGHT):
     ).scale(size)
 
 def create_tag_graph(scale=1.0):
-    positions = {
-        "A": ORIGIN,
-        "B": LEFT * 2.25 + UP * 1.35,
-        "C": LEFT * 2.60 + DOWN * 0.75,
-        "D": LEFT * 0.85 + UP * 2.0,
-        "E": LEFT * 0.90 + DOWN * 1.70,
-        "F": RIGHT * 1.0 + UP * 1.85,
-        "G": RIGHT * 2.45 + UP * 1.05,
-        "H": RIGHT * 2.30 + DOWN * 0.65,
-        "I": RIGHT * 0.95 + DOWN * 1.85,
-    }
-    positions = {key: value * scale for key, value in positions.items()}
-    pairs = [
-        ("A", "B"), ("A", "C"), ("A", "D"), ("A", "E"), ("A", "F"), ("A", "H"), ("A", "I"),
-        ("B", "C"), ("B", "D"), ("C", "E"), ("D", "F"), ("F", "G"), ("F", "H"), ("G", "H"), ("H", "I"),
-    ]
-    edges = VGroup(*[
-        Line(positions[u], positions[v], buff=0.19 * scale, color=DARK, stroke_width=1.6)
-        for u, v in pairs
+    """Return the shared 12-node TAG with stable letter aliases.
+
+    Section 1 used to invent a separate nine-node network.  Reusing
+    ``demo_tag`` gives the viewer object permanence across sections 1, 3 and
+    4.  A/B/C form the small citation triangle used below, while A remains the
+    familiar high-homophily hub (shared node 4).
+    """
+    shared = gs.demo_tag(labels=True, scale=scale)
+    # The shared helper intentionally keeps generic center-to-center edges.
+    # S1 zooms closer, so trim every edge to the node circumference here.
+    shared.edges = VGroup(*[
+        boundary_line(shared.nodes[u], shared.nodes[v], color=gs.C_EDGE,
+                      stroke_width=2.2, buff=0.01)
+        for u, v in gs.DEMO_EDGES
     ])
-    nodes = {
-        key: node(key, target=key == "A", radius=(0.26 if key == "A" else 0.18) * scale).move_to(pos)
-        for key, pos in positions.items()
+    letter_to_id = {
+        "A": 4, "B": 2, "C": 1, "D": 0, "E": 3, "F": 5,
+        "G": 7, "H": 6, "I": 8, "J": 9, "K": 10, "L": 11,
     }
-    nodes_vgroup = VGroup(*nodes.values()).set_z_index(5)
-    graph = VGroup(edges, nodes_vgroup)
-    graph.edges = edges
+    nodes = {letter: shared.nodes[node_id] for letter, node_id in letter_to_id.items()}
+    nodes["A"].set_stroke(gs.C_ROUTER, width=2.8).scale(1.18)
+
+    labels = VGroup()
+    label_map = {}
+    for letter, dot in nodes.items():
+        label = t(letter, size=12, color=INK, weight=HEAVY).move_to(dot)
+        label.set_z_index(6)
+        labels.add(label)
+        label_map[letter] = label
+
+    graph = VGroup(shared.edges, VGroup(*nodes.values()), labels)
+    graph.edges = shared.edges
     graph.nodes = nodes
+    graph.node_labels = labels
+    graph.node_label_map = label_map
     return graph
 
 def create_target_neighborhood(kind="clean", label="A", scale=1.0):
@@ -217,12 +240,16 @@ def create_target_neighborhood(kind="clean", label="A", scale=1.0):
     neighbors = VGroup()
     for index, pos in enumerate(positions):
         conflicting = kind == "noisy" and index in {1, 2, 5, 7}
-        shape = Square(side_length=0.32 * scale).rotate(PI / 4) if conflicting else Circle(radius=0.17 * scale)
-        shape.set_stroke(LIGHT, 1.6).set_fill(BG, 1).move_to(pos)
+        color = gs.C_BAD if conflicting else LIGHT
+        shape = gs.graph_node(
+            color=color, radius=0.17 * scale, fill_opacity=0.12,
+            stroke_width=3.2 if conflicting else 2.8,
+        ).move_to(pos)
         neighbors.add(shape)
     edges = VGroup(*[
         (DashedLine if kind == "noisy" and index in {1, 5} else Line)(
-            target.get_center(), neighbor.get_center(), buff=0.26 * scale, color=DARK, stroke_width=1.6
+            target.get_center(), neighbor.get_center(), buff=0.26 * scale,
+            color=gs.C_EDGE, stroke_width=2.4,
         ).set_z_index(-1)
         for index, neighbor in enumerate(neighbors)
     ])
@@ -285,8 +312,39 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             gs.GlanceScene.speech_service(self), create_subcaption=True
         )
 
+    def ensure_section_header(self):
+        """Keep section 1 on the same top-left chrome row as sections 2-5."""
+        current = getattr(self, "section_header", None)
+        if current is not None and current in self.mobjects:
+            return current
+
+        header = gs.section_chrome("1", "Core fusion problem", "01").set_z_index(100)
+        reference = header.copy()
+        reference_center = reference.get_center().copy()
+        if not hasattr(self, "_section_title_started_at"):
+            self._section_title_started_at = self.renderer.time
+
+        def follow_frame(mobject):
+            gs.update_section_title_visibility(
+                reference,
+                self.renderer.time - self._section_title_started_at,
+                "01",
+            )
+            frame = self.camera.frame
+            scale = frame.width / config.frame_width
+            target = reference.copy().scale(scale)
+            target.move_to(frame.get_center() + reference_center * scale)
+            target.set_z_index(100)
+            mobject.become(target)
+
+        header.add_updater(follow_frame)
+        self.section_header = header
+        self.add(header)
+        return header
+
     def create_subtitle_box(self, text, max_width=12.4): 
-        label = Text(text, font=gs.FONT_MAIN, font_size=20, color=WHITE, weight="SEMIBOLD", stroke_width=1, stroke_color=BLACK)
+        label = Text(text, font=gs.FONT_MAIN, font_size=20, color=WHITE,
+                     weight="SEMIBOLD", stroke_width=1, stroke_color=BG)
         if label.width > max_width:
             raise ValueError(f"Subtitle cue exceeds max width of {max_width}: '{text}'")
         if "\n" in text:
@@ -296,8 +354,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             width=label.width + 0.42,
             height=label.height + 0.18,
             corner_radius=0.15,
-            fill_color=BLACK,
-            fill_opacity=0.6,
+            fill_color=BG,
+            fill_opacity=0.92,
             stroke_width=0,
         )
         box = VGroup(bg, label)
@@ -342,7 +400,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.wait(0.7)
 
     def stage_punchline(self, mobjects, hold=1.5, animate_last_index=-1):
-        overlay = Rectangle(width=25, height=15, fill_color=BLACK, fill_opacity=0.85, stroke_width=0).set_z_index(40)
+        overlay = Rectangle(width=25, height=15, fill_color=BG,
+                            fill_opacity=0.85, stroke_width=0).set_z_index(40)
         punch_group = VGroup(*mobjects).arrange(DOWN, buff=0.4).set_z_index(50)
         
         self.play(FadeIn(overlay), run_time=0.5)
@@ -364,7 +423,51 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         self.wait(hold)
         self.play(FadeOut(overlay), FadeOut(punch_group), run_time=0.5)
 
+    def remove_families(self, *mobjects):
+        """Remove every animated descendant, not only an ad-hoc parent VGroup.
+
+        Several S1 compositions animate children directly and construct their
+        parent group only later.  Removing only that parent can leave the child
+        mobjects alive for one frame at the next beat.
+        """
+        family = []
+        for mob in mobjects:
+            if mob is not None:
+                family.extend(mob.get_family())
+        self.remove(*family)
+
     def construct(self):
+        # Final QA can render one logical beat without paying for the full S1
+        # monolith. These modes are intentionally internal and do not add new
+        # renderable classes for build.sh to discover.
+        only = os.environ.get("S1_ONLY_SECTION", "").strip().lower()
+        if only == "opening":
+            self.section_1_opening()
+            return
+        if only == "tag":
+            self.section_2_tag()
+            return
+        if only == "hybrid":
+            self.section_2_tag()
+            self.section_3_hybrid_systems()
+            return
+        if only == "paradigms":
+            self.section_5_two_paradigms()
+            return
+        if only == "static":
+            self.sec5_objects = VGroup()
+            self.section_6_static_fusion()
+            return
+        if only == "nodes":
+            self.sec5_objects = VGroup()
+            self.section_6_static_fusion()
+            self.section_7_node_comparison()
+            return
+        if only == "aggregate":
+            self.comparison_objects = VGroup()
+            self.section_9_aggregate_accuracy()
+            return
+
         self.section_1_opening()
         self.section_2_tag()
         self.section_3_hybrid_systems()
@@ -379,6 +482,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     # SECTION 1 — Opening: GLANCE and the Fusion Problem
     # ─────────────────────────────────────────────────────────
     def section_1_opening(self):
+        self.next_section("S1_01_opening")
+        self.ensure_section_header()
         """Opening: dữ liệu không tồn tại độc lập (18–22 giây).
 
         Bốn nhịp theo kịch bản:
@@ -404,13 +509,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         for name, pos, accent in card_specs:
             box = RoundedRectangle(
                 width=2.25, height=1.35, corner_radius=0.12,
-                stroke_color=gs.C_EDGE, stroke_width=2.0,
+                stroke_color=gs.C_EDGE, stroke_width=2.8,
                 fill_color=gs.C_PANEL, fill_opacity=0.92,
             )
             avatar_ring = Circle(
                 radius=0.25,
                 stroke_color=accent,
-                stroke_width=2.2,
+                stroke_width=3.2,
                 fill_color=accent,
                 fill_opacity=0.13,
             )
@@ -500,13 +605,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         # Bên trái: nội dung của một người dùng được tách khỏi mạng xã hội.
         # Dùng bản sao của chính hồ sơ User B để giữ mạch hình liên tục.
         content_source = VGroup(cards[1].copy(), contents[1].copy())
-        content_source.scale(1.12).move_to(LEFT * 4.45 + DOWN * 0.10).set_z_index(6)
+        content_source.scale(1.12).move_to(LEFT * 4.45).set_z_index(6)
         lbl_content = t("TEXT CONTENT", size=24, color=gs.C_LLM, weight=BOLD)
         lbl_content.next_to(content_source, UP, buff=0.35).set_z_index(6)
 
         # Bên phải: ego-network của User B. Các avatar hàng xóm truyền thông tin
         # dọc theo cạnh vào user mục tiêu, thay vì chỉ hiện một nhãn Relationships.
-        graph_center = RIGHT * 4.45 + DOWN * 0.10
+        graph_center = RIGHT * 4.45
         graph_positions = [
             graph_center,
             graph_center + LEFT * 1.25 + UP * 1.05,
@@ -532,43 +637,50 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         target_caption = t("TARGET USER", size=14, color=gs.C_ROUTER, weight=BOLD)
         target_chip = panel(
             target_caption.width + 0.26, target_caption.height + 0.18,
-            stroke=gs.C_ROUTER, fill=BG, opacity=0.95,
+            stroke=gs.C_ROUTER, fill=BG, opacity=1.0,
         )
         target_caption.move_to(target_chip)
         target_label = VGroup(target_chip, target_caption)
         target_label.next_to(target_ring, DOWN, buff=0.12).set_z_index(8)
 
         graph_edges = VGroup(*[
-            Line(
-                graph_nodes[index].get_center(), target_node.get_center(),
+            boundary_line(
+                graph_nodes[index], target_node,
                 color=gs.C_EDGE, stroke_width=2.4,
             )
             for index in range(1, len(graph_nodes))
         ]).set_z_index(4)
         # Hai cạnh phụ giữ cảm giác đây là một mạng, không phải bốn input độc lập.
         graph_edges.add(
-            Line(graph_nodes[1].get_center(), graph_nodes[3].get_center(),
-                 color=gs.C_EDGE, stroke_width=1.8),
-            Line(graph_nodes[2].get_center(), graph_nodes[4].get_center(),
-                 color=gs.C_EDGE, stroke_width=1.8),
+            boundary_line(graph_nodes[1], graph_nodes[3],
+                          color=gs.C_EDGE, stroke_width=1.8),
+            boundary_line(graph_nodes[2], graph_nodes[4],
+                          color=gs.C_EDGE, stroke_width=1.8),
         )
         graph_focus = VGroup(graph_edges, graph_nodes, target_ring, target_label)
         lbl_rel = t("GRAPH STRUCTURE", size=24, color=gs.C_GNN, weight=BOLD)
         lbl_rel.move_to(graph_center + UP * 1.95).set_z_index(6)
 
+        # Caption bounds used to tilt these flows. Pin both to one centerline.
         arr_content = small_arrow(
-            content_source.get_right(), core.get_left(), color=gs.C_LLM, buff=0.30
-        ).set_z_index(5)
+            np.array([content_source.get_right()[0], core.get_y(), 0.0]),
+            core.get_center(), color=gs.C_LLM, buff=0.18, snap=False,
+        ).set_z_index(7)
         arr_rel = small_arrow(
-            target_node.get_left(), core.get_right(), color=gs.C_GNN, buff=0.30
-        ).set_z_index(5)
+            np.array([graph_focus.get_left()[0], core.get_y(), 0.0]),
+            core.get_center(), color=gs.C_GNN, buff=0.18, snap=False,
+        ).set_z_index(7)
 
         with self.narrated_caption([
             "Việc khai thác đồng thời hai nguồn thông tin này",
             "mở ra nhiều cơ hội,",
             "nhưng cũng đặt ra những thách thức mới.",
         ]):
-            self.play(network.animate.set_opacity(0.08), run_time=0.6)
+            # The next composition is dense enough on its own. Remove the
+            # social graph completely so it cannot ghost through the new
+            # content/structure layout.
+            self.play(FadeOut(network), run_time=0.6)
+            self.remove_families(network)
             self.play(
                 FadeIn(content_source, shift=RIGHT * 0.25),
                 FadeIn(lbl_content, shift=DOWN * 0.12),
@@ -586,7 +698,10 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                     lag_ratio=0.16,
                 ),
                 LaggedStart(
-                    *[Indicate(node_m, color=gs.C_GNN, scale_factor=1.10)
+                    *[ShowPassingFlash(
+                        gs.node_focus_ring(node_m, color=gs.C_GNN, buff=0.07),
+                        time_width=0.55,
+                    )
                       for node_m in graph_nodes[1:]],
                     lag_ratio=0.16,
                 ),
@@ -635,24 +750,30 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             )
 
         # ── Nhịp 4 (0:17–0:22): hội tụ -> tiêu đề + poster ──
-        title = t("GLANCE for Context", size=46, color=gs.C_ROUTER, weight=BOLD)
-        title.set_color_by_gradient(gs.C_GNN, gs.C_ROUTER, gs.C_LLM)  # gradient nhận diện GLANCE
+        glance_word = t("GLANCE", size=62, color=gs.C_ROUTER, weight=TITLE_WEIGHT)
+        context_word = t("for Context", size=38, color=gs.C_ROUTER, weight=TITLE_WEIGHT)
+        title = VGroup(glance_word, context_word).arrange(DOWN, buff=0.12)
+        title.set_color_by_gradient(gs.C_GNN, gs.C_ROUTER, gs.C_LLM)
         subtitle = t(
             "Learning When to Leverage LLMs\nfor Node-Aware GNN-LLM Fusion",
-            size=25,
-            color=MID,
+            size=23,
+            color=INK,
+            weight=SEMIBOLD,
             line_spacing=0.8,
         )
-        subtitle.scale_to_fit_width(6.4)
-        title_block = VGroup(title, subtitle).arrange(DOWN, buff=0.34)
-        title_block.to_edge(LEFT, buff=0.8).set_z_index(8)
+        subtitle.scale_to_fit_width(5.5)
+        title_block = VGroup(title, subtitle).arrange(DOWN, buff=0.24).set_z_index(8)
 
         poster = ImageMobject(str(ASSET_DIR / "iclr_2026_poster.png"))
-        poster.scale_to_fit_width(5.9).to_edge(RIGHT, buff=0.6)
+        poster.scale_to_fit_width(4.65).set_opacity(0.92)
         if poster.height > 6.2:
-            poster.scale_to_fit_height(6.2).to_edge(RIGHT, buff=0.6)
-        poster_border = SurroundingRectangle(poster, color=gs.C_EDGE, buff=0.08, stroke_width=2)
+            poster.scale_to_fit_height(6.0)
+        poster_border = SurroundingRectangle(poster, color=gs.C_EDGE, buff=0.08, stroke_width=2.6)
         poster_group = Group(poster, poster_border).set_z_index(8)
+        Group(title_block, poster_group).arrange(RIGHT, buff=0.72).move_to(DOWN * 0.03)
+        title_outline = title.copy().set_fill(opacity=0).set_stroke(
+            gs.C_ROUTER, width=2.0, opacity=0.92,
+        ).set_z_index(9)
 
         with self.narrated_caption([
             "Trong vi đi ô này, chúng ta sẽ cùng tìm hiểu",
@@ -666,12 +787,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 lbl_rel.animate.move_to(core.get_center()).set_opacity(0),
                 run_time=0.8,
             )
+            self.remove(arr_content, arr_rel, content_source, graph_focus,
+                        lbl_content, lbl_rel)
             # Giữ nền ở 0.12 chứ không tắt hẳn: ở 0.07 khung hình gần như đen
             # trong lúc core đang biến thành title, tạo một nhịp trống thấy rõ.
             self.play(
                 Flash(core, color=gs.C_ROUTER, line_length=0.28,
                       num_lines=14, flash_radius=0.55),
-                network.animate.set_opacity(0.12),
                 run_time=0.7,
             )
             # Title và poster vào cùng lúc để không có khoảng trống giữa hai nhịp.
@@ -682,6 +804,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 run_time=0.9,
             )
             self.play(FadeIn(subtitle, shift=UP * 0.2), run_time=0.6)
+            self.play(ShowPassingFlash(title_outline, time_width=0.45), run_time=0.75)
             # Title card phải đứng lại tới hết câu thoại, nếu không cảnh bị cắt
             # sớm và khán giả chưa kịp đọc tên bài báo. Bù đúng phần audio còn
             # lại thay vì đoán bằng self.wait() cố định.
@@ -693,7 +816,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         # Dọn sạch để section 2 mở trên nền trống.
         self.play(
             FadeOut(network), FadeOut(title), FadeOut(subtitle),
-            FadeOut(poster_group), FadeOut(lbl_content), FadeOut(lbl_rel),
+            FadeOut(title_outline), FadeOut(poster_group),
+            FadeOut(lbl_content), FadeOut(lbl_rel),
             run_time=0.7,
         )
 
@@ -702,6 +826,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     # SECTION 2 — Text-Attributed Graphs (TAG)
     # ─────────────────────────────────────────────────────────
     def section_2_tag(self):
+        self.next_section("S1_02_tag")
+        self.ensure_section_header()
         # ── Beat 1: một tài liệu văn bản, rồi lộ ra cả một mạng lưới ──
         paper = create_text_document(
             "Paper A",
@@ -711,9 +837,15 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         paper.heading.set_color(gs.C_LLM)     # văn bản = LLM/amber
         paper[0].set_stroke(gs.C_LLM)
 
-        doc1 = doc_icon("Paper A", ["Title", "Abstract"], width=2.3, height=1.45).move_to(LEFT * 4.3 + UP * 0.35)
-        doc2 = doc_icon("Paper B", ["Title", "Abstract"], width=2.3, height=1.45).move_to(UP * 0.35)
-        doc3 = doc_icon("Paper C", ["Title", "Abstract"], width=2.3, height=1.45).move_to(RIGHT * 4.3 + UP * 0.35)
+        doc1 = doc_icon("Paper A", ["Title", "Abstract", "Keywords"],
+                        width=1.55, height=2.15).move_to(LEFT * 4.1 + UP * 0.25)
+        doc2 = doc_icon("Paper B", ["Title", "Abstract", "Keywords"],
+                        width=1.55, height=2.15).move_to(UP * 0.25)
+        doc3 = doc_icon("Paper C", ["Title", "Abstract", "Keywords"],
+                        width=1.55, height=2.15).move_to(RIGHT * 4.1 + UP * 0.25)
+        for document in (doc1, doc2, doc3):
+            document[0].set_stroke(gs.C_GNN)
+            document[1].set_stroke(gs.C_GNN)
 
         with self.narrated_caption([
             "Hãy hình dung một mạng lưới học thuật kết nối bằng các trích dẫn.",
@@ -734,31 +866,41 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         node_A = graph.nodes["A"]
         node_B = graph.nodes["B"]
         node_C = graph.nodes["C"]
+        label_A = graph.node_label_map["A"]
+        label_B = graph.node_label_map["B"]
+        label_C = graph.node_label_map["C"]
         other_nodes = VGroup(*[n for k, n in graph.nodes.items() if k not in ["A", "B", "C"]])
+        other_labels = VGroup(*[
+            label for key, label in graph.node_label_map.items()
+            if key not in ["A", "B", "C"]
+        ])
 
         with self.narrated_caption([
             "Các bài báo trích dẫn lẫn nhau.",
             "Mỗi bài trở thành một nót, mỗi trích dẫn thành một cạnh.",
         ]):
             self.play(GrowArrow(cite_AB), GrowArrow(cite_BC), Create(cite_AC), run_time=0.8)
-            self.play(
-                ReplacementTransform(doc1, node_A),
-                ReplacementTransform(doc2, node_B),
-                ReplacementTransform(doc3, node_C),
-                FadeOut(cite_AB), FadeOut(cite_BC), FadeOut(cite_AC),
-                run_time=1.1,
-            )
-            self.play(Create(graph.edges), FadeIn(other_nodes, lag_ratio=0.1), run_time=1.0)
-            # "chạm vào một nót thì văn bản của nó bung ra"
-            callout = doc_icon("Paper B", ["Title", "Abstract"], width=2.4, height=1.3).move_to(LEFT * 4.5 + UP * 1.35)
-            link = small_arrow(callout.get_right(), node_B.get_left(), color=DIM, buff=0.12)
-            callout.heading.set_color(gs.C_LLM)   # văn bản node = amber
-            self.play(node_B.animate.set_stroke(gs.C_GNN, width=3.0), GrowArrow(link),
-                      FadeIn(callout, shift=RIGHT * 0.15), run_time=1.0)
-            # Callout "Paper B" là chỗ khán giả phải đọc chữ trong khung; giữ nó
-            # đứng yên một nhịp trước khi fade, không đổi run_time của animation nào.
-            self.wait(1.0)
-            self.play(FadeOut(callout), FadeOut(link), node_B.animate.set_stroke(LIGHT, width=1.5), run_time=0.5)
+            self.play(FadeOut(cite_AB), FadeOut(cite_BC), FadeOut(cite_AC), run_time=0.3)
+            # Preserve the semantic map directly. Text fades while each document
+            # shell travels and contracts into its corresponding graph node.
+            morphs = []
+            for document, graph_node, graph_label in (
+                (doc1, node_A, label_A),
+                (doc2, node_B, label_B),
+                (doc3, node_C, label_C),
+            ):
+                shell = VGroup(document[0], document[1])
+                morphs.append(AnimationGroup(
+                    FadeOut(document[2], scale=0.82),
+                    ReplacementTransform(shell, graph_node),
+                    FadeIn(graph_label, scale=0.72),
+                    lag_ratio=0.0,
+                ))
+            self.play(LaggedStart(*morphs, lag_ratio=0.24), run_time=1.55)
+            self.play(FadeIn(other_nodes, lag_ratio=0.08),
+                      FadeIn(other_labels, lag_ratio=0.08), run_time=0.75)
+            # Edges appear only after all nodes reach their final positions.
+            self.play(Create(graph.edges), run_time=0.9)
 
         # ── Beat 3: cấu trúc này được gọi là TAG; cả mạng sáng lên ──
         # Câu này kết bằng chuỗi chữ cái rời "ti ây gi" nên giọng đọc bị khựng.
@@ -779,9 +921,18 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             fit(legend, 11.5)
             legend.next_to(graph, DOWN, buff=0.3)
 
+            # Center graph + legend as one optical composition.
+            composition = VGroup(graph, legend)
+            vertical_shift = DOWN * 0.05 - composition.get_center()
+            legend.shift(vertical_shift)
+            self.play(graph.animate.shift(vertical_shift), run_time=0.40)
+
             self.play(
                 LaggedStart(
-                    *[Indicate(n, color=gs.C_LLM, scale_factor=1.18)
+                    *[ShowPassingFlash(
+                        gs.node_focus_ring(n, color=gs.C_LLM, buff=0.07),
+                        time_width=0.55,
+                    )
                       for n in graph.nodes.values()],
                     lag_ratio=0.06,
                 ),
@@ -798,7 +949,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         self.tag_graph = graph
 
         # ── Beat 4: hai nguồn thông tin hội tụ vào nót trung tâm ──
-        blackout = Rectangle(width=25, height=15, fill_color=BLACK, fill_opacity=0.9, stroke_width=0).set_z_index(90)
+        blackout = Rectangle(width=25, height=15, fill_color=BG,
+                             fill_opacity=1.0, stroke_width=0).set_z_index(90)
 
         with self.narrated_caption([
             "Ti ây gi cho phép mô hình suy luận từ hai nguồn cùng lúc:",
@@ -806,25 +958,28 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "và nót đó kết nối với những ai.",
         ]):
             self.play(FadeOut(legend), FadeIn(blackout), run_time=0.5)
-            hub = node("A", target=True, radius=0.34).move_to(DOWN * 0.15).set_z_index(96)
-            hub[1].set_stroke(gs.C_ROUTER).set_fill(gs.C_ROUTER, 0.22)  # hub = điểm fusion/tím
-            content = doc_icon("CONTENT", ["Title", "Abstract"], width=2.9, height=1.5,
-                               emphasized=True).move_to(LEFT * 4.2 + DOWN * 0.15).set_z_index(96)
+            hub = node("A", target=True, radius=0.34).move_to(UP * 0.42).set_z_index(96)
+            hub_halo = Circle(radius=0.44, color=gs.C_ROUTER, stroke_width=3).move_to(hub).set_z_index(95)
+            content = doc_icon("CONTENT", ["Title", "Abstract"], width=1.65, height=2.15,
+                               emphasized=True).move_to(LEFT * 4.2 + UP * 0.42).set_z_index(96)
             content.heading.set_color(gs.C_LLM)     # content = LLM/amber
             content[0].set_stroke(gs.C_LLM)
-            structure = create_target_neighborhood("clean", "A", scale=0.5).move_to(RIGHT * 4.2 + DOWN * 0.15).set_z_index(96)
+            structure = create_target_neighborhood("clean", "A", scale=0.5).move_to(RIGHT * 4.2 + UP * 0.42).set_z_index(96)
             struct_label = t("STRUCTURE", 20, gs.C_GNN, BOLD).next_to(structure, UP, buff=0.28).set_z_index(96)
             arr_c = small_arrow(content.get_right(), hub.get_left(), color=gs.C_LLM, buff=0.2)
             arr_s = small_arrow(structure.get_left(), hub.get_right(), color=gs.C_GNN, buff=0.2)
+            arr_c.set_z_index(97)
+            arr_s.set_z_index(97)
             self.play(FadeIn(content, shift=RIGHT * 0.2), FadeIn(structure, shift=LEFT * 0.2),
-                      FadeIn(struct_label), FadeIn(hub), run_time=0.9)
+                      FadeIn(struct_label), FadeIn(hub), Create(hub_halo), run_time=0.9)
             self.play(GrowArrow(arr_c), GrowArrow(arr_s), run_time=0.6)
             self.play(Flash(hub, color=gs.C_ROUTER, line_length=0.2, num_lines=12, flash_radius=0.5), run_time=0.6)
 
         # ── Câu chuyển sang node classification ──
         formula = t("TAG = Textual Content + Graph Structure", 30, BRIGHT, BOLD).to_edge(UP, buff=1.15).set_z_index(96)
         pred = probability_vector("Predicted label", [0.12, 0.71, 0.17], width=2.9,
-                                  emphasized_index=1).next_to(hub, DOWN, buff=0.45).set_z_index(96)
+                                  emphasized_index=1).set_z_index(96)
+        pred.next_to(hub, DOWN, buff=0.28)
 
         with self.narrated_caption([
             "Bài toán đặt ra là làm thế nào để dự đoán nhãn",
@@ -836,12 +991,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
 
         # Handoff cho section_3: graph nằm dưới lớp phủ; punch gom mọi thứ overlay.
         self.tag_blackout = blackout
-        self.tag_punch = VGroup(content, structure, struct_label, arr_c, arr_s, hub, formula, pred)
+        self.tag_punch = VGroup(content, structure, struct_label, arr_c, arr_s, hub, hub_halo, formula, pred)
 
     # ─────────────────────────────────────────────────────────
     # SECTION 3 — Hybrid Systems
     # ─────────────────────────────────────────────────────────
     def section_3_hybrid_systems(self):
+        self.next_section("S1_03_hybrid_systems")
         """Timeline trái→phải: shallow text features → GNN → hybrid GNN–LLM.
 
         Màu: đặc trưng nông = xám (MUTED); GNN / cấu trúc = xanh (C_GNN);
@@ -855,7 +1011,23 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "thường được biểu diễn bằng các đặc trưng tương đối nông,",
             "như tê ép y đê ép hoặc véc-tơ biểu diễn tĩnh.",
         ]):
+            # Delete debris hidden below the opaque cover before fading it.
+            # This prevents a brief reveal of old TAG elements.
+            protected_ids = {
+                id(member)
+                for protected in (
+                    graph, self.tag_punch, self.tag_blackout,
+                    getattr(self, "section_header", None),
+                )
+                if protected is not None
+                for member in protected.get_family()
+            }
+            hidden_below_cover = [
+                mob for mob in self.mobjects if id(mob) not in protected_ids
+            ]
+            self.remove_families(*hidden_below_cover)
             self.play(FadeOut(self.tag_punch), FadeOut(self.tag_blackout), run_time=0.4)
+            self.remove_families(self.tag_punch, self.tag_blackout)
             # Dọn dứt điểm phần còn lại của section 2: legend, callout và các
             # object trung gian không nằm trong tag_punch/tag_blackout vẫn còn
             # sống dưới lớp phủ và lộ mờ ra ở cảnh sau. Giữ đúng `graph` vì
@@ -863,25 +1035,39 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             leftovers = [m for m in self.mobjects if m is not graph and graph not in m.get_family()]
             if leftovers:
                 self.remove(*leftovers)
-            self.play(graph.animate.scale(0.62).to_edge(LEFT, buff=0.6).shift(DOWN * 0.2),
+            self.ensure_section_header()
+            self.play(graph.animate.scale(0.62).move_to(LEFT * 4.35 + UP * 0.15),
                       run_time=0.8)
             tfidf = custom_feature_vector("TF-IDF", [0.2, 0.8, 0.3, 0.6, 0.15],
                                           color=MID, width=2.5).scale(0.82)
             static = custom_feature_vector("Static embeddings", [0.5, 0.35, 0.7, 0.3, 0.6],
                                            color=MID, width=2.5).scale(0.82)
-            VGroup(tfidf, static).arrange(DOWN, buff=0.55).move_to(RIGHT * 1.0 + UP * 0.35)
+            feature_stack = VGroup(tfidf, static).arrange(DOWN, buff=0.55)
+            feature_stack.move_to(UP * 0.25)
             shallow_label = t("Shallow Text Features", size=23, color=MID, weight=BOLD)\
-                .next_to(VGroup(tfidf, static), UP, buff=0.35)
+                .next_to(feature_stack, UP, buff=0.35)
             self.play(FadeIn(shallow_label), run_time=0.4)
             self.play(FadeIn(tfidf, shift=LEFT * 0.2), FadeIn(static, shift=LEFT * 0.2),
                       lag_ratio=0.3, run_time=1.1)
 
         # ── Beat 2 (0:08–0:17): đưa vào GNN, message passing xanh ──
         gnn_mod = module("GNN", "structural learning", width=3.0, height=0.95,
-                         emphasized=True).move_to(RIGHT * 4.6 + UP * 0.35)
+                         emphasized=True).move_to(RIGHT * 4.35)
+        gnn_mod.set_y(feature_stack.get_y() + 0.38)
         gnn_mod[0].set_stroke(gs.C_GNN)
         gnn_mod[1][0].set_color(gs.C_GNN)
-        arr_in = small_arrow(VGroup(tfidf, static).get_right(), gnn_mod.get_left(), color=gs.C_GNN)
+        feature_midpoint = np.array([
+            max(tfidf[0].get_right()[0], static[0].get_right()[0]),
+            (tfidf[0].get_y() + static[0].get_y()) / 2,
+            0.0,
+        ])
+        gnn_direction = np.array(gnn_mod.get_center(), dtype=float) - feature_midpoint
+        gnn_unit = gnn_direction / np.linalg.norm(gnn_direction)
+        gnn_entry = gnn_mod.get_boundary_point(-gnn_unit) - gnn_unit * 0.05
+        arr_in = Arrow(
+            feature_midpoint, gnn_entry, buff=0, color=gs.C_GNN,
+            stroke_width=2.8, tip_length=0.10,
+        )
         with self.narrated_caption([
             "Các véc-tơ này sau đó được đưa vào gờ nờ nờ",
             "để tổng hợp thông tin từ những nót lân cận.",
@@ -892,7 +1078,10 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             flashes = [ShowPassingFlash(e.copy().set_stroke(gs.C_GNN, 4), time_width=0.5)
                        for e in graph.edges]
             self.play(LaggedStart(*flashes, lag_ratio=0.06), run_time=1.3)
-            self.play(Indicate(hub, color=gs.C_GNN, scale_factor=1.4), run_time=0.7)
+            self.play(ShowPassingFlash(
+                gs.node_focus_ring(hub, color=gs.C_GNN, buff=0.10),
+                time_width=0.55,
+            ), run_time=0.7)
 
         # ── Beat 3 (0:17–0:24): cấu trúc tốt, ngữ nghĩa hạn chế ──
         with self.narrated_caption([
@@ -918,14 +1107,14 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         # Bố cục hai hàng, mỗi hàng một nhánh. Các mobject trong cùng một hàng
         # được ép về CÙNG tung độ trước khi tạo mũi tên, nên mũi tên nằm ngang
         # tuyệt đối — bản cũ nối box lệch cao độ nên mũi tên bị xéo.
-        ROW_SEM, ROW_STRUCT = 1.55, -1.45
+        ROW_SEM, ROW_STRUCT = 1.72, -1.72
 
         sem_rep = custom_feature_vector("Semantic representation", [0.7, 0.85, 0.6, 0.9, 0.75],
                                         color=gs.C_LLM, width=2.8).scale(0.78)
         struct_rep = custom_feature_vector("Structural representation", [0.75, 0.5, 0.85, 0.45, 0.7],
                                            color=gs.C_GNN, width=2.8).scale(0.78)
-        sem_rep.move_to(RIGHT * 4.35 + UP * ROW_SEM)
-        struct_rep.move_to(RIGHT * 4.35 + UP * ROW_STRUCT)
+        sem_rep.move_to(RIGHT * 4.55 + UP * ROW_SEM)
+        struct_rep.move_to(RIGHT * 4.55 + UP * ROW_STRUCT)
         # Mũi tên cắm vào KHUNG véc-tơ (phần [0]), không phải cả group kèm nhãn,
         # nên lấy đúng tung độ của khung làm trục của cả hàng.
         y_sem = sem_rep[0].get_center()[1]
@@ -947,21 +1136,22 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             # văn bản của nót) và xuống gờ nờ nờ (tổng hợp hàng xóm). Đồ thị ở
             # lại trên màn hình suốt beat, để thấy hai năng lực cùng khai thác
             # một nguồn dữ liệu chứ không phải hai đầu vào rời nhau.
+            self.play(FadeOut(VGroup(tfidf, static, shallow_label, arr_in, struct_tag, sem_tag)),
+                      run_time=0.35)
             self.play(
-                FadeOut(VGroup(tfidf, static, shallow_label, arr_in, struct_tag, sem_tag)),
-                graph.animate.scale(0.66).move_to(LEFT * 4.7),
+                graph.animate.scale(0.66).move_to(LEFT * 4.65),
                 gnn_mod.animate.move_to(RIGHT * 0.55).set_y(y_struct),
-                run_time=0.9,
+                run_time=0.65,
             )
-            # Hai nhánh xuất phát từ mép phải đồ thị, ở hai cao độ khác nhau.
-            branch_up = small_arrow(graph.get_right() + UP * 0.35, llm_mod.get_left(),
-                                    color=gs.C_LLM, buff=0.18)
-            branch_dn = small_arrow(graph.get_right() + DOWN * 0.35, gnn_mod.get_left(),
-                                    color=gs.C_GNN, buff=0.18)
+            # Mirror fan-out from the outer graph boundary to each model box.
+            branch_up = boundary_arrow(graph, llm_mod, color=gs.C_LLM, buff=0.10)
+            branch_dn = boundary_arrow(graph, gnn_mod, color=gs.C_GNN, buff=0.10)
             branch_up_lbl = t("node text", size=15, color=gs.C_LLM)
-            branch_up_lbl.next_to(branch_up.get_center(), UL, buff=0.20)
+            branch_up_lbl.rotate(branch_up.get_angle())
+            branch_up_lbl.move_to(branch_up.point_from_proportion(0.52) + UP * 0.28)
             branch_dn_lbl = t("neighbors", size=15, color=gs.C_GNN)
-            branch_dn_lbl.next_to(branch_dn.get_center(), DL, buff=0.20)
+            branch_dn_lbl.rotate(branch_dn.get_angle())
+            branch_dn_lbl.move_to(branch_dn.point_from_proportion(0.52) + DOWN * 0.28)
 
             arr_ls = small_arrow(llm_mod.get_right(), sem_rep[0].get_left(), color=gs.C_LLM)
             arr_gs = small_arrow(gnn_mod.get_right(), struct_rep[0].get_left(), color=gs.C_GNN)
@@ -991,13 +1181,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "Vậy, có thực sự cần gọi lờ lờ mờ cho tất cả các nót?",
         ]):
             fusion = module("GNN–LLM Fusion", "one strategy for every node",
-                            width=3.7, height=1.05, emphasized=True).move_to(RIGHT * 4.35)
+                            width=3.7, height=1.05, emphasized=True).move_to(RIGHT * 4.55)
             fusion[0].set_stroke(gs.C_ROUTER)
             fusion[1][0].set_color(gs.C_ROUTER)
-            to_fusion_sem = small_arrow(sem_rep.get_bottom(), fusion.get_top() + LEFT * 0.5,
-                                        color=gs.C_LLM, buff=0.14)
-            to_fusion_struct = small_arrow(struct_rep.get_top(), fusion.get_bottom() + LEFT * 0.5,
-                                           color=gs.C_GNN, buff=0.14)
+            to_fusion_sem = small_arrow(sem_rep[0].get_bottom(), fusion.get_top(),
+                                        color=gs.C_LLM, buff=0.10)
+            to_fusion_struct = small_arrow(struct_rep[0].get_top(), fusion.get_bottom(),
+                                           color=gs.C_GNN, buff=0.10)
             self.play(
                 FadeOut(VGroup(branch_up, branch_dn, branch_labels, arr_ls, arr_gs,
                                llm_mod, gnn_mod)),
@@ -1016,19 +1206,34 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             # Đồ thị lệch sang phải, khối hợp nhất lùi hẳn về góc trên trái, số
             # đếm xuống góc dưới phải: ba thứ chiếm ba vùng riêng nên không đè
             # nhau như bản đặt tất cả vào giữa.
+            self.play(FadeOut(VGroup(to_fusion_sem, to_fusion_struct)), run_time=0.25)
             self.play(
-                FadeOut(VGroup(sem_rep, struct_rep, to_fusion_sem, to_fusion_struct)),
+                FadeOut(VGroup(sem_rep, struct_rep)),
                 graph.animate.scale(1.5).move_to(RIGHT * 1.5 + DOWN * 0.15),
-                fusion.animate.scale(0.8).to_corner(UL, buff=0.6),
-                run_time=0.9,
+                fusion.animate.scale(0.8).move_to(LEFT * 4.55 + UP * 2.05),
+                run_time=0.75,
             )
             queries = ValueTracker(0)
-            counter = always_redraw(
-                lambda: t(f"LLM queries: {int(queries.get_value())} / {len(node_list)}",
-                          size=22,
-                          color=gs.C_LLM if queries.get_value() > 0 else MID,
-                          weight=BOLD).to_corner(DR, buff=0.7)
-            )
+            def query_counter():
+                label = t(
+                    f"LLM queries: {int(queries.get_value())} / {len(node_list)}",
+                    size=22,
+                    color=gs.C_LLM if queries.get_value() > 0 else INK,
+                    weight=BOLD,
+                )
+                frame = RoundedRectangle(
+                    width=label.width + 0.48,
+                    height=label.height + 0.30,
+                    corner_radius=0.12,
+                    fill_color=BG,
+                    fill_opacity=1.0,
+                    stroke_color=gs.C_LLM,
+                    stroke_width=2.2,
+                )
+                label.move_to(frame)
+                return VGroup(frame, label).to_corner(DR, buff=0.70).shift(UP * 1.28)
+
+            counter = always_redraw(query_counter).set_z_index(35)
             self.add(counter)
             self.play(
                 LaggedStart(*[
@@ -1073,19 +1278,29 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             # frame và không fade out cùng phần còn lại được.
             counter.clear_updaters()
 
-            # Kết bằng câu hỏi routing, không kết bằng "hybrid là lời giải".
-            # Câu hỏi gom về MỘT góc (dưới trái) thay vì nằm giữa đè lên đồ thị;
-            # lớp phủ cũng nhẹ đi để vẫn thấy các nót vừa sáng phía sau.
-            dim = Rectangle(width=25, height=15, fill_color=BLACK,
-                            fill_opacity=0.35, stroke_width=0).set_z_index(60)
-            question = t("Does every node really need the LLM?",
-                         size=30, color=INK, weight=BOLD).set_z_index(70)
-            cost_line = t("Accuracy <-> Computational cost",
-                          size=24, color=gs.C_ROUTER).set_z_index(70)
-            closing = VGroup(question, cost_line).arrange(DOWN, aligned_edge=LEFT, buff=0.26)
-            fit(closing, 6.4)
-            closing.to_corner(DL, buff=0.8)
-            self.play(FadeIn(dim), FadeIn(question, shift=UP * 0.12), run_time=0.8)
+            # End on the routing question. It is the frame's primary hierarchy;
+            # graph and metrics become supporting evidence.
+            dim = Rectangle(width=25, height=15, fill_color=BG,
+                            fill_opacity=0.22, stroke_width=0).set_z_index(60)
+            question = t("DOES EVERY NODE REALLY NEED THE LLM?",
+                         size=35, color=INK, weight=TITLE_WEIGHT).set_z_index(70)
+            cost_line = t("Accuracy  <->  Computational cost",
+                          size=21, color=gs.C_ROUTER,
+                          weight=SEMIBOLD).set_z_index(70)
+            closing = VGroup(question, cost_line).arrange(DOWN, buff=0.20)
+            fit(closing, 11.2)
+            closing.move_to(UP * 2.35)
+            metric = easy_tag.copy().scale(0.80).move_to(
+                LEFT * 4.25 + DOWN * 2.05
+            ).set_z_index(70)
+            self.play(
+                FadeIn(dim),
+                graph.animate.move_to(UP * 0.05),
+                fusion.animate.scale(0.78).move_to(LEFT * 4.25 + DOWN * 1.15),
+                FadeOut(easy_tag), FadeIn(metric),
+                FadeIn(question, shift=UP * 0.12),
+                run_time=0.8,
+            )
             self.play(FadeIn(cost_line), run_time=0.5)
 
         # Dọn NGOÀI khối voiceover: nếu fade ngay trong khối thì khối còn phải
@@ -1096,22 +1311,26 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     # SECTION 5 — Two Existing GNN–LLM Paradigms
     # ─────────────────────────────────────────────────────────
     def section_5_two_paradigms(self):
+        self.next_section("S1_04_two_paradigms")
+        self.ensure_section_header()
         if getattr(self, "glance_title", None) is not None and self.glance_title in self.mobjects:
             self.remove(self.glance_title)
 
-        title = t("TWO GNN–LLM FUSION PARADIGMS", size=34, color=INK, weight=BOLD).to_edge(UP, buff=0.38)
+        title = fit(t("TWO GNN–LLM FUSION PARADIGMS", size=34, color=INK, weight=BOLD), 11.0)
+        title.move_to([0, gs.TITLE_Y, 0])
 
         enhancer_title = t("LLM-AS-ENHANCER", size=26, color=LIGHT, weight=BOLD)
-        enh_p = VGroup(module("Text", width=1.7), module("LLM", width=1.7, emphasized=True),
-                       module("GNN", width=1.7), module("Predict", width=1.7)).arrange(DOWN, buff=0.35)
+        pipeline_width = 2.2
+        enh_p = VGroup(module("Text", width=pipeline_width), module("LLM", width=pipeline_width, emphasized=True),
+                       module("GNN", width=pipeline_width), module("Predict", width=pipeline_width)).arrange(DOWN, buff=0.35)
         enh_arrows = VGroup(*[small_arrow(enh_p[i].get_bottom(), enh_p[i+1].get_top()) for i in range(3)])
-        enh_group = VGroup(enhancer_title, VGroup(enh_p, enh_arrows)).arrange(DOWN, buff=0.35).scale(0.88).move_to(LEFT * 3.5 + UP * 0.1)
+        enh_group = VGroup(enhancer_title, VGroup(enh_p, enh_arrows)).arrange(DOWN, buff=0.48).scale(0.88).move_to(LEFT * 3.5 + DOWN * 0.15)
 
         predictor_title = t("LLM-AS-PREDICTOR", size=26, color=LIGHT, weight=BOLD)
-        pred_p = VGroup(module("Text+Graph", width=2.2), module("Prompt", width=2.2),
-                        module("LLM", width=2.2, emphasized=True), module("Predict", width=2.2)).arrange(DOWN, buff=0.35)
+        pred_p = VGroup(module("Text+Graph", width=pipeline_width), module("Prompt", width=pipeline_width),
+                        module("LLM", width=pipeline_width, emphasized=True), module("Predict", width=pipeline_width)).arrange(DOWN, buff=0.35)
         pred_arrows = VGroup(*[small_arrow(pred_p[i].get_bottom(), pred_p[i+1].get_top()) for i in range(3)])
-        pred_group = VGroup(predictor_title, VGroup(pred_p, pred_arrows)).arrange(DOWN, buff=0.35).scale(0.88).move_to(RIGHT * 3.5 + UP * 0.1)
+        pred_group = VGroup(predictor_title, VGroup(pred_p, pred_arrows)).arrange(DOWN, buff=0.48).scale(0.88).move_to(RIGHT * 3.5 + DOWN * 0.15)
 
         # Ba khối dưới đây đọc tên hai paradigm bằng phiên âm rời rạc; sinh ở
         # 1.15x cho liền mạch, chỉ ba khối này chứ không cả section.
@@ -1125,12 +1344,9 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         # Enhancer deep-dive
         hetero_nbhd = create_target_neighborhood(kind="noisy", scale=0.9).move_to(RIGHT * 2.8 + DOWN * 0.2)
         with self.narrated_caption(["lờ lờ mờ ass èn han xờ tạo véc-tơ ngữ nghĩa giàu hơn,", "rồi gờ nờ nờ tiếp tục truyền thông tin và dự đoán."], speed=1.25):
+            self.play(FadeOut(pred_group), FadeOut(title), run_time=0.35)
             self.play(
-                FadeOut(pred_group),
                 enh_group.animate.scale(1.08).shift(RIGHT * 1.2),
-                # Tiêu đề rời hẳn màn hình thay vì thu nhỏ nằm lại ở góc: chữ nhỏ
-                # đó không còn nhiệm vụ gì trong các nhịp sau, chỉ làm rối khung.
-                FadeOut(title),
                 FadeIn(hetero_nbhd.target), FadeIn(hetero_nbhd.neighbors), FadeIn(hetero_nbhd.edges),
                 run_time=0.8
             )
@@ -1145,7 +1361,10 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             
             inject_arr = small_arrow(vec_rich.get_bottom(), hetero_nbhd.target.get_top())
             self.play(GrowArrow(inject_arr), run_time=0.8)
-            self.play(hetero_nbhd.target[0].animate.set_stroke(gs.C_LLM), hetero_nbhd.target[1].animate.set_color(gs.C_LLM), run_time=0.8)
+            self.play(ShowPassingFlash(
+                gs.node_focus_ring(hetero_nbhd.target, color=gs.C_LLM, buff=0.08),
+                time_width=0.55,
+            ), run_time=0.8)
             self.wait(0.6)
             self.play(FadeOut(vec_rich), FadeOut(inject_arr), run_time=0.6)
             conflicting_msgs = VGroup(*[create_message_vector(
@@ -1174,7 +1393,12 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             # Cột paradigm lùi hẳn về mép trái và nhỏ lại: nó vẫn neo bối cảnh
             # "đang nói về nhánh enhancer", nhưng nhường dải giữa cho khối
             # AGGREGATE và trục tiềm ẩn — bản đầu đặt chồng lên nhau.
-            self.play(enh_group.animate.scale(0.78).to_edge(LEFT, buff=0.3), run_time=0.6)
+            self.play(
+                FadeOut(enh_group, shift=LEFT * 0.35),
+                hetero_nbhd.animate.move_to(RIGHT * 2.75 + UP * 0.10),
+                run_time=0.6,
+            )
+            self.remove_families(enh_group)
 
             # Message cùng lớp xanh, message xung đột coral.
             self.play(
@@ -1203,27 +1427,36 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             )
             self.play(
                 FadeOut(agg_dots, scale=0.3),
-                hetero_nbhd.target[0].animate.set_stroke(gs.C_BAD),
-                hetero_nbhd.target[1].animate.set_color(gs.C_BAD),
+                ShowPassingFlash(
+                    gs.node_focus_ring(hetero_nbhd.target, color=gs.C_BAD, buff=0.08),
+                    time_width=0.55,
+                ),
                 run_time=0.8,
             )
 
             # Trục tiềm ẩn: h_v trước → sau, vượt qua ranh giới quyết định.
-            axis = Line(LEFT * 2.2, RIGHT * 2.2, color=DIM, stroke_width=2)
-            axis.move_to(LEFT * 2.5 + DOWN * 2.25)
+            # Keep the latent axis beside the neighborhood, sharing its vertical
+            # centre instead of floating below the composition.
+            axis = Line(LEFT * 1.75, RIGHT * 1.75, color=DIM, stroke_width=3.2)
+            axis.move_to(LEFT * 1.80 + UP * 0.10).set_z_index(1)
             boundary = DashedLine(axis.get_center() + UP * 0.42, axis.get_center() + DOWN * 0.42,
-                                  dash_length=0.08, color=MID, stroke_width=2)
+                                  dash_length=0.08, color=MID, stroke_width=2.8)
             class_a = t("class A", size=15, color=gs.C_GOOD).next_to(axis.get_left(), DOWN, buff=0.22)
             class_b = t("class B", size=15, color=gs.C_BAD).next_to(axis.get_right(), DOWN, buff=0.22)
-            h_before = Dot(axis.get_left() + RIGHT * 0.7, radius=0.09, color=gs.C_GNN)
+            h_before = Dot(axis.get_left() + RIGHT * 0.60, radius=0.09, color=gs.C_GNN)\
+                .set_z_index(5)
             h_before_lbl = MathTex(r"h_v\ \text{before}", font_size=22, color=gs.C_GNN).next_to(h_before, UP, buff=0.16)
             self.play(Create(axis), Create(boundary), FadeIn(class_a), FadeIn(class_b),
                       FadeIn(h_before), FadeIn(h_before_lbl), run_time=0.8)
 
-            h_after = h_before.copy().set_color(gs.C_BAD).move_to(axis.get_right() + LEFT * 0.7)
+            h_after = h_before.copy().set_color(gs.C_BAD)\
+                .move_to(axis.get_right() + LEFT * 0.60).set_z_index(5)
             h_after_lbl = MathTex(r"h_v\ \text{after}", font_size=22, color=gs.C_BAD).next_to(h_after, UP, buff=0.16)
-            drift = small_arrow(h_before.get_center() + UP * 0.03, h_after.get_center() + UP * 0.03,
-                                color=gs.C_BAD, buff=0.16)
+            drift = Arrow(
+                h_before.get_center(), h_after.get_center(),
+                buff=0.14, color=gs.C_BAD,
+                stroke_width=3.2, tip_length=0.10,
+            ).set_z_index(6)
             self.play(GrowArrow(drift), run_time=0.5)
             self.play(FadeIn(h_after), FadeIn(h_after_lbl), run_time=0.7)
 
@@ -1232,22 +1465,62 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 t("A:  0.78  ->  0.39", size=20, color=gs.C_BAD, weight=BOLD),
                 t("B:  0.17  ->  0.55", size=20, color=gs.C_BAD, weight=BOLD),
                 t("Schematic example", size=13, color=MID),
-            ).arrange(DOWN, buff=0.14).move_to(RIGHT * 4.75 + DOWN * 2.35)
+            ).arrange(DOWN, buff=0.14).move_to(RIGHT * 2.75 + DOWN * 2.15)
             self.play(FadeIn(shift_rows, shift=UP * 0.1), run_time=0.7)
             self.wait(0.4)
 
-            # Punchline KHÔNG kèm lớp phủ: hình bên dưới giữ nguyên độ sáng, câu
-            # chốt nằm ở dải trên cùng nên không cần làm mờ gì cả.
-            bias_text = VGroup(
-                t("BETTER SEMANTICS ≠ RELIABLE AGGREGATION", size=34, color=INK, weight=BOLD),
-                t("Message passing still depends on neighbors", size=20, color=gs.C_BAD),
-            ).arrange(DOWN, buff=0.22).move_to(UP * 2.55).set_z_index(100)
-            self.play(FadeIn(bias_text, shift=UP * 0.1), run_time=1.0)
-            self.wait(0.7)
-            self.aggregation_debris = VGroup(
-                axis, boundary, class_a, class_b,
-                h_before, h_before_lbl, h_after, h_after_lbl, drift, shift_rows,
+            # Reduce the frame to one claim, one neighborhood and one compact
+            # before/after block. The previous pipeline and class axis repeated
+            # the same story and competed with the headline.
+            before_rows = VGroup(
+                t("BEFORE", size=16, color=MID, weight=BOLD),
+                t("A  0.78", size=20, color=gs.C_GNN, weight=BOLD),
+                t("B  0.17", size=20, color=MID),
+            ).arrange(DOWN, aligned_edge=LEFT, buff=0.12)
+            after_rows = VGroup(
+                t("AFTER", size=16, color=MID, weight=BOLD),
+                t("A  0.39", size=20, color=gs.C_BAD, weight=BOLD),
+                t("B  0.55", size=20, color=gs.C_BAD, weight=BOLD),
+            ).arrange(DOWN, aligned_edge=LEFT, buff=0.12)
+            before_card = VGroup(
+                panel(2.05, 1.48, stroke=gs.C_GNN, fill=BG, opacity=0.92),
+                before_rows,
             )
+            before_rows.move_to(before_card[0])
+            after_card = VGroup(
+                panel(2.05, 1.48, stroke=gs.C_BAD, fill=BG, opacity=0.92),
+                after_rows,
+            )
+            after_rows.move_to(after_card[0])
+            VGroup(before_card, after_card).arrange(RIGHT, buff=1.15).move_to(RIGHT * 3.15 + DOWN * 0.25)
+            result_arrow = small_arrow(before_card.get_right(), after_card.get_left(),
+                                       color=gs.C_BAD, buff=0.08)
+            result_block = VGroup(before_card, result_arrow, after_card)
+
+            bias_text = VGroup(
+                t("BETTER SEMANTICS ≠ RELIABLE AGGREGATION", size=36,
+                  color=INK, weight=TITLE_WEIGHT),
+                t("Message passing still depends on neighbors", size=21,
+                  color=gs.C_BAD, weight=SEMIBOLD),
+            ).arrange(DOWN, buff=0.22).move_to(UP * 2.55).set_z_index(100)
+            self.play(
+                FadeOut(conflicting_msgs),
+                FadeOut(VGroup(axis, boundary, class_a, class_b,
+                               h_before, h_before_lbl, h_after, h_after_lbl,
+                               drift, shift_rows)),
+                hetero_nbhd.animate.scale(1.08).move_to(LEFT * 2.85 + DOWN * 0.25),
+                FadeIn(result_block, shift=LEFT * 0.12),
+                FadeIn(bias_text, shift=UP * 0.1),
+                run_time=1.0,
+            )
+            self.remove_families(
+                enh_group, conflicting_msgs,
+                axis, boundary, class_a, class_b,
+                h_before, h_before_lbl, h_after, h_after_lbl,
+                drift, shift_rows,
+            )
+            self.wait(0.7)
+            self.aggregation_debris = VGroup(result_block)
             
         # ── Predictor deep-dive: mở rộng vùng lân cận → chuỗi dài → chi phí ──
         with self.narrated_caption([
@@ -1256,9 +1529,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         ], speed=1.15):
             pred_group.move_to(RIGHT * 2.5 + DOWN * 0.1).scale(1.08)
             self.play(
-                FadeOut(hetero_nbhd), FadeOut(conflicting_msgs), FadeOut(bias_text),
+                FadeOut(hetero_nbhd), FadeOut(bias_text),
                 FadeOut(self.aggregation_debris),
-                FadeOut(enh_group),
                 run_time=0.8
             )
             # Quy trình dựng dần: hộp → mũi tên → hộp kế tiếp, thay vì bật cả
@@ -1275,19 +1547,17 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.wait(0.3)
 
         # Lớp phủ nhẹ hơn (0.72): vẫn thấy đồ thị, chuỗi và card phía sau punchline.
-        blackout3 = Rectangle(width=25, height=15, fill_color=BLACK, fill_opacity=0.72).set_z_index(80)
+        blackout3 = Rectangle(width=25, height=15, fill_color=BG,
+                              fill_opacity=1.0).set_z_index(80)
 
         graph_center = LEFT * 3.75 + DOWN * 0.15
         # Ba bán kính vòng lân cận khai báo một chỗ, dùng chung cho cả nót lẫn
         # vòng pulse, để hai thứ luôn khớp nhau.
         RING_1, RING_2, RING_3 = 0.72, 1.38, 1.98
-        # Dải chuỗi neo theo MÉP TRÁI cố định, không căn theo tâm: mỗi lần thêm
-        # ô mà căn tâm thì dải nở về cả hai phía, mép trái trườn lên đầu mũi tên
-        # và chữ 'Serialize'.
-        SEQ_LEFT_X, SEQ_Y = -0.55, 0.35
-        # Card nằm dưới hàng tiêu đề và trên chuỗi: cao hơn thì đè tiêu đề góc,
-        # thấp hơn thì chạm ô đầu tiên của chuỗi.
-        CARD_POS = RIGHT * 4.75 + UP * 1.75
+        # Serialized context grows vertically. A fixed top anchor keeps the
+        # Serialize arrow clear while later hops extend downward, not off-frame.
+        SEQ_CENTER_X, SEQ_Y = 2.20, -0.62
+        CARD_POS = RIGHT * 2.75 + UP * 1.48
 
         def ring_nodes(labels, radius, color, center, angle_offset=0.0):
             """Một vòng lân cận: nót xếp đều trên đường tròn bán kính `radius`.
@@ -1305,30 +1575,38 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 n[0].set_stroke(color)
                 n[1].set_color(color)
                 nodes.add(n)
-                edges.add(Line(center, pos, color=DIM, stroke_width=1.4).set_z_index(85))
+                edges.add(Line(center, pos, buff=0.18,
+                               color=DIM, stroke_width=1.4).set_z_index(85))
             nodes.set_z_index(90)
             return nodes, edges
 
         def seq_box(label, color):
             """Một ô của chuỗi: nhãn nót + hai vạch gợi ý Title/Abstract đi kèm,
             để chuỗi đọc ra là VĂN BẢN đã tuần tự hoá chứ không phải danh sách id."""
-            box = panel(0.42, 0.54, fill=BG, stroke=color).set_opacity(0.85)
-            head = t(label, size=13, color=color, weight=BOLD)
+            box = panel(0.54, 0.78, fill=BG, stroke=color, opacity=1.0)
+            fold = Polygon(
+                box.get_corner(UR) + LEFT * 0.13,
+                box.get_corner(UR) + DOWN * 0.13,
+                box.get_corner(UR),
+                stroke_color=color, stroke_width=1.7,
+                fill_color=BG, fill_opacity=1.0,
+            )
+            head = t(label, size=13, color=INK, weight=HEAVY)
             stripes = VGroup(*[
-                Line(ORIGIN, RIGHT * 0.26, color=color, stroke_width=1.6).set_opacity(0.55)
+                Line(ORIGIN, RIGHT * 0.27, color=color, stroke_width=1.8)
                 for _ in range(2)
-            ]).arrange(DOWN, buff=0.07)
-            VGroup(head, stripes).arrange(DOWN, buff=0.07).move_to(box)
-            return VGroup(box, head, stripes).set_z_index(90)
+            ]).arrange(DOWN, buff=0.045)
+            VGroup(head, stripes).arrange(DOWN, buff=0.08).move_to(box)
+            return VGroup(box, fold, head, stripes).set_z_index(90)
 
         seq_items = []
 
         def grow_sequence(new_items, run_time=0.9, from_nodes=None):
-            """Kéo dài chuỗi theo chiều ngang: ô cũ dịch sang, ô mới bay từ nót."""
+            """Grow one horizontal row of serialized paper cards."""
             seq_items.extend(new_items)
             ghost = VGroup(*[m.copy() for m in seq_items])
-            ghost.arrange(RIGHT, buff=0.07)
-            ghost.align_to(np.array([SEQ_LEFT_X, 0.0, 0.0]), LEFT).set_y(SEQ_Y)
+            ghost.arrange(RIGHT, buff=0.08)
+            ghost.move_to(np.array([SEQ_CENTER_X, SEQ_Y, 0.0]))
             anims = []
             for item, target in zip(seq_items, ghost):
                 if item in new_items:
@@ -1337,7 +1615,18 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                     anims.append(item.animate.move_to(target))
             for index, item in enumerate(new_items):
                 source = from_nodes[index] if from_nodes else None
-                anims.append(TransformFromCopy(source, item) if source else FadeIn(item, scale=0.6))
+                if source:
+                    anims.append(AnimationGroup(
+                        ShowPassingFlash(
+                            gs.node_focus_ring(
+                                source, color=item[0].get_stroke_color(), buff=0.06,
+                            ),
+                            time_width=0.55,
+                        ),
+                        FadeIn(item, scale=0.72),
+                    ))
+                else:
+                    anims.append(FadeIn(item, scale=0.6))
             self.play(LaggedStart(*anims, lag_ratio=0.05), run_time=run_time)
 
         def context_card(nodes_value, prompt_value, prompt_color=LIGHT):
@@ -1362,14 +1651,14 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             rows.move_to(frame)
             return VGroup(frame, rows).move_to(CARD_POS).set_z_index(92)
 
-        target_A = node("A", radius=0.24).move_to(graph_center).set_z_index(90)
-        target_A[0].set_stroke(gs.C_GNN)
-        target_A[1].set_color(gs.C_GNN)
+        target_A = node("A", target=True, radius=0.24).move_to(graph_center).set_z_index(90)
         serialize_arr = small_arrow(
-            graph_center + RIGHT * 2.35,
-            np.array([SEQ_LEFT_X - 0.28, SEQ_Y, 0.0]),
+            np.array([graph_center[0] + 2.05, SEQ_Y, 0.0]),
+            np.array([SEQ_CENTER_X - 3.0, SEQ_Y, 0.0]),
+            snap=False,
         ).set_z_index(90)
-        serialize_txt = t("Serialize", size=19, color=LIGHT).next_to(serialize_arr, UP, buff=0.1).set_z_index(90)
+        serialize_txt = t("SERIALIZED PAPERS", size=19, color=INK, weight=HEAVY)\
+            .move_to(np.array([SEQ_CENTER_X, SEQ_Y + 0.72, 0.0])).set_z_index(90)
         hop_label = t("1-hop context", size=19, color=MID).move_to(graph_center + DOWN * 3.0).set_z_index(90)
         card = context_card("5", "~80")
 
@@ -1443,7 +1732,10 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                               for n, e in zip(wave_a, edges_a)], lag_ratio=0.08),
                 run_time=1.0,
             )
-            grow_sequence([seq_box("N", MID)], run_time=0.5, from_nodes=[wave_a[0]])
+            self.play(ShowPassingFlash(
+                gs.node_focus_ring(wave_a[0], color=gs.C_LLM, buff=0.06),
+                time_width=0.55,
+            ), run_time=0.5)
             card_3 = context_card("34", "~760", prompt_color=gs.C_LLM)
             self.play(ReplacementTransform(card_2, card_3), run_time=0.4)
 
@@ -1452,7 +1744,10 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                               for n, e in zip(wave_b, edges_b)], lag_ratio=0.08),
                 run_time=1.0,
             )
-            grow_sequence([seq_box("Y", MID)], run_time=0.5, from_nodes=[wave_b[0]])
+            self.play(ShowPassingFlash(
+                gs.node_focus_ring(wave_b[0], color=gs.C_LLM, buff=0.06),
+                time_width=0.55,
+            ), run_time=0.5)
             card_4 = context_card("52", "~1.3k", prompt_color=gs.C_LLM)
             self.play(ReplacementTransform(card_3, card_4), run_time=0.4)
             # Đỏ đến SAU một nhịp, không đỏ ngay từ lúc số nhảy.
@@ -1466,15 +1761,14 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         ]):
             punch_group = VGroup(
                 t("MORE NEIGHBORS  ->  MORE TEXT  ->  MORE LLM COST",
-                  size=30, color=BRIGHT, weight=BOLD),
-                t("each query carries the whole neighborhood", size=20, color=gs.C_BAD),
-            # Punchline nằm ở khoảng trống bên PHẢI, dưới dải chuỗi: đặt giữa
-            # khung thì chữ cắt ngang đúng vòng nót bên trái.
+                  size=33, color=BRIGHT, weight=TITLE_WEIGHT),
+                t("each query carries the whole neighborhood", size=21,
+                  color=gs.C_BAD, weight=SEMIBOLD),
             ).arrange(DOWN, buff=0.22).set_z_index(100)
-            fit(punch_group, 6.7)
-            punch_group.move_to(RIGHT * 3.0 + DOWN * 1.75)
-            blackout_punch = Rectangle(width=20, height=15, fill_color=BLACK,
-                                       fill_opacity=0.55).set_z_index(95)
+            fit(punch_group, 11.4)
+            punch_group.move_to(ORIGIN)
+            blackout_punch = Rectangle(width=20, height=15, fill_color=BG,
+                                        fill_opacity=1.0).set_z_index(95)
             self.play(FadeIn(blackout_punch), FadeIn(punch_group, shift=UP * 0.2), run_time=1.0)
             self.wait(0.7)
             
@@ -1483,23 +1777,41 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             # trung gian, nên chúng còn sống dưới lớp blackout rồi lộ ra ở
             # cảnh sau. Gom mọi mobject đang có mặt để dọn dứt điểm.
             # Giữ nguyên nhịp: vẫn không fade out ở đây, để audio chạy hết.
-            self.sec5_objects = Group(*self.mobjects)
+            self.sec5_objects = Group(*[
+                mob for mob in self.mobjects if mob is not self.section_header
+            ])
+            self.sec5_cover = blackout_punch
+            self.sec5_punch = punch_group
 
     # ─────────────────────────────────────────────────────────
     # SECTION 6 — Uniform Static Fusion
     # ─────────────────────────────────────────────────────────
     def section_6_static_fusion(self):
+        self.next_section("S1_05_static_fusion")
         """Fixed Fusion: cùng một cơ chế hợp nhất cho MỌI nót → đặt câu hỏi nghiên cứu.
 
         Không ám chỉ hệ cũ luôn gọi LLM lãng phí — chỉ nhấn: cùng một chiến lược
         hợp nhất cho mọi nót, trong khi nhu cầu mỗi nót lại khác nhau.
         """
-        self.play(FadeOut(self.sec5_objects), run_time=0.5)
+        if hasattr(self, "sec5_cover") and hasattr(self, "sec5_punch"):
+            protected_ids = {
+                id(member)
+                for protected in (self.sec5_cover, self.sec5_punch, self.section_header)
+                for member in protected.get_family()
+            }
+            hidden_below_cover = [
+                mob for mob in self.mobjects if id(mob) not in protected_ids
+            ]
+            self.remove_families(*hidden_below_cover)
+            self.play(FadeOut(self.sec5_punch), FadeOut(self.sec5_cover), run_time=0.5)
+            self.remove_families(self.sec5_punch, self.sec5_cover)
+        else:
+            self.play(FadeOut(self.sec5_objects), run_time=0.5)
 
         # ── Beat 1 (0:00–0:08): mọi nót đi qua cùng một khối Fixed Fusion ──
-        node_a = node("A", radius=0.28).move_to(LEFT * 4.6 + UP * 2.0)
-        node_b = node("B", radius=0.28).move_to(LEFT * 4.6 + ORIGIN)
-        node_c = node("C", radius=0.28).move_to(LEFT * 4.6 + DOWN * 2.0)
+        node_a = node("A", radius=0.22).move_to(LEFT * 4.6 + UP * 2.0)
+        node_b = node("B", radius=0.22).move_to(LEFT * 4.6 + ORIGIN)
+        node_c = node("C", radius=0.22).move_to(LEFT * 4.6 + DOWN * 2.0)
         nodes = VGroup(node_a, node_b, node_c)
 
         fusion = module("Static Fusion", "one rule for every node", width=3.5, height=1.25,
@@ -1540,7 +1852,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "bất kể đặc điểm riêng của từng nót.",
         ]):
             self.play(FadeIn(formula, shift=UP * 0.15), run_time=0.7)
-            self.play(Indicate(fusion, color=gs.C_ROUTER, scale_factor=1.06), run_time=0.8)
+            self.play(Circumscribe(fusion[0], color=gs.C_ROUTER, buff=0.08), run_time=0.8)
 
         # ── Beat 3 (0:17–0:27): nhu cầu mỗi nót khác nhau ──
         need_a = t("needs GNN", size=16, color=gs.C_GNN).next_to(node_a, UP, buff=0.16)
@@ -1567,7 +1879,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "không phản ánh được mức độ hữu ích khác nhau của hai mô hình với từng nót.",
         ]):
             self.play(FadeIn(same_rule, shift=UP * 0.1), run_time=0.5)
-            self.play(Indicate(fusion, color=gs.C_ROUTER, scale_factor=1.04), run_time=0.6)
+            self.play(Circumscribe(fusion[0], color=gs.C_ROUTER, buff=0.08), run_time=0.6)
             self.play(FadeIn(warn, shift=UP * 0.1), run_time=0.6)
 
         # ── Beat 5 (0:34–0:42): Fixed Fusion -> Node-Aware Router + câu hỏi ──
@@ -1575,92 +1887,181 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "Vậy làm thế nào để quyết định, ở cấp độ từng nót,",
             "khi nào nên tận dụng lờ lờ mờ?",
         ]):
-            left_part = VGroup(nodes, arrows, fusion, need_a, need_c)
-            self.play(FadeOut(src), FadeOut(same_rule),
-                      left_part.animate.scale(0.85).shift(LEFT * 1.5),
-                      run_time=0.8)
-
-            router = module("Node-Aware Router", "decide per node", width=3.8, height=1.3, emphasized=True)
+            router = module("Node-Aware Router", "decide per node",
+                            width=3.8, height=1.3, emphasized=True).move_to(UP * 0.05)
             router[0].set_stroke(gs.C_ROUTER)
+            router[0].set_fill(BG, opacity=1.0)
             router[1][0].set_color(gs.C_ROUTER)
+            final_node_positions = [
+                LEFT * 4.15 + UP * 1.65,
+                LEFT * 4.15 + UP * 0.05,
+                LEFT * 4.15 + DOWN * 1.55,
+            ]
+            keep_box = module("Keep GNN", width=2.35, height=0.90)\
+                .move_to(RIGHT * 4.55 + UP * 1.00)
+            query_box = module("Query LLM", "refine GNN", width=2.35, height=0.90,
+                               emphasized=True).move_to(RIGHT * 4.55 + DOWN * 0.90)
+            keep_box[0].set_stroke(gs.C_GNN)
+            keep_box[0].set_fill(BG, opacity=1.0)
+            keep_box[1][0].set_color(gs.C_GNN)
+            query_box[0].set_stroke(gs.C_LLM)
+            query_box[0].set_fill(BG, opacity=1.0)
+            query_box[1][0].set_color(gs.C_LLM)
 
-            r_arr_g = small_arrow(router.get_right() + UP * 0.22,
-                                  router.get_right() + RIGHT * 1.2 + UP * 0.6, color=gs.C_GNN)
-            r_arr_l = small_arrow(router.get_right() + DOWN * 0.22,
-                                  router.get_right() + RIGHT * 1.2 + DOWN * 0.6, color=gs.C_LLM)
-            r_g = t("Keep GNN", size=18, color=gs.C_GNN, weight=BOLD).next_to(r_arr_g.get_end(), RIGHT, buff=0.18)
-            r_l = t("Query LLM", size=18, color=gs.C_LLM, weight=BOLD).next_to(r_arr_l.get_end(), RIGHT, buff=0.18)
-            r_refine = t("refine GNN", size=14, color=gs.C_ROUTER).next_to(r_l, DOWN, buff=0.12, aligned_edge=LEFT)
+            # Compute connectors from the final geometry: balanced clearance on
+            # both sides.  All three inputs share the middle-left port; both
+            # outputs share the middle-right port.  The shafts aim at the box
+            # centres but stop just outside the visible strokes.
+            input_nodes = [n.copy().move_to(pos) for n, pos in zip(nodes, final_node_positions)]
 
-            # Khối bên trái đang có scale tổng là 1.14 * 0.85 = 0.969
-            right_part = VGroup(router, r_arr_g, r_arr_l, r_g, r_l, r_refine).scale(1.14 * 0.85)
-            right_part.shift(fusion.get_center() - router.get_center())
+            def port_arrow(source, target, color, source_port=None, target_port=None):
+                source_anchor = np.array(
+                    source_port if source_port is not None else source.get_center(),
+                    dtype=float,
+                )
+                target_anchor = np.array(
+                    target_port if target_port is not None else target.get_center(),
+                    dtype=float,
+                )
+                direction = target_anchor - source_anchor
+                unit = direction / np.linalg.norm(direction)
+                start = (
+                    source_anchor + unit * 0.05
+                    if source_port is not None
+                    else source.get_boundary_point(unit) + unit * 0.05
+                )
+                end = (
+                    target_anchor - unit * 0.05
+                    if target_port is not None
+                    else target.get_boundary_point(-unit) - unit * 0.05
+                )
+                return Arrow(
+                    start, end, buff=0, color=color,
+                    stroke_width=2.8, tip_length=0.10,
+                )
+
+            input_arrows = VGroup(*[
+                port_arrow(n, router, color=gs.C_EDGE, target_port=router.get_left())
+                for n in input_nodes
+            ])
+            r_arr_g = port_arrow(
+                router, keep_box, color=gs.C_GNN, source_port=router.get_right(),
+            )
+            r_arr_l = port_arrow(
+                router, query_box, color=gs.C_LLM, source_port=router.get_right(),
+            )
 
             center = VGroup(
                 t("Different nodes", size=26, color=INK, weight=BOLD),
                 mt(r"\Rightarrow", size=32, color=gs.C_ROUTER),
                 t("Different model utility", size=26, color=gs.C_ROUTER, weight=BOLD),
-            ).arrange(RIGHT, buff=0.28).to_edge(DOWN, buff=1.1)
+            ).arrange(RIGHT, buff=0.28).move_to(DOWN * 2.65)
 
-            self.play(ReplacementTransform(fusion, router), run_time=0.6)
+            self.play(
+                FadeOut(src), FadeOut(same_rule), FadeOut(arrows),
+                FadeOut(fusion), FadeOut(need_a), FadeOut(need_c),
+                *[n.animate.move_to(pos) for n, pos in zip(nodes, final_node_positions)],
+                run_time=0.8,
+            )
+            self.play(FadeIn(router, scale=0.96), run_time=0.38)
+            self.play(LaggedStart(*[GrowArrow(a) for a in input_arrows], lag_ratio=0.14),
+                      run_time=0.65)
             self.play(GrowArrow(r_arr_g), GrowArrow(r_arr_l),
-                      FadeIn(r_g), FadeIn(r_l), FadeIn(r_refine), run_time=0.7)
-            self.play(FadeOut(warn, shift=UP*0.1), FadeIn(center, shift=UP*0.1), run_time=0.7)
+                      FadeIn(keep_box), FadeIn(query_box), run_time=0.7)
+            self.play(FadeOut(warn, shift=UP * 0.1), run_time=0.25)
+            self.play(FadeIn(center, shift=UP * 0.1), run_time=0.45)
             self.wait(0.4)
 
         # Handoff cho section_7: giữ 3 nót, gom phần còn lại để fade.
         self.static_nodes = nodes
-        self.static_objects = VGroup(router, arrows, r_arr_g, r_arr_l, r_g, r_l, r_refine,
-                                     need_a, need_c, center)
+        self.static_objects = VGroup(router, input_arrows, r_arr_g, r_arr_l,
+                                     keep_box, query_box, center)
 
     # ─────────────────────────────────────────────────────────
     # SECTION 7 — Node A, B, C Comparison
     # ─────────────────────────────────────────────────────────
     def section_7_node_comparison(self):
-        # Fade out static fusion elements, keep nodes briefly
-        self.play(FadeOut(self.static_objects), run_time=0.6)
-        node_a, node_b, node_c = self.static_nodes[0], self.static_nodes[1], self.static_nodes[2]
+        self.next_section("S1_06_node_comparison")
+        # Exit the old composition as one unit. No isolated node is left in a
+        # future layout position while the new scene is still being built.
+        self.play(FadeOut(VGroup(self.static_objects, self.static_nodes)), run_time=0.6)
+
+        TITLE_POS = np.array([0.0, gs.TITLE_Y, 0.0])
+        GRAPH_POS = LEFT * 3.85 + DOWN * 0.15
+        DOC_POS = RIGHT * 3.325 + UP * 1.32
+        GNN_POS = RIGHT * 1.85 + DOWN * 0.38
+        LLM_POS = RIGHT * 4.80 + DOWN * 0.38
+        DECISION_POS = RIGHT * 3.30 + DOWN * 2.28
+
+        def decision_badge(main, sub, color):
+            sub_lines = sub if isinstance(sub, (tuple, list)) else (sub,)
+            rows = VGroup(
+                t(main, size=24, color=color, weight=TITLE_WEIGHT),
+                *[t(line, size=17, color=INK, weight=SEMIBOLD)
+                  for line in sub_lines],
+            ).arrange(DOWN, buff=0.09)
+            frame = panel(
+                max(3.55, rows.width + 0.42), rows.height + 0.30,
+                stroke=color, fill=BG, opacity=1.0,
+            )
+            rows.move_to(frame)
+            return VGroup(frame, rows).move_to(DECISION_POS)
+
+        def case_title(text_value):
+            title_mob = fit(t(text_value, size=32, color=INK,
+                              weight=TITLE_WEIGHT), 11.3)
+            return title_mob.move_to(TITLE_POS)
+
+        def prediction(label, values, emphasized_index, color):
+            return probability_vector(
+                label, values, emphasized_index=emphasized_index,
+                color=color, class_names=["C1", "C2", "C3"], true_index=0,
+            ).scale(0.84)
 
         # ── NODE A ──────────────────────────────────────────
-        group_A = create_target_neighborhood(kind="clean", label="A", scale=0.95).move_to(LEFT * 4 + UP * 0.4)
-        title_A = t("Node A: Clear Structure", size=34, color=INK, weight=BOLD).to_edge(UP, buff=0.35)
-        doc_A = create_text_document("Node A", ["Topic 1", "Topic 2", "Topic 3"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
-        gnn_bar_A = probability_vector("GNN Prediction", [0.85, 0.10, 0.05], emphasized_index=0, color=gs.C_GNN, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 3.5 + DOWN * 0.2).scale(1.2)
+        group_A = create_target_neighborhood(kind="clean", label="A", scale=1.05).move_to(GRAPH_POS)
+        title_A = case_title("Node A: Clear Structure")
+        doc_A = create_text_document(
+            "Node A", ["Topic 1", "Topic 2", "Topic 3"],
+            width=1.82, height=2.05,
+        ).scale(0.85).move_to(DOC_POS)
+        gnn_bar_A = prediction("GNN Prediction", [0.85, 0.10, 0.05], 0, gs.C_GNN)\
+            .move_to(GNN_POS)
+        llm_idle_A = module(
+            "LLM", "not queried",
+            width=gnn_bar_A.width, height=gnn_bar_A.height,
+        )\
+            .move_to(LLM_POS).set_opacity(0.50)
 
         with self.narrated_caption(["ba nót có thể rất khác nhau.", "nót a được gờ nờ nờ xử lý tốt."]):
-            self.play(FadeOut(node_b), FadeOut(node_c), run_time=0.5)
-            self.play(ReplacementTransform(node_a, group_A.target), run_time=0.8)
-            self.play(Write(title_A), FadeIn(group_A.neighbors), FadeIn(group_A.edges), FadeIn(doc_A), run_time=1.0)
+            self.play(Write(title_A), FadeIn(group_A), FadeIn(doc_A), run_time=1.0)
 
         with self.narrated_caption(["hàng xóm đồng thuận, gờ nờ nờ tạo véc-tơ ổn định."]):
             msgs_A = VGroup(*[create_message_vector(n.get_center(), group_A.target.get_center(), color=LIGHT)
                                for n in group_A.neighbors])
             self.play(AnimationGroup(*[GrowArrow(m) for m in msgs_A], lag_ratio=0.1), run_time=1.0)
-            self.play(FadeIn(gnn_bar_A), run_time=0.7)
+            self.play(FadeIn(gnn_bar_A), FadeIn(llm_idle_A), run_time=0.7)
 
         with self.narrated_caption([
             "gờ nờ nờ đã đủ tốt cho nót a,",
             "nên ta giữ dự đoán này và không tốn thêm một lần gọi lờ lờ mờ.",
         ]):
-            # Không chỉ hiện dòng chữ [SKIP LLM]: dựng thành một QUYẾT ĐỊNH giữ
-            # nhánh GNN — dấu ✓, thông điệp chính "KEEP GNN", nhãn phụ nhỏ.
-            keep_rows = VGroup(
-                VGroup(
-                    gs.check(color=gs.C_GOOD, size=0.22),
-                    t("KEEP GNN", size=26, color=gs.C_GOOD, weight=BOLD),
-                ).arrange(RIGHT, buff=0.18),
-                t("No LLM call needed", size=16, color=MID),
-                t("[SKIP LLM]", size=13, color=DIM),
-            ).arrange(DOWN, buff=0.13)
-            skip_card = panel(keep_rows.width + 0.6, keep_rows.height + 0.42,
-                              stroke=gs.C_GOOD, fill=BG, opacity=0.9)
-            keep_rows.move_to(skip_card)
-            skip_label = VGroup(skip_card, keep_rows).next_to(gnn_bar_A, DOWN, buff=0.38)
-            decision_arrow = small_arrow(gnn_bar_A.get_bottom(), skip_card.get_top(),
-                                         color=gs.C_GOOD, buff=0.12)
+            skip_label = decision_badge("KEEP GNN", "No LLM call needed", gs.C_GOOD)
+            between_boxes = np.array([
+                (gnn_bar_A.get_right()[0] + llm_idle_A.get_left()[0]) / 2,
+                min(gnn_bar_A.get_bottom()[1], llm_idle_A.get_bottom()[1]),
+                0.0,
+            ])
+            decision_arrow = small_arrow(
+                between_boxes, skip_label.get_top(),
+                color=gs.C_GOOD, buff=0.08, snap=False,
+            )
 
             self.play(
-                Indicate(group_A.target, color=gs.C_GOOD, scale_factor=1.25),
+                ShowPassingFlash(
+                    gs.node_focus_ring(group_A.target, color=gs.C_GOOD, buff=0.09),
+                    time_width=0.55,
+                ),
                 Indicate(gnn_bar_A, color=gs.C_GOOD, scale_factor=1.04),
                 run_time=0.7,
             )
@@ -1670,21 +2071,33 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             skip_label = VGroup(skip_label, decision_arrow)
 
         # ── NODE B ──────────────────────────────────────────
-        title_B = t("Node B: Noisy Structure, Clear Text", size=34, color=INK, weight=BOLD).to_edge(UP, buff=0.35)
-        group_B = create_target_neighborhood(kind="noisy", label="B", scale=0.95).move_to(LEFT * 4 + UP * 0.4)
-        doc_B = create_text_document("Node B", ["Graph Learning", "Heterophily", "Node Classification"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
-        gnn_bar_B = probability_vector("GNN Prediction", [0.20, 0.65, 0.15], emphasized_index=1, color=gs.C_GNN, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 1.8 + DOWN * 0.8).scale(0.9)
+        title_B = case_title("Node B: Noisy Structure, Clear Text")
+        group_B = create_target_neighborhood(kind="noisy", label="B", scale=1.05).move_to(GRAPH_POS)
+        doc_B = create_text_document(
+            "Node B", ["Graph Learning", "Heterophily", "Node", "Classification"],
+            width=1.82, height=2.05,
+        ).scale(0.85).move_to(DOC_POS)
+        gnn_bar_B = prediction("GNN Prediction", [0.20, 0.65, 0.15], 1, gs.C_GNN)\
+            .move_to(GNN_POS)
+        llm_bar_B = prediction("LLM Corrected", [0.90, 0.05, 0.05], 0, gs.C_LLM)\
+            .move_to(LLM_POS)
+        wrong_B = t("GNN: WRONG", color=gs.C_BAD, weight=BOLD, size=18)\
+            .next_to(gnn_bar_B, DOWN, buff=0.18)
+        correct_B = t("LLM: CORRECT", color=gs.C_GOOD, weight=BOLD, size=18)\
+            .next_to(llm_bar_B, DOWN, buff=0.18)
+        decision_B = decision_badge(
+            "QUERY LLM", ("Clear text repairs", "the prediction"), gs.C_LLM,
+        )
 
         with self.narrated_caption(["nót bê có vùng lân cận chứa nhiều loại khác nhau."]):
+            self.play(FadeOut(title_A), FadeOut(doc_A), FadeOut(group_A),
+                      FadeOut(gnn_bar_A), FadeOut(llm_idle_A),
+                      FadeOut(skip_label), FadeOut(msgs_A), run_time=0.35)
             self.play(
-                FadeOut(title_A),
                 FadeIn(title_B),
-                ReplacementTransform(group_A.neighbors, group_B.neighbors),
-                ReplacementTransform(group_A.target, group_B.target),
-                ReplacementTransform(group_A.edges, group_B.edges),
-                ReplacementTransform(doc_A, doc_B),
-                FadeOut(skip_label), FadeOut(msgs_A),
-                run_time=1.1
+                FadeIn(group_B),
+                FadeIn(doc_B),
+                run_time=0.75
             )
 
         # Câu ngắn bắt đầu bằng chữ thường và kết ngay sau chuỗi "gờ nờ nờ" bị
@@ -1699,64 +2112,67 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 color=DARK if i not in {1, 2, 5, 7} else gs.C_BAD
             ) for i, n in enumerate(group_B.neighbors)])
             self.play(AnimationGroup(*[GrowArrow(m) for m in msgs_B], lag_ratio=0.1), run_time=1.0)
-            self.play(ReplacementTransform(gnn_bar_A, gnn_bar_B), run_time=0.7)
-            wrong_B = t("GNN: WRONG", color=gs.C_BAD, weight=BOLD, size=24).next_to(gnn_bar_B, DOWN, buff=0.25)
+            self.play(FadeIn(gnn_bar_B), run_time=0.45)
             self.play(FadeIn(wrong_B), run_time=0.4)
 
         with self.narrated_caption(["nhưng văn bản nót bê rất rõ ràng.", "lờ lờ mờ sửa lại dự đoán thành công."]):
             self.play(highlight_keywords(doc_B, [0, 1, 2]), run_time=0.8)
-            llm_bar_B = probability_vector("LLM Corrected", [0.90, 0.05, 0.05], emphasized_index=0, color=gs.C_LLM, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 5.2 + DOWN * 0.8).scale(0.9)
             self.play(FadeIn(llm_bar_B), run_time=0.7)
-            correct_B = t("LLM: CORRECT", color=gs.C_GOOD, weight=BOLD, size=24).next_to(llm_bar_B, DOWN, buff=0.25)
-            self.play(FadeIn(correct_B), run_time=0.4)
+            self.play(FadeIn(correct_B), FadeIn(decision_B, shift=UP * 0.1), run_time=0.5)
 
         # Save Node B state for section 8
         self.node_B_state = {
             "title": title_B, "group": group_B, "doc": doc_B,
             "gnn_bar": gnn_bar_B, "llm_bar": llm_bar_B,
-            "wrong": wrong_B, "correct": correct_B, "msgs": msgs_B
+            "wrong": wrong_B, "correct": correct_B, "msgs": msgs_B,
+            "decision": decision_B,
         }
 
         # ── NODE C ──────────────────────────────────────────
-        title_C = t("Node C: Noisy Structure, Ambiguous Text", size=32, color=INK, weight=BOLD).to_edge(UP, buff=0.35)
-        group_C = create_target_neighborhood(kind="noisy", label="C", scale=0.95).move_to(LEFT * 4 + UP * 0.4)
-        doc_C = create_text_document("Node C", ["Some words...", "General text...", "Vague description"], width=3.2, height=1.6).move_to(RIGHT * 3.5 + UP * 1.8)
+        title_C = case_title("Node C: Noisy Structure, Ambiguous Text")
+        group_C = create_target_neighborhood(kind="noisy", label="C", scale=1.05).move_to(GRAPH_POS)
+        doc_C = create_text_document(
+            "Node C", ["Some words...", "General text...", "Vague", "description"],
+            width=1.82, height=2.05,
+        ).scale(0.85).move_to(DOC_POS)
+        gnn_bar_C = prediction("GNN Prediction", [0.10, 0.20, 0.70], 2, gs.C_GNN)\
+            .move_to(GNN_POS)
+        llm_bar_C = prediction("LLM Output", [0.33, 0.34, 0.33], None, gs.C_LLM)\
+            .move_to(LLM_POS)
+        wrong_gnn_C = t("GNN: WRONG", color=gs.C_BAD, weight=BOLD, size=18)\
+            .next_to(gnn_bar_C, DOWN, buff=0.18)
+        wrong_C = t("LLM: UNCERTAIN", color=YELLOW, weight=BOLD, size=18)\
+            .next_to(llm_bar_C, DOWN, buff=0.18)
+        decision_C = decision_badge(
+            "NO RELIABLE GAIN", ("Both models remain", "uncertain"), gs.C_BAD,
+        )
 
         with self.narrated_caption(["nót xê cũng khó với gờ nờ nờ.", "nhưng văn bản lại rất mơ hồ."]):
-            llm_bar_C = probability_vector("LLM Output", [0.33, 0.34, 0.33], emphasized_index=None, color=gs.C_LLM, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 5.2 + DOWN * 0.8).scale(0.9)
-            wrong_C = t("LLM: UNCERTAIN", color=YELLOW, weight=BOLD, size=24).next_to(llm_bar_C, DOWN, buff=0.25)
-            self.play(
-                FadeOut(title_B),
-                FadeIn(title_C),
-                ReplacementTransform(group_B.target, group_C.target),
-                ReplacementTransform(group_B.neighbors, group_C.neighbors),
-                ReplacementTransform(group_B.edges, group_C.edges),
-                ReplacementTransform(doc_B, doc_C),
-                ReplacementTransform(llm_bar_B, llm_bar_C),
-                FadeOut(correct_B),
-                FadeOut(msgs_B),
-                run_time=1.1
-            )
-            self.play(FadeIn(wrong_C), run_time=0.4)
+            self.play(FadeOut(title_B), FadeOut(group_B), FadeOut(doc_B),
+                      FadeOut(gnn_bar_B), FadeOut(llm_bar_B),
+                      FadeOut(wrong_B), FadeOut(correct_B), FadeOut(decision_B),
+                      FadeOut(msgs_B),
+                      run_time=0.35)
+            self.play(FadeIn(title_C), FadeIn(group_C), FadeIn(doc_C),
+                      FadeIn(gnn_bar_C), FadeIn(wrong_gnn_C), run_time=0.75)
 
         with self.narrated_caption(["lờ lờ mờ không đủ bằng chứng để sửa kết quả.", "cả hai mô hình đều thất bại."]):
-            self.wait(0.6)
-            # For Node C, GNN was also wrong. We just update the label for Node C's GNN
-            gnn_bar_C = probability_vector("GNN Prediction", [0.10, 0.20, 0.70], emphasized_index=2, color=gs.C_GNN, class_names=["C1", "C2", "C3"], true_index=0).move_to(RIGHT * 1.8 + DOWN * 0.8).scale(0.9)
-            wrong_gnn_C = t("GNN: WRONG", color=gs.C_BAD, weight=BOLD, size=24).next_to(gnn_bar_C, DOWN, buff=0.25)
-            self.play(ReplacementTransform(gnn_bar_B, gnn_bar_C), FadeOut(wrong_B), FadeIn(wrong_gnn_C), run_time=0.7)
+            self.play(FadeIn(llm_bar_C), FadeIn(wrong_C), run_time=0.55)
+            self.play(FadeIn(decision_C, shift=UP * 0.1), run_time=0.45)
 
         # Save Node C state for section 8
         self.node_C_state = {
             "title": title_C, "group": group_C, "doc": doc_C,
             "gnn_bar": gnn_bar_C, "llm_bar": llm_bar_C,
-            "wrong_gnn": wrong_gnn_C, "wrong_llm": wrong_C, "msgs": msgs_B
+            "wrong_gnn": wrong_gnn_C, "wrong_llm": wrong_C,
+            "decision": decision_C,
         }
 
     # ─────────────────────────────────────────────────────────
     # SECTION 8 — Direct B vs C Comparison
     # ─────────────────────────────────────────────────────────
     def section_8_bc_comparison(self):
+        self.next_section("S1_07_bc_comparison")
         c = self.node_C_state
 
         with self.narrated_caption(["nót bê và nót xê đều khó với gờ nờ nờ.", "nhưng chỉ nót bê nhận được lợi ích từ lờ lờ mờ."]):
@@ -1765,13 +2181,18 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 FadeOut(c["title"]), FadeOut(c["group"]), FadeOut(c["doc"]),
                 FadeOut(c["gnn_bar"]), FadeOut(c["llm_bar"]),
                 FadeOut(c["wrong_gnn"]), FadeOut(c["wrong_llm"]),
+                FadeOut(c["decision"]),
                 run_time=0.5
             )
 
             # TOP ROW: Node B
-            node_b_label = t("Node B", size=32, color=INK, weight=BOLD).move_to(LEFT * 5.0 + UP * 1.5)
+            node_b_label = VGroup(
+                node("B", target=True, radius=0.28),
+                t("Node B", size=26, color=INK, weight=HEAVY),
+            ).arrange(RIGHT, buff=0.24).move_to(LEFT * 5.0 + UP * 1.05)
             
-            text_b = t("Clear Text:\n'Graph Learning...'", size=28, color=INK).next_to(node_b_label, RIGHT, buff=1.0)
+            text_b = t("Clear Text:\n'Graph Learning...'", size=28, color=INK)\
+                .next_to(node_b_label, RIGHT, buff=0.65)
             
             arrow_b = Arrow(text_b.get_right(), text_b.get_right() + RIGHT * 1.2, buff=0.15, color=gs.C_EDGE, stroke_width=4, tip_length=0.2)
             
@@ -1786,9 +2207,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             row_b = VGroup(node_b_label, text_b, arrow_b, result_b)
 
             # BOTTOM ROW: Node C
-            node_c_label = t("Node C", size=32, color=INK, weight=BOLD).move_to(LEFT * 5.0 + DOWN * 1.5)
+            node_c_label = VGroup(
+                node("C", target=True, radius=0.28),
+                t("Node C", size=26, color=INK, weight=HEAVY),
+            ).arrange(RIGHT, buff=0.24).move_to(LEFT * 5.0 + DOWN * 1.05)
             
-            text_c = t("Vague Text:\n'Some words...'", size=28, color=INK).next_to(node_c_label, RIGHT, buff=1.0)
+            text_c = t("Vague Text:\n'Some words...'", size=28, color=INK)\
+                .next_to(node_c_label, RIGHT, buff=0.65)
             text_c.align_to(text_b, LEFT)
             
             arrow_c = Arrow(text_c.get_right(), text_c.get_right() + RIGHT * 1.2, buff=0.15, color=gs.C_EDGE, stroke_width=4, tip_length=0.2)
@@ -1810,13 +2235,15 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.wait(0.5)
 
         conclusion = VGroup(
-            t("GNN DIFFICULTY", size=42, color=gs.C_GNN, weight=BOLD),
-            t("≠", size=56, color=gs.C_BAD, weight=BOLD),
-            t("GUARANTEED LLM BENEFIT", size=42, color=gs.C_LLM, weight=BOLD),
+            t("GNN DIFFICULTY", size=42, color=gs.C_GNN, weight=TITLE_WEIGHT),
+            t("≠", size=56, color=gs.C_BAD, weight=TITLE_WEIGHT),
+            t("GUARANTEED LLM BENEFIT", size=42, color=gs.C_LLM, weight=TITLE_WEIGHT),
         ).arrange(DOWN, buff=0.28).set_z_index(100)
-        blackout5 = Rectangle(width=20, height=15, fill_color=BLACK, fill_opacity=0.85).set_z_index(99)
+        blackout5 = Rectangle(width=20, height=15, fill_color=BG,
+                              fill_opacity=1.0).set_z_index(99)
         with self.narrated_caption(["Nói cách khác, khó với gờ nờ nờ", "chưa chắc hưởng lợi từ lờ lờ mờ."]):
-            self.play(FadeIn(blackout5), FadeIn(conclusion, shift=UP * 0.2), run_time=0.8)
+            self.play(FadeOut(VGroup(row_b, row_c)), run_time=0.35)
+            self.play(FadeIn(blackout5), FadeIn(conclusion, shift=UP * 0.2), run_time=0.65)
             self.wait(0.6)
 
         # Store for morph into section 9
@@ -1826,22 +2253,32 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     # SECTION 9 — Aggregate Accuracy
     # ─────────────────────────────────────────────────────────
     def section_9_aggregate_accuracy(self):
-        # Cả section neo vào MỘT hình: quần thể 100 nót. Bản cũ fade sạch màn
-        # hình ngay nhịp đầu rồi để lời đọc chạy trên nền trống mấy giây.
+        self.next_section("S1_08_aggregate_groups")
         HARD_INDICES = [7, 16, 23, 38, 44, 51, 66, 72, 85, 93]
 
         with self.narrated_caption([
             "Xét một ví dụ cụ thể.",
             "Nó cho thấy vì sao độ chính xác tổng thể có thể tăng rất ít.",
         ]):
-            self.play(FadeOut(self.comparison_objects, shift=UP * 0.3), run_time=0.6)
-            head9 = t("100 NODES  ·  SCHEMATIC EXAMPLE", size=23, color=MID, weight=BOLD)
-            head9.to_edge(UP, buff=0.6)
-            population = VGroup(*[Dot(radius=0.085, color=gs.C_GNN) for _ in range(100)])
+            if len(self.comparison_objects) >= 2:
+                # Old rows are hidden under an opaque cover. Remove them first,
+                # then fade the visible punch/cover so no stale frame can flash.
+                self.remove_families(*self.comparison_objects[2:])
+                visible_cover = VGroup(self.comparison_objects[0], self.comparison_objects[1])
+                self.play(FadeOut(visible_cover, shift=UP * 0.3), run_time=0.6)
+                self.remove_families(visible_cover)
+            else:
+                self.play(FadeOut(self.comparison_objects, shift=UP * 0.3), run_time=0.6)
+            head9 = t("100 NODES  ·  SCHEMATIC EXAMPLE", size=27,
+                      color=INK, weight=TITLE_WEIGHT)
+            head9.move_to([0, gs.TITLE_Y, 0])
+            population = VGroup(*[Dot(radius=0.085, color=MID) for _ in range(100)])
             population.arrange_in_grid(rows=10, cols=10, buff=0.17)
-            population.move_to(LEFT * 3.9 + DOWN * 0.35)
+            population.move_to(LEFT * 2.75 + DOWN * 0.12)
             hard_dots = VGroup(*[population[i] for i in HARD_INDICES])
-            hard_dots.set_color(gs.C_BAD)
+            easy_dots = VGroup(*[
+                population[i] for i in range(len(population)) if i not in HARD_INDICES
+            ])
             self.play(FadeIn(head9), run_time=0.4)
             self.play(
                 LaggedStart(*[FadeIn(d, scale=0.55) for d in population], lag_ratio=0.012),
@@ -1852,71 +2289,122 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "giả sử chín mươi phần trăm là các nót dễ,",
             "còn mười phần trăm là các nót khó.",
         ]):
+            easy_copy = VGroup(
+                t("90 EASY NODES", size=34, color=gs.C_GNN, weight=HEAVY),
+                t("GNN 95%  ->  Fusion 94%", size=21, color=INK, weight=SEMIBOLD),
+            ).arrange(DOWN, buff=0.16)
+            hard_copy = VGroup(
+                t("10 HARD NODES", size=34, color=gs.C_BAD, weight=HEAVY),
+                t("GNN 40%  ->  Fusion 53%", size=21, color=INK, weight=SEMIBOLD),
+            ).arrange(DOWN, buff=0.16)
             easy_group = VGroup(
-                t("90 easy nodes", size=30, color=gs.C_GNN, weight=BOLD),
-                t("GNN 95%   ->   Fusion 94%", size=22, color=LIGHT),
-            ).arrange(DOWN, buff=0.16).move_to(RIGHT * 3.15 + UP * 2.05)
+                panel(5.15, 1.48, stroke=gs.C_GNN, fill=BG, opacity=1.0),
+                easy_copy,
+            )
             hard_group = VGroup(
-                t("10 hard nodes", size=30, color=gs.C_BAD, weight=BOLD),
-                t("GNN 40%   ->   Fusion 53%", size=22, color=LIGHT),
-            ).arrange(DOWN, buff=0.16).move_to(RIGHT * 3.15 + UP * 0.55)
-            self.play(FadeIn(easy_group, shift=UP * 0.15), run_time=0.7)
+                panel(5.15, 1.48, stroke=gs.C_BAD, fill=BG, opacity=1.0),
+                hard_copy,
+            )
+            easy_copy.move_to(easy_group[0])
+            hard_copy.move_to(hard_group[0])
+            stat_cards = VGroup(easy_group, hard_group).arrange(
+                DOWN, buff=0.48,
+            ).move_to(RIGHT * 3.10 + UP * 0.20)
             self.play(
-                FadeIn(hard_group, shift=UP * 0.15),
-                LaggedStart(*[Indicate(d, color=gs.C_BAD, scale_factor=1.8)
-                              for d in hard_dots], lag_ratio=0.07),
-                run_time=1.0,
+                FadeIn(easy_group, shift=LEFT * 0.15),
+                run_time=0.55,
+            )
+            self.play(
+                LaggedStart(
+                    *[dot.animate.set_color(gs.C_GNN) for dot in easy_dots],
+                    lag_ratio=0.012,
+                ),
+                run_time=1.05,
+            )
+            self.play(
+                FadeIn(hard_group, shift=LEFT * 0.15),
+                run_time=0.55,
+            )
+            self.play(
+                LaggedStart(
+                    *[dot.animate.set_color(gs.C_BAD) for dot in hard_dots],
+                    lag_ratio=0.10,
+                ),
+                run_time=0.85,
             )
 
         with self.narrated_caption(["trên nhóm khó, lờ lờ mờ giúp tăng mười ba điểm phần trăm."]):
-            # Chính mười chấm coral đổi sang xanh: thấy ngay phần được cải thiện
-            # chỉ là một góc nhỏ của quần thể.
-            gain_hard = t("hard-node gain:  +13 pts", size=23, color=gs.C_GOOD, weight=BOLD)
-            gain_hard.next_to(hard_group, DOWN, buff=0.35)
+            gain_hard = VGroup(
+                t("+13 PTS", size=52, color=gs.C_GOOD, weight=HEAVY),
+                t("gain on hard nodes", size=27, color=INK, weight=SEMIBOLD),
+            ).arrange(DOWN, buff=0.12).next_to(hard_group, DOWN, buff=0.32)
             self.play(
-                LaggedStart(*[d.animate.set_color(gs.C_GOOD) for d in hard_dots], lag_ratio=0.07),
                 FadeIn(gain_hard, shift=UP * 0.1),
-                run_time=1.1,
-            )
-            gnn_eq = mt(r"\text{GNN: } 0.9{\times}95\% + 0.1{\times}40\% = 89.5\%", size=30)
-            fit(gnn_eq, 6.4)
-            gnn_eq.move_to(RIGHT * 3.15 + DOWN * 1.35)
-            self.play(Write(gnn_eq), run_time=0.9)
-
-        with self.narrated_caption(["nhưng trên toàn đồ thị, tổng thể chỉ tăng không chấm bốn điểm."]):
-            fusion_eq = mt(r"\text{Fusion: } 0.9{\times}94\% + 0.1{\times}53\% = 89.9\%", size=30)
-            fit(fusion_eq, 6.4)
-            fusion_eq.next_to(gnn_eq, DOWN, buff=0.32)
-            self.play(TransformFromCopy(gnn_eq, fusion_eq), run_time=0.9)
-            self.play(gnn_eq.animate.set_opacity(0.35), run_time=0.4)
-            gain_overall = t("overall gain:  +0.4 pts", size=23, color=MID)
-            gain_overall.next_to(fusion_eq, DOWN, buff=0.28)
-            self.play(FadeIn(gain_overall), run_time=0.5)
-
-        with self.narrated_caption(["lợi ích lớn ở một nhóm nhỏ trông rất nhỏ khi tính tổng."]):
-            # Câu chốt dạng chữ đã bỏ: lời thoại nói đúng ý đó rồi, và dải chữ
-            # rộng bằng khung hình chỉ chen vào giữa lưới nót với hai công thức.
-            # Thay bằng một nhịp nhấn chính mười chấm đã đổi màu.
-            self.play(
-                LaggedStart(*[Indicate(d, color=gs.C_GOOD, scale_factor=1.6)
-                              for d in hard_dots], lag_ratio=0.06),
+                ShowPassingFlash(
+                    SurroundingRectangle(
+                        hard_group, color=gs.C_GOOD, buff=0.10,
+                        corner_radius=0.18, stroke_width=3.2,
+                    ),
+                    time_width=0.55,
+                ),
                 run_time=1.0,
             )
+
+        self.next_section("S1_09_aggregate_overall")
+        with self.narrated_caption(["nhưng trên toàn đồ thị, tổng thể chỉ tăng không chấm bốn điểm."]):
+            overall_title = t(
+                "OVERALL ACCURACY", size=34, color=INK, weight=HEAVY,
+            )
+            gnn_eq = VGroup(
+                t("GNN", size=28, color=gs.C_GNN, weight=HEAVY),
+                t("89.5%", size=42, color=INK, weight=HEAVY),
+            ).arrange(DOWN, buff=0.18)
+            fusion_eq = VGroup(
+                t("FUSION", size=28, color=gs.C_ROUTER, weight=HEAVY),
+                t("89.9%", size=42, color=INK, weight=HEAVY),
+            ).arrange(DOWN, buff=0.18)
+            gnn_card = VGroup(
+                panel(3.25, 1.62, stroke=gs.C_GNN, fill=BG, opacity=1.0),
+                gnn_eq,
+            )
+            fusion_card = VGroup(
+                panel(3.25, 1.62, stroke=gs.C_ROUTER, fill=BG, opacity=1.0),
+                fusion_eq,
+            )
+            gnn_eq.move_to(gnn_card[0])
+            fusion_eq.move_to(fusion_card[0])
+            score_pair = VGroup(gnn_card, fusion_card).arrange(RIGHT, buff=1.05)
+            gain_overall = VGroup(
+                t("+0.4 PTS", size=54, color=gs.C_GOOD, weight=HEAVY),
+                t("overall gain", size=27, color=INK, weight=SEMIBOLD),
+            ).arrange(DOWN, buff=0.18)
+            overall_scene = VGroup(
+                overall_title, score_pair, gain_overall,
+            ).arrange(DOWN, buff=0.68).move_to(DOWN * 0.05)
+            self.play(
+                FadeOut(VGroup(head9, population, stat_cards, gain_hard)),
+                FadeIn(overall_scene, shift=UP * 0.15),
+                run_time=0.9,
+            )
+            self.remove_families(head9, population, stat_cards, gain_hard)
+
+        with self.narrated_caption(["lợi ích lớn ở một nhóm nhỏ trông rất nhỏ khi tính tổng."]):
+            self.play(Indicate(gain_overall, color=gs.C_GOOD, scale_factor=1.05),
+                      run_time=0.8)
             self.wait(0.6)
 
-        self.sec9_objects = VGroup(head9, population, easy_group, hard_group,
-                                   gnn_eq, fusion_eq, gain_hard, gain_overall)
+        self.sec9_objects = overall_scene
 
     # ─────────────────────────────────────────────────────────
     # SECTION 10 — GLANCE Research Question & Task 2
     # ─────────────────────────────────────────────────────────
     def section_10_glance_question(self):
+        self.next_section("S1_10_glance_question")
         with self.narrated_caption([
             "Như vậy, độ khó với gờ nờ nờ",
             "chưa đủ để quyết định.",
         ]):
-            self.play(FadeOut(self.sec9_objects, shift=UP * 0.3), run_time=0.7)
-            self.wait(0.3)
+            self.play(self.sec9_objects.animate.set_opacity(0.16), run_time=0.55)
 
         # GLANCE = quyết định định tuyến từng nót: giữ GNN, hoặc gọi LLM để tinh chỉnh.
         node = module("Node", width=1.9).move_to(LEFT * 4.6 + DOWN * 0.1)
@@ -1941,7 +2429,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "gờ lans biến việc này thành một quyết định định tuyến cho từng nót:",
             "giữ dự đoán của gờ nờ nờ, hoặc gọi lờ lờ mờ để tinh chỉnh nó.",
         ]):
-            self.play(FadeIn(VGroup(node, gnn, router)), GrowArrow(arr1), GrowArrow(arr2),
+            self.play(FadeOut(self.sec9_objects),
+                      FadeIn(VGroup(node, gnn, router)), GrowArrow(arr1), GrowArrow(arr2),
                       run_time=1.0)
             self.play(FadeIn(keep), FadeIn(query), GrowArrow(a_up), GrowArrow(a_dn),
                       run_time=1.0)
@@ -1951,9 +2440,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "Nếu phải chọn nót để gọi lờ lờ mờ,",
             "người ta đã chọn bằng cách nào?",
         ]):
-            self.play(Indicate(router, color=gs.C_ROUTER, scale_factor=1.06), run_time=0.8)
+            self.play(Circumscribe(router[0], color=gs.C_ROUTER, buff=0.08), run_time=0.8)
             self.wait(0.3)
-            self.play(
-                FadeOut(VGroup(node, gnn, router, keep, query, arr1, arr2, a_up, a_dn)),
-                run_time=0.6,
-            )
+        self.play(FadeOut(VGroup(node, gnn, router, keep, query, arr1, arr2, a_up, a_dn)),
+                  run_time=0.6)

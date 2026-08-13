@@ -79,10 +79,10 @@ def main(concat_file, out_file):
         offset += duration(mp4)
 
     if not blocks:
-        print("Không tìm thấy .srt nào — bỏ qua.")
+        print("No scene SRT files found; skipping subtitle merge.")
         return
     Path(out_file).write_text("\n\n".join(blocks) + "\n", encoding="utf-8")
-    print(f"Đã ghi {out_file} ({index} dòng phụ đề)")
+    print(f"Wrote {out_file} ({index} subtitle cues)")
 
 
 if __name__ == "__main__":

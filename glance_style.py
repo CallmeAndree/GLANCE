@@ -17,6 +17,7 @@ import os
 import pathlib
 import re
 import time
+import wave
 from urllib import error as urlerror
 from urllib import request as urlrequest
 
@@ -42,6 +43,46 @@ DEFAULT_TIMED_TTS_TOP_K = 30
 DEFAULT_TIMED_TTS_TOP_P = 0.85
 DEFAULT_TIMED_TTS_SPEED = 1.15
 DEFAULT_TIMED_TTS_KEY_FILE = ".run/api.key"
+
+
+class SilentService(SpeechService):
+    """Offline timing carrier for layout and animation previews only."""
+
+    def __init__(self, words_per_minute=165, minimum_duration=0.45, **kwargs):
+        super().__init__(**kwargs)
+        self.words_per_minute = float(words_per_minute)
+        self.minimum_duration = float(minimum_duration)
+
+    def generate_from_text(self, text, cache_dir=None, path=None, **kwargs):
+        cache_dir = pathlib.Path(cache_dir or self.cache_dir)
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        plain = remove_bookmarks(text)
+        input_data = {
+            "input_text": plain,
+            "service": "glance-silent-preview-v1",
+            "words_per_minute": self.words_per_minute,
+            "minimum_duration": self.minimum_duration,
+        }
+        cached = self.get_cached_result(input_data, cache_dir)
+        if cached is not None and (cache_dir / cached["original_audio"]).is_file():
+            return cached
+
+        word_count = max(1, len(re.findall(r"\S+", plain)))
+        duration = max(self.minimum_duration, 60.0 * word_count / self.words_per_minute)
+        filename = pathlib.Path(path or f"{self.get_audio_basename(input_data)}.wav")
+        output = filename if filename.is_absolute() else cache_dir / filename
+        sample_rate = 8_000
+        frame_count = max(1, round(duration * sample_rate))
+        with wave.open(str(output), "wb") as wav_file:
+            wav_file.setnchannels(1)
+            wav_file.setsampwidth(2)
+            wav_file.setframerate(sample_rate)
+            wav_file.writeframes(b"\x00\x00" * frame_count)
+        return {
+            "input_text": plain,
+            "input_data": input_data,
+            "original_audio": output.name,
+        }
 
 
 class TimedTTSService(SpeechService):
@@ -415,31 +456,32 @@ def _first_available(candidates, fallback="sans-serif"):
     return fallback
 
 
-FONT_MAIN = _first_available(
-    ["Be Vietnam Pro", "Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans", "Liberation Sans"]
-)
 FONT_MONO = _first_available(
     ["Menlo", "SF Mono", "DejaVu Sans Mono", "Liberation Mono", "Courier New"]
 )
+# 3Blue1Brown-style visual explanations benefit from predictable glyph widths:
+# labels, live values and animated text keep their alignment while transforming.
+# DejaVu Sans Mono also covers Vietnamese, unlike several platform monospace fonts.
+FONT_MAIN = FONT_MONO
 
 # --------------------------------------------------------------------------
 # Palette. Dark background, one accent per idea. Keep meanings stable:
-#   GNN  -> teal        LLM -> amber        router -> violet
+#   GNN  -> blue        LLM -> lime         router -> violet
 #   good / benefit -> green        failure / cost -> red
 # --------------------------------------------------------------------------
 
 # Bọc trong ManimColor để dùng được interpolate_color(), .lighter(), v.v.
 # Bảng màu "Deep Graph": nền navy đen, nhấn xanh dương / cam / tím / cyan.
 BG = ManimColor("#08111F")        # nền chính toàn video
-INK = ManimColor("#F1F5F9")       # chữ chính (off-white)
-MUTED = ManimColor("#94A3B8")     # chữ phụ / chú thích (blue gray)
+INK = ManimColor("#F8FAFC")       # chữ chính, gần trắng để đọc rõ trên nền navy
+MUTED = ManimColor("#CBD5E1")     # chữ phụ sáng; không dùng xám tối trên nền navy
 
 C_GNN = ManimColor("#4F8CFF")     # GNN / cấu trúc graph (blue)
-C_LLM = ManimColor("#56C596")     # LLM / semantic content (green)
+C_LLM = ManimColor("#A3E635")     # LLM / semantic content (lime; distinct from success)
 C_ROUTER = ManimColor("#8B5CF6")  # Router / GLANCE (violet)
 C_GOOD = ManimColor("#34D399")    # đúng / improvement (mint green)
 C_BAD = ManimColor("#FB7185")     # khó / heterophily / sai (coral red)
-C_EDGE = ManimColor("#334A63")    # đường graph trung tính trên nền navy
+C_EDGE = ManimColor("#5F7FA3")    # cạnh xanh slate sáng, tránh cảm giác xám/chìm
 C_HIGHLIGHT = ManimColor("#22D3EE")  # nhấn công nghệ chung (cyan)
 
 # Structural signals (homophily, degree, uncertainty) = cyan. Trùng C_HIGHLIGHT
@@ -469,19 +511,77 @@ TITLE_SIZE = 44
 HEAD_SIZE = 34
 BODY_SIZE = 26
 SMALL_SIZE = 20
+SECTION_TITLE_DISPLAY_SECONDS = 2.0
+SECTION_TITLE_FADE_SECONDS = 0.28
+
+# Named layout regions. The first row is page chrome: section identity on the
+# left, provenance on the right. Scene content starts on the next baseline.
+PAGE_SAFE_LEFT = -6.0
+PAGE_SAFE_RIGHT = 6.0
+PAGE_SAFE_TOP = 3.6
+PAGE_SAFE_BOTTOM = -3.1
+GRID_COLUMNS = 12
+GRID_GUTTER = 0.18
+GRID_COLUMN_WIDTH = (
+    (PAGE_SAFE_RIGHT - PAGE_SAFE_LEFT) - GRID_GUTTER * (GRID_COLUMNS - 1)
+) / GRID_COLUMNS
+BASELINE_STEP = 0.25
+CHROME_Y = 3.48
+TITLE_Y = 2.85
+MAIN_CENTER = ORIGIN + DOWN * 0.2
+LEFT_PANEL = LEFT * 3.35
+RIGHT_PANEL = RIGHT * 3.35
+BOTTOM_Y = -3.1
+SAFE_WIDTH = 12.0
+SAFE_HEIGHT = 6.0
+DIM_OPACITY = 0.10
+CONTEXT_OPACITY = 0.38
+GRID_OPACITY = 0.15
+
+
+def grid_span(start, span=1):
+    """Return ``(center_x, width)`` for a 1-indexed 12-column page span."""
+    if not 1 <= start <= GRID_COLUMNS:
+        raise ValueError(f"grid column must be in 1..{GRID_COLUMNS}: {start}")
+    if span < 1 or start + span - 1 > GRID_COLUMNS:
+        raise ValueError(f"invalid grid span: start={start}, span={span}")
+    left = PAGE_SAFE_LEFT + (start - 1) * (GRID_COLUMN_WIDTH + GRID_GUTTER)
+    width = span * GRID_COLUMN_WIDTH + (span - 1) * GRID_GUTTER
+    return left + width / 2, width
+
+
+def snap_y(value, origin=0.0):
+    """Snap a vertical coordinate to the shared quarter-unit baseline."""
+    return origin + round((value - origin) / BASELINE_STEP) * BASELINE_STEP
+
+
+def place_in_grid(mobject, start, span=1, y=MAIN_CENTER[1], edge=None):
+    """Place a top-level element in a page span and cap it to that width."""
+    center_x, width = grid_span(start, span)
+    fit_width(mobject, width)
+    mobject.move_to([center_x, snap_y(y), 0])
+    if edge is not None:
+        mobject.align_to([PAGE_SAFE_LEFT if edge is LEFT else PAGE_SAFE_RIGHT, 0, 0], edge)
+    return mobject
 
 
 # --------------------------------------------------------------------------
 # Text helpers
 # --------------------------------------------------------------------------
 
-def txt(s, size=BODY_SIZE, color=INK, weight=NORMAL, **kw):
-    """Vietnamese-safe text."""
-    return Text(s, font=FONT_MAIN, font_size=size, color=color, weight=weight, **kw)
+def txt(s, size=BODY_SIZE, color=INK, weight=NORMAL, max_width=None, **kw):
+    """Vietnamese-safe monospace text with an optional width cap."""
+    # Small copy needs enough weight to survive compression and x4 playback.
+    if size <= SMALL_SIZE and weight == NORMAL:
+        weight = SEMIBOLD
+    result = Text(s, font=FONT_MAIN, font_size=size, color=color, weight=weight, **kw)
+    if max_width is not None and result.width > max_width:
+        result.scale_to_fit_width(max_width)
+    return result
 
 
-def mono(s, size=SMALL_SIZE, color=MUTED, **kw):
-    return Text(s, font=FONT_MONO, font_size=size, color=color, **kw)
+def mono(s, size=SMALL_SIZE, color=MUTED, weight=SEMIBOLD, **kw):
+    return Text(s, font=FONT_MONO, font_size=size, color=color, weight=weight, **kw)
 
 
 def mt(tex, size=32, color=INK, **kw):
@@ -495,6 +595,59 @@ def mt(tex, size=32, color=INK, **kw):
 
 def heading(s, color=INK):
     return txt(s, size=HEAD_SIZE, color=color, weight=BOLD)
+
+
+def safe_text(s, size=BODY_SIZE, color=INK, max_width=SAFE_WIDTH, **kw):
+    """Single-line text guaranteed to remain inside the horizontal safe zone."""
+    return txt(s, size=size, color=color, max_width=max_width, **kw)
+
+
+def safe_multiline(*lines, size=BODY_SIZE, color=INK, line_buff=0.22,
+                   max_width=SAFE_WIDTH, **kw):
+    """Centered multiline text built from independent lines.
+
+    Pango left-aligns a newline embedded in one ``Text`` mobject.  Separate
+    mobjects keep question and takeaway frames optically centered.
+    """
+    rows = VGroup(*[
+        safe_text(line, size=size, color=color, max_width=max_width, **kw)
+        for line in lines
+    ])
+    return rows.arrange(DOWN, buff=line_buff, center=True)
+
+
+def bottom_note(s, color=MUTED, size=SMALL_SIZE):
+    """Text for the reserved bottom zone; animate it with ``FadeIn``."""
+    return safe_text(s, size=size, color=color, max_width=SAFE_WIDTH).move_to(
+        [0, BOTTOM_Y, 0]
+    )
+
+
+def question_frame(*lines, color=C_HIGHLIGHT, size=HEAD_SIZE):
+    """A sparse prediction prompt used before the visual answer appears."""
+    question = safe_multiline(
+        *lines, size=size, color=color, line_buff=0.28, max_width=10.8,
+        weight=BOLD,
+    )
+    rule = Line(LEFT * 1.1, RIGHT * 1.1, color=color, stroke_width=3)
+    rule.next_to(question, DOWN, buff=0.35)
+    return VGroup(question, rule).move_to(MAIN_CENTER)
+
+
+def fade_all(scene, *mobjects, run_time=0.65):
+    """Remove a logical phase before another phase reuses the same region."""
+    targets = list(mobjects) if mobjects else list(scene.mobjects)
+    if targets:
+        scene.play(*[FadeOut(m) for m in targets], run_time=run_time)
+
+
+def dim_context(scene, *mobjects, opacity=DIM_OPACITY, run_time=0.45):
+    """Keep adjacent context visible while making the current object dominant."""
+    if mobjects:
+        scene.play(
+            *[m.animate.set_opacity(opacity) for m in mobjects],
+            run_time=run_time,
+        )
 
 
 def bullets(items, size=BODY_SIZE, buff=0.42, dot_color=C_HIGHLIGHT, width=9.5):
@@ -518,8 +671,12 @@ def caption(s, size=SMALL_SIZE):
 
 
 def source(ref):
-    """Bottom-right provenance stamp: source('Table 1, p.4')."""
-    return caption(f"Source: {ref}").to_corner(DR, buff=0.35)
+    """Top-right provenance stamp, opposite the persistent section header."""
+    stamp = caption(f"Source: {ref}")
+    stamp.set(font_size=17)
+    fit_width(stamp, 4.6)
+    stamp.to_corner(UR, buff=0.35)
+    return stamp
 
 
 # --------------------------------------------------------------------------
@@ -534,31 +691,87 @@ def title_card(title, subtitle=None, owner=None, accent=C_HIGHLIGHT):
     if owner:
         parts.add(txt(owner, size=SMALL_SIZE, color=MUTED))
     parts.arrange(DOWN, buff=0.35)
-    rule = Line(LEFT * 3, RIGHT * 3, color=accent, stroke_width=3)
-    rule.next_to(parts[0], DOWN, buff=0.22)
-    return VGroup(parts, rule)
+    return parts
 
 
 def section_banner(number, name, accent=None):
-    """Persistent top-left marker, e.g. section_banner('3', 'Structural signal')."""
+    """Top-left ``[section number][section title]`` header."""
     accent = accent or SECTION_COLORS.get(str(number), C_HIGHLIGHT)
     tag = VGroup(
         RoundedRectangle(
             corner_radius=0.1, width=0.72, height=0.46,
             stroke_width=0, fill_color=accent, fill_opacity=1,
         ),
-        txt(str(number), size=SMALL_SIZE, color=BG, weight=BOLD),
+        txt(str(number), size=SMALL_SIZE, color=BG, weight=HEAVY),
     )
-    label = txt(name, size=SMALL_SIZE, color=MUTED)
+    label = txt(name, size=SMALL_SIZE, color=INK, weight=HEAVY)
     banner = VGroup(tag, label).arrange(RIGHT, buff=0.28)
-    return banner.to_corner(UL, buff=0.35)
+    banner.to_corner(UL, buff=0.35)
+    banner.set_y(CHROME_Y)
+    banner.section_tag = tag
+    banner.section_label = label
+    return banner
+
+
+# New name describes the placement. Keep the old API for existing scene code.
+section_header = section_banner
+
+
+def scene_badge(number):
+    """Compact scene id used only for render/debug handoff."""
+    label = txt(f"{int(number):02d}", size=16, color=INK, weight=BOLD)
+    box = RoundedRectangle(
+        width=0.62, height=0.36, corner_radius=0.09,
+        stroke_color=MUTED, stroke_width=1.4,
+        fill_color=BG, fill_opacity=0.92,
+    )
+    label.move_to(box)
+    return VGroup(box, label)
+
+
+def section_chrome(number, name, scene_number=None, accent=None):
+    """Top-left section identity with an optional number-only scene badge."""
+    header = section_header(number, name, accent=accent)
+    if scene_number is None:
+        return header
+    badge = scene_badge(scene_number).next_to(header, RIGHT, buff=0.22)
+    chrome = VGroup(header, badge)
+    chrome.section_tag = header.section_tag
+    chrome.section_label = header.section_label
+    chrome.scene_badge = badge
+    return chrome
+
+
+def update_section_title_visibility(chrome, elapsed, scene_number=None):
+    """Keep the section name for two seconds only; retain compact badges."""
+    label = getattr(chrome, "section_label", None)
+    tag = getattr(chrome, "section_tag", None)
+    if label is None:
+        return chrome
+
+    is_section_open = scene_number is None or int(scene_number) == 1
+    if not is_section_open:
+        opacity = 0.0
+    else:
+        fade_start = SECTION_TITLE_DISPLAY_SECONDS - SECTION_TITLE_FADE_SECONDS
+        opacity = np.clip(
+            (SECTION_TITLE_DISPLAY_SECONDS - elapsed) / SECTION_TITLE_FADE_SECONDS,
+            0.0,
+            1.0,
+        ) if elapsed > fade_start else 1.0
+    label.set_opacity(opacity)
+
+    badge = getattr(chrome, "scene_badge", None)
+    if badge is not None and opacity <= 0.0 and tag is not None:
+        badge.next_to(tag, RIGHT, buff=0.22)
+    return chrome
 
 
 def panel(mobject, color=C_EDGE, buff=0.4, fill_opacity=0.06):
     """Rounded frame around content, for side-by-side comparisons."""
     return SurroundingRectangle(
         mobject, color=color, corner_radius=0.18, buff=buff,
-        stroke_width=2, fill_color=color, fill_opacity=fill_opacity,
+        stroke_width=2.6, fill_color=color, fill_opacity=fill_opacity,
     )
 
 
@@ -571,7 +784,7 @@ def labeled_box(label, color, width=2.6, height=1.1):
     """
     box = RoundedRectangle(
         corner_radius=0.16, width=width, height=height,
-        stroke_color=color, stroke_width=3,
+        stroke_color=color, stroke_width=3.4,
         fill_color=color, fill_opacity=0.12,
     )
     content = label if isinstance(label, Mobject) else txt(
@@ -581,7 +794,7 @@ def labeled_box(label, color, width=2.6, height=1.1):
 
 
 def pipeline(steps, direction=RIGHT, box_w=2.0, box_h=0.85, buff=0.55,
-             arrow_color=MUTED, text_size=SMALL_SIZE):
+             arrow_color=C_EDGE, text_size=SMALL_SIZE):
     """A chain of labelled boxes joined by arrows.
 
     steps: list of (label, color) tuples.
@@ -602,10 +815,9 @@ def pipeline(steps, direction=RIGHT, box_w=2.0, box_h=0.85, buff=0.55,
 
     arrows = VGroup()
     for a, b in zip(boxes[:-1], boxes[1:]):
-        arrows.add(Arrow(
+        arrows.add(small_arrow(
             a.get_edge_center(direction), b.get_edge_center(-direction),
-            buff=0.08, stroke_width=3, max_tip_length_to_length_ratio=0.22,
-            color=arrow_color,
+            buff=0.08, stroke_width=3, color=arrow_color,
         ))
 
     g = VGroup(boxes, arrows)
@@ -635,6 +847,22 @@ def cross(color=C_BAD, size=0.36):
 # the same way everywhere.
 # --------------------------------------------------------------------------
 
+def graph_node(color=C_HIGHLIGHT, radius=0.16, fill_opacity=0.14,
+               stroke_width=3.0):
+    """Canonical graph node: clear outline with a restrained semantic tint.
+
+    Highlights add a ring, glow or thicker stroke; the base node itself stays
+    visually stable across graph scenes.
+    """
+    return Circle(
+        radius=radius,
+        stroke_color=color,
+        stroke_width=stroke_width,
+        fill_color=color,
+        fill_opacity=fill_opacity,
+    )
+
+
 def tag_graph(edges, positions, labels=None, radius=0.16, scale=1.0,
               node_color=C_HIGHLIGHT, edge_color=C_EDGE):
     """Return a VGroup with `.nodes` (dict id -> Dot) and `.edges` (VGroup).
@@ -652,13 +880,17 @@ def tag_graph(edges, positions, labels=None, radius=0.16, scale=1.0,
     nodes = {}
     for nid, pos in positions.items():
         color = label_color[labels[nid]] if labels else node_color
-        nodes[nid] = Dot(np.array(pos, dtype=float) * scale, radius=radius, color=color)
+        nodes[nid] = graph_node(color=color, radius=radius).move_to(
+            np.array(pos, dtype=float) * scale
+        )
 
     edge_group = VGroup()
     for u, v in edges:
         edge_group.add(
-            Line(nodes[u].get_center(), nodes[v].get_center(),
-                 stroke_width=2.2, color=edge_color, z_index=-1)
+            boundary_line(
+                nodes[u], nodes[v], stroke_width=2.6,
+                color=edge_color, buff=0.0, z_index=-1,
+            )
         )
 
     g = VGroup(edge_group, VGroup(*nodes.values()))
@@ -708,15 +940,28 @@ def ego_ring(graph, center_id, hop_ids, color=C_LLM, buff=0.22):
     )
 
 
+def node_focus_ring(node, color=C_HIGHLIGHT, buff=0.10, stroke_width=3.4,
+                    dashed=False):
+    """Canonical circular node focus; never use a square highlight for nodes."""
+    ring = Circle(
+        radius=max(node.width, node.height) / 2 + buff,
+        color=color,
+        stroke_width=stroke_width,
+    ).move_to(node.get_center())
+    if dashed:
+        ring = DashedVMobject(ring, num_dashes=24)
+    return ring
+
+
 def text_chip(s, color=C_LLM, width=2.4):
     """A little 'raw text' card hanging off a node."""
-    body = mono(s, size=15, color=INK)
+    body = mono(s, size=17, color=INK, weight=HEAVY)
     if body.width > width - 0.3:
         body.scale_to_fit_width(width - 0.3)
     card = RoundedRectangle(
         corner_radius=0.08, width=width, height=body.height + 0.32,
-        stroke_color=color, stroke_width=1.6,
-        fill_color=BG, fill_opacity=0.9,
+        stroke_color=color, stroke_width=2.4,
+        fill_color=BG, fill_opacity=1.0,
     )
     return VGroup(card, body)
 
@@ -900,39 +1145,28 @@ def avatar_node(label, target=False, radius=0.30):
         fill_color=BG,
         fill_opacity=1,
         stroke_color=INK if target else MUTED,
-        stroke_width=2.6 if target else 1.8,
+        stroke_width=3.8 if target else 2.8,
     )
-    label_mob = txt(label, size=20, color=INK if target else MUTED, weight=BOLD).move_to(circle)
+    label_mob = txt(label, size=20, color=INK, weight=HEAVY).move_to(circle)
     return VGroup(circle, label_mob)
 
 
 def step_header(number, title):
-    """Numbered step banner for a scene sequence, e.g. step_header(2, "Aggregate").
+    """Compatibility anchor for removed numbered scene subtitles.
 
-    Starts clear of the top-left corner (offset right by ~4.3 units) so it
-    never overlaps a `section_banner()` placed there in the same scene.
+    Scene identity now comes only from the persistent section header. Keep a
+    point so older transitions can still Fade/Transform it safely.
     """
-    number_mob = txt(f"{number:02d}", size=SMALL_SIZE, color=BG, weight=BOLD)
-    pill = RoundedRectangle(
-        width=0.62, height=0.38, corner_radius=0.10,
-        fill_color=INK, fill_opacity=1, stroke_width=0,
-    )
-    number_mob.move_to(pill)
-    title_mob = fit_width(txt(title, size=HEAD_SIZE, color=INK, weight=BOLD), 8.6)
-    head = VGroup(VGroup(pill, number_mob), title_mob).arrange(RIGHT, buff=0.22)
-    head.to_corner(UL, buff=0.32).shift(RIGHT * 4.3)
-    rule = Line(LEFT * 6.7, RIGHT * 6.7, color=C_EDGE, stroke_width=1.5)
-    rule.to_edge(UP, buff=0.98)
-    return VGroup(head, rule)
+    return VectorizedPoint([PAGE_SAFE_LEFT, TITLE_Y, 0])
 
 
 def takeaway_chip(text_value):
     """Small pill-shaped takeaway line pinned to the bottom of the frame."""
-    body = fit_width(txt(text_value, size=21, color=MUTED, weight=BOLD), 11.8)
+    body = fit_width(txt(text_value, size=21, color=INK, weight=HEAVY), 11.8)
     bg = RoundedRectangle(
         width=max(body.width + 0.45, 4.8), height=body.height + 0.25,
         corner_radius=0.10, fill_color=BG, fill_opacity=0.94,
-        stroke_color=C_EDGE, stroke_width=1,
+        stroke_color=C_EDGE, stroke_width=2.2,
     )
     body.move_to(bg)
     return VGroup(bg, body).to_edge(DOWN, buff=0.18)
@@ -941,11 +1175,11 @@ def takeaway_chip(text_value):
 def doc_icon(scale=1.0):
     """Tiny document glyph, a stand-in for 'raw node text'."""
     page = RoundedRectangle(
-        width=0.36, height=0.46, corner_radius=0.04,
-        fill_color=BG, fill_opacity=1, stroke_color=MUTED, stroke_width=1.2,
+        width=0.34, height=0.52, corner_radius=0.04,
+        fill_color=BG, fill_opacity=1, stroke_color=INK, stroke_width=2.2,
     )
     lines = VGroup(*[
-        Line(LEFT * 0.11, RIGHT * 0.11, color=MUTED, stroke_width=1) for _ in range(3)
+        Line(LEFT * 0.11, RIGHT * 0.11, color=C_LLM, stroke_width=1.8) for _ in range(3)
     ]).arrange(DOWN, buff=0.06).move_to(page)
     return VGroup(page, lines).scale(scale)
 
@@ -953,54 +1187,60 @@ def doc_icon(scale=1.0):
 def _box(width, height, stroke=MUTED, fill=C_PANEL, radius=0.18):
     return RoundedRectangle(
         width=width, height=height, corner_radius=radius,
-        stroke_color=stroke, stroke_width=1.6, fill_color=fill, fill_opacity=1,
+        stroke_color=stroke, stroke_width=2.4, fill_color=fill, fill_opacity=1,
     )
 
 
-def module_box(title, subtitle, width=4.5, height=1.05, emphasized=False):
+def module_box(title, subtitle, width=4.5, height=1.05, emphasized=False, accent=None):
     """A labelled model block with a subtitle, e.g. module_box("GNN", "backbone")."""
-    outer = _box(width, height, stroke=INK if emphasized else MUTED, fill=C_PANEL)
-    title_mob = fit_width(txt(title, size=24, color=INK if emphasized else MUTED, weight=BOLD), width - 0.35)
-    subtitle_mob = fit_width(txt(subtitle, size=17, color=MUTED), width - 0.35)
+    semantic = accent or (INK if emphasized else MUTED)
+    outer = _box(width, height, stroke=semantic, fill=C_PANEL)
+    title_mob = fit_width(txt(title, size=24, color=semantic, weight=BOLD), width - 0.35)
+    subtitle_mob = fit_width(txt(subtitle, size=17, color=INK, weight=SEMIBOLD), width - 0.35)
     content = VGroup(title_mob, subtitle_mob).arrange(DOWN, buff=0.08).move_to(outer)
     return VGroup(outer, content)
 
 
-def math_module_box(tex, subtitle, width=4.0, height=0.95, emphasized=False):
+def math_module_box(tex, subtitle, width=4.0, height=0.95, emphasized=False, accent=None):
     """Like module_box, but the title is a LaTeX formula."""
-    outer = _box(width, height, stroke=INK if emphasized else MUTED, fill=C_PANEL)
-    title_mob = fit_width(MathTex(tex, font_size=30, color=INK if emphasized else MUTED), width - 0.35)
-    subtitle_mob = fit_width(txt(subtitle, size=17, color=MUTED), width - 0.35)
+    semantic = accent or (INK if emphasized else MUTED)
+    outer = _box(width, height, stroke=semantic, fill=C_PANEL)
+    title_mob = fit_width(MathTex(tex, font_size=30, color=semantic), width - 0.35)
+    subtitle_mob = fit_width(txt(subtitle, size=17, color=INK, weight=SEMIBOLD), width - 0.35)
     content = VGroup(title_mob, subtitle_mob).arrange(DOWN, buff=0.08).move_to(outer)
     return VGroup(outer, content)
 
 
-def equation_card(formula, subtitle, width=4.2, height=1.25, emphasized=False):
+def equation_card(formula, subtitle, width=4.2, height=1.25, emphasized=False, accent=None):
     """A boxed formula with a caption underneath."""
-    box = _box(width, height, stroke=INK if emphasized else MUTED, fill=C_PANEL)
-    equation = fit_width(MathTex(formula, font_size=40, color=INK if emphasized else MUTED), width - 0.34)
-    label = txt(subtitle, size=19, color=MUTED)
+    semantic = accent or (INK if emphasized else MUTED)
+    box = _box(width, height, stroke=semantic, fill=C_PANEL)
+    equation = fit_width(MathTex(formula, font_size=40, color=semantic), width - 0.34)
+    label = fit_width(txt(subtitle, size=19, color=INK, weight=SEMIBOLD), width - 0.34)
     content = VGroup(equation, label).arrange(DOWN, buff=0.12).move_to(box)
     return VGroup(box, content)
 
 
-def feature_strip(label, n=7, cell_size=0.34, math_label=False):
+def feature_strip(label, n=7, cell_size=0.34, math_label=False, accent=None):
     """A row of small squares standing in for an opaque feature vector."""
     cells = VGroup(*[
         Square(
             side_length=cell_size, stroke_color=MUTED, stroke_width=1.2,
-            fill_color=INK if i % 3 == 0 else (MUTED if i % 3 == 1 else C_EDGE),
+            fill_color=(accent if accent is not None else
+                        (INK if i % 3 == 0 else (MUTED if i % 3 == 1 else C_EDGE))),
             fill_opacity=0.92,
         )
         for i in range(n)
     ]).arrange(RIGHT, buff=0.035)
-    label_mob = MathTex(label, font_size=28, color=INK) if math_label else txt(label, size=22, color=INK, weight=BOLD)
+    label_color = accent or INK
+    label_mob = MathTex(label, font_size=28, color=label_color) if math_label else txt(label, size=22, color=label_color, weight=BOLD)
     return VGroup(label_mob, cells).arrange(RIGHT, buff=0.18)
 
 
-def probability_bars(label, values, width=2.25, math_label=False):
+def probability_bars(label, values, width=2.25, math_label=False, accent=None):
     """A small stack of horizontal bars, one per class probability."""
-    label_mob = MathTex(label, font_size=25, color=INK) if math_label else txt(label, size=19, color=INK, weight=BOLD)
+    label_color = accent or INK
+    label_mob = MathTex(label, font_size=25, color=label_color) if math_label else txt(label, size=19, color=label_color, weight=BOLD)
     bars = VGroup()
     for value in values:
         track = RoundedRectangle(
@@ -1009,7 +1249,7 @@ def probability_bars(label, values, width=2.25, math_label=False):
         )
         fill_bar = RoundedRectangle(
             width=max(width * value, 0.05), height=0.17, corner_radius=0.04,
-            fill_color=MUTED, fill_opacity=1, stroke_width=0,
+            fill_color=accent or MUTED, fill_opacity=0.88 if accent else 1, stroke_width=0,
         ).align_to(track, LEFT)
         bars.add(VGroup(track, fill_bar))
     bars.arrange(DOWN, buff=0.07)
@@ -1057,17 +1297,24 @@ def segmented_embedding(label, segments, cells_per_segment=4, cell_size=0.28):
 
 
 def router_glyph(radius=0.66):
-    """A divided circle with aggregation and sigmoid, standing in for the router."""
-    ring = Circle(
-        radius=radius, stroke_color=C_ROUTER, stroke_width=4.0,
+    """Router shell with its internal aggregation and sigmoid detail.
+
+    The router keeps one rounded-rectangle identity across overview and detail
+    scenes.  Sigma symbols explain the internal computation without replacing
+    the component itself with a different outer shape.
+    """
+    width, height = radius * 2.65, radius * 1.72
+    ring = RoundedRectangle(
+        width=width, height=height, corner_radius=radius * 0.30,
+        stroke_color=C_ROUTER, stroke_width=4.0,
         fill_color=BG, fill_opacity=1.0,
     )
     divider = Line(
-        ring.get_top() + DOWN * 0.06, ring.get_bottom() + UP * 0.06,
+        ring.get_top() + DOWN * 0.10, ring.get_bottom() + UP * 0.10,
         color=C_ROUTER, stroke_width=3.0,
     )
-    sigma_sum = MathTex(r"\Sigma", font_size=43, color=INK).move_to(LEFT * radius * 0.48)
-    sigma_gate = MathTex(r"\sigma", font_size=43, color=INK).move_to(RIGHT * radius * 0.48)
+    sigma_sum = MathTex(r"\Sigma", font_size=38, color=INK).move_to(LEFT * radius * 0.55)
+    sigma_gate = MathTex(r"\sigma", font_size=38, color=INK).move_to(RIGHT * radius * 0.55)
     return VGroup(ring, divider, sigma_sum, sigma_gate)
 
 
@@ -1096,8 +1343,75 @@ def prompt_panel(title_text, lines, width=8.8, height=3.65):
     return VGroup(box, content)
 
 
-def small_arrow(start, end, color=MUTED, stroke_width=2.0, buff=0.10):
-    return Arrow(start, end, buff=buff, color=color, stroke_width=stroke_width, tip_length=0.10)
+def _snapped_arrow_points(start, end, tolerance=BASELINE_STEP):
+    """Remove accidental near-horizontal/vertical tilt without banning diagonals."""
+    start = np.array(start, dtype=float)
+    end = np.array(end, dtype=float)
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    if abs(dy) <= tolerance and abs(dx) > tolerance:
+        mid_y = snap_y((start[1] + end[1]) / 2)
+        start[1] = end[1] = mid_y
+    elif abs(dx) <= tolerance and abs(dy) > tolerance:
+        mid_x = (start[0] + end[0]) / 2
+        start[0] = end[0] = mid_x
+    return start, end
+
+
+def boundary_line(source, target, color=C_EDGE, stroke_width=2.6, buff=0.0,
+                  z_index=0):
+    """Line on the exact center-to-center axis, clipped at both boundaries."""
+    start_center = np.array(source.get_center(), dtype=float)
+    end_center = np.array(target.get_center(), dtype=float)
+    direction = end_center - start_center
+    norm = np.linalg.norm(direction)
+    if norm == 0:
+        return Line(
+            start_center, end_center, color=color,
+            stroke_width=stroke_width, z_index=z_index,
+        )
+    unit = direction / norm
+    start = source.get_boundary_point(unit) + unit * buff
+    end = target.get_boundary_point(-unit) - unit * buff
+    return Line(
+        start, end, color=color, stroke_width=stroke_width, z_index=z_index,
+    )
+
+
+def boundary_arrow(source, target, color=C_EDGE, stroke_width=2.8, buff=0.06,
+                   tip_length=0.10, z_index=0):
+    """Arrow on the exact center-to-center axis, clipped at both boundaries."""
+    start_center = np.array(source.get_center(), dtype=float)
+    end_center = np.array(target.get_center(), dtype=float)
+    direction = end_center - start_center
+    norm = np.linalg.norm(direction)
+    if norm == 0:
+        return Arrow(
+            start_center, end_center, color=color,
+            stroke_width=stroke_width, tip_length=tip_length,
+            z_index=z_index,
+        )
+    unit = direction / norm
+    start = source.get_boundary_point(unit) + unit * buff
+    end = target.get_boundary_point(-unit) - unit * buff
+    return Arrow(
+        start, end, buff=0, color=color, stroke_width=stroke_width,
+        tip_length=tip_length, z_index=z_index,
+    )
+
+
+def small_arrow(start, end, color=C_EDGE, stroke_width=2.6, buff=0.10,
+                snap=True, snap_tolerance=BASELINE_STEP):
+    """Straight connector; snap only small accidental row/column misalignment.
+
+    Meaningful fan-out, fan-in and graph diagonals remain diagonal. Callers can
+    pass ``snap=False`` when a shallow diagonal is semantically intentional.
+    """
+    if snap:
+        start, end = _snapped_arrow_points(start, end, snap_tolerance)
+    return Arrow(
+        start, end, buff=buff, color=color, stroke_width=stroke_width,
+        tip_length=0.10,
+    )
 
 
 def probability_chart(values, title_tex, class_names, width=5.15):
@@ -1253,6 +1567,13 @@ class GlanceScene(VoiceoverScene):
             else:
                 backend = "gtts"
 
+        if backend in ("silent", "preview"):
+            return SilentService(
+                words_per_minute=float(
+                    os.environ.get("GLANCE_SILENT_WPM", "165")
+                )
+            )
+
         if backend in ("timed", "api"):
             key_file = os.environ.get(
                 "GLANCE_TIMED_TTS_KEY_FILE", DEFAULT_TIMED_TTS_KEY_FILE
@@ -1296,7 +1617,17 @@ class GlanceScene(VoiceoverScene):
     def banner(self):
         if self.section is None:
             return None
-        b = section_banner(self.section, self.section_name)
+        match = re.match(r"S\d+_(\d+)_", type(self).__name__)
+        scene_number = match.group(1) if match else None
+        b = section_chrome(self.section, self.section_name, scene_number)
+        started_at = self.renderer.time
+
+        def time_section_title(mobject):
+            update_section_title_visibility(
+                mobject, self.renderer.time - started_at, scene_number,
+            )
+
+        b.add_updater(time_section_title)
         self.add(b)
         return b
 
@@ -1326,4 +1657,29 @@ class GlanceScene(VoiceoverScene):
 
 class GlanceMovingScene(GlanceScene, MovingCameraScene):
     """GlanceScene variant for beats that pan or zoom the camera (self.camera.frame)."""
-    pass
+
+    def banner(self):
+        if self.section is None:
+            return None
+        match = re.match(r"S\d+_(\d+)_", type(self).__name__)
+        scene_number = match.group(1) if match else None
+        b = section_chrome(self.section, self.section_name, scene_number)
+        # MovingCameraScene has no add_fixed_in_frame_mobjects() in ManimCE
+        # 0.21. Counter the camera transform so page chrome stays screen-fixed.
+        reference = b.copy()
+        reference_center = reference.get_center().copy()
+        started_at = self.renderer.time
+
+        def follow_frame(mobject):
+            update_section_title_visibility(
+                reference, self.renderer.time - started_at, scene_number,
+            )
+            frame = self.camera.frame
+            scale = frame.width / config.frame_width
+            target = reference.copy().scale(scale)
+            target.move_to(frame.get_center() + reference_center * scale)
+            mobject.become(target)
+
+        b.add_updater(follow_frame)
+        self.add(b)
+        return b

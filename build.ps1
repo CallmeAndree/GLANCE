@@ -246,7 +246,9 @@ try {
         $commitOutput = (& git rev-parse --short HEAD 2>$null | Out-String).Trim()
         if ($LASTEXITCODE -eq 0) {
             $gitCommit = $commitOutput
-            & git diff --quiet 2>$null
+            # core.safecrlf=warn writes a line-ending warning to stderr on
+            # Windows; PowerShell can promote it to a terminating error.
+            & git -c core.safecrlf=false diff --quiet 2>$null
             if ($LASTEXITCODE -eq 1) {
                 $gitCommit += ' (co thay doi chua commit)'
             }

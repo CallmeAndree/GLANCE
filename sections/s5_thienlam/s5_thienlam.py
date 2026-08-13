@@ -75,6 +75,26 @@ def fit_box_label(box_group, width, pad=0.3):
     return box_group
 
 
+def scene_title(text_value, color=INK, size=HEAD_SIZE, max_width=12.2):
+    """Section-local scene headline with the strongest available font weight."""
+    return safe_text(
+        text_value, size=size, color=color, max_width=max_width, weight="HEAVY",
+    ).to_edge(UP, buff=0.85)
+
+
+def candidate_node(label, color=C_ROUTER, radius=0.40, focal=False):
+    """Canonical circular candidate node for the Top-K illustration."""
+    circle = Circle(
+        radius=radius, stroke_color=color,
+        stroke_width=3.0 if focal else 2.2,
+        fill_color=color, fill_opacity=0.16 if focal else 0.10,
+    )
+    label_mob = txt(
+        label, size=SMALL_SIZE, color=INK if focal else color, weight=BOLD,
+    ).move_to(circle)
+    return VGroup(circle, label_mob)
+
+
 # ---------------------------------------------------------------------------
 # VO — mọi lời thuyết minh gom một chỗ. Đã viết theo cách ĐỌC LÊN và phiên âm
 # thuật ngữ tiếng Anh theo bảng chung trong glance_style.py / SKILL.md, vì
@@ -244,12 +264,11 @@ class S5_01_Title(GlanceScene):
     section, section_name = SECTION, SECTION_NAME
 
     def construct(self):
-        card = title_card(
-            f"{SECTION} — {SECTION_NAME}",
-            "Why GLANCE learns, and why the results validate it",
-            OWNER,
-            accent=ACCENT,
-        )
+        card = VGroup(
+            txt(f"{SECTION} — {SECTION_NAME}", size=HEAD_SIZE, color=ACCENT, weight="HEAVY"),
+            txt("Why GLANCE learns, and why the results validate it", size=BODY_SIZE, color=INK),
+            txt(OWNER, size=SMALL_SIZE, color=MUTED),
+        ).arrange(DOWN, buff=0.35)
         with self.voiceover(text=VO["title_intro"]):
             self.play(FadeIn(card, shift=UP * 0.3), run_time=1.4)
         self.play(FadeOut(card), run_time=0.6)
@@ -262,16 +281,21 @@ class S5_02_TopKProblem(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Core problem: top-K is non-differentiable", color=ACCENT).to_edge(UP, buff=0.85)
+        head = scene_title(
+            "Can a gradient pass through top-K?", color=ACCENT,
+            size=int(HEAD_SIZE * 0.92),
+        )
 
         # Pill ngân sách nâng cao hẳn và nhỏ lại; hàng node hạ xuống, để hàng
         # dấu tick (đặt trên node) không chạm mép dưới pill như bản trước.
-        budget = pill("FIXED BUDGET  ·  K = 2", C_LLM, width=4.0).move_to([0, 2.15, 0])
+        budget = pill("FIXED BUDGET  ·  K = 2", C_LLM, width=4.0).move_to([0, 2.05, 0])
 
         labels = ["A", "B", "C", "D", "E", "F"]
         scores = [0.91, 0.82, 0.79, 0.61, 0.44, 0.20]
-        nodes = VGroup(*[labeled_box(l, C_ROUTER, width=1.05, height=0.85) for l in labels])
-        nodes.arrange(RIGHT, buff=0.35).move_to([0, 0.55, 0])
+        nodes = VGroup(*[
+            candidate_node(label, focal=(label == "A")) for label in labels
+        ])
+        nodes.arrange(RIGHT, buff=0.55).move_to([0, 0.72, 0])
         score_texts = VGroup(*[
             txt(f"{s:.2f}", size=SMALL_SIZE, color=MUTED, weight=BOLD).next_to(n, DOWN, buff=0.12)
             for n, s in zip(nodes, scores)
@@ -296,7 +320,7 @@ class S5_02_TopKProblem(GlanceScene):
         step_axis = Axes(
             x_range=[0, 6, 1], y_range=[0, 1, 1], x_length=8.5, y_length=1.8,
             tips=False, axis_config={"color": C_EDGE, "include_ticks": False},
-        ).move_to([0, -1.1, 0])
+        ).move_to([0, -1.18, 0])
         step = VMobject(color=C_ROUTER, stroke_width=4)
         step.set_points_as_corners([
             step_axis.c2p(0, 0), step_axis.c2p(2.5, 0),
@@ -314,28 +338,28 @@ class S5_02_TopKProblem(GlanceScene):
         marker = Dot(step_axis.c2p(2.35, 0), radius=0.09, color=YELLOW)
 
         with self.voiceover(text=VO["topk_jump"]) as tracker:
-            self.play(FadeOut(tickets), FadeOut(budget), run_time=0.3)
+            self.play(FadeOut(budget), run_time=0.3)
             self.play(
-                nodes.animate.scale(0.75).to_edge(UP, buff=1.7),
-                score_texts.animate.scale(0.75).next_to(nodes.copy().scale(0.75).to_edge(UP, buff=1.7), DOWN),
                 Create(step_axis), Create(step),
-                run_time=1.6,
+                run_time=1.0,
             )
             self.play(Create(cut), FadeIn(jump_label, shift=UP * 0.1), FadeIn(marker, scale=0.6),
                       run_time=min(1.4, tracker.duration))
 
-        # Điểm B tụt nhẹ từ 0.82 xuống 0.78 — thấp hơn C (0.79) — nên đổi hạng.
+        # Node A is the single focal example: its score crosses the cutoff while
+        # every object's geometry stays fixed.
         # Giữ nguyên vị trí các ô (không hoán đổi B/C): trong không gian hẹp,
         # cho hai ô bay qua nhau từng đè lên nhau giữa đường đi. Chỉ cần đổi
         # số điểm của B và chuyển "vé" sang C là đủ thể hiện quyết định nhảy.
-        score_078 = txt("0.78", size=SMALL_SIZE - 5, color=C_BAD, weight=BOLD).move_to(score_texts[1])
+        score_078 = txt("0.78", size=SMALL_SIZE, color=C_BAD, weight=BOLD).move_to(score_texts[0])
         # Đặt tick bên DƯỚI dòng điểm số, không phải phía trên node — lúc này
         # hàng node đã bị thu nhỏ/đẩy sát lên đỉnh khung hình (gần banner tiêu
         # đề), đặt phía trên sẽ đè lên chữ tiêu đề.
-        new_ticket = check(color=C_LLM, size=0.30).next_to(score_texts[2], DOWN, buff=0.22)
+        new_ticket = check(color=C_LLM, size=0.30).next_to(nodes[2], UP, buff=0.10).shift(DOWN * 0.15)
         self.play(
-            Transform(score_texts[1], score_078),
-            Indicate(nodes[1], color=C_BAD, scale_factor=1.08),
+            Transform(score_texts[0], score_078),
+            FadeOut(tickets[0]),
+            Indicate(nodes[0], color=C_BAD, scale_factor=1.08),
             marker.animate.move_to(step_axis.c2p(2.65, 1)),
             run_time=1.2,
         )
@@ -345,25 +369,29 @@ class S5_02_TopKProblem(GlanceScene):
 
         chain = pipeline(
             [("ROUTER π", C_ROUTER), ("TOP-K", C_BAD), ("FINAL LOSS", C_GOOD)],
-        ).move_to([0, -1.1, 0])
-        blocked = cross(color=C_BAD, size=0.5).move_to(chain.boxes[1])
+        ).move_to([0, 0.18, 0])
+        blocked = cross(color=C_BAD, size=0.34).move_to(chain.arrows[0].get_center())
         grad_arrow = Arrow(
             chain.boxes[2].get_left(), chain.boxes[1].get_right(),
             buff=0.10, color=YELLOW, stroke_width=5,
         )
+        forward_label = txt("FORWARD PASS WORKS", size=SMALL_SIZE - 2, color=C_GOOD, weight=BOLD)
+        forward_label.next_to(chain, UP, buff=0.45)
+        backward_label = txt(
+            "BACKWARD GRADIENT STOPS AT TOP-K", size=SMALL_SIZE - 2,
+            color=C_BAD, weight=BOLD,
+        ).next_to(chain, DOWN, buff=0.50)
 
         with self.voiceover(text=VO["topk_block"]) as tracker:
             self.play(
-                FadeOut(VGroup(nodes, score_texts, step_axis, step, cut, jump_label, marker, new_ticket)),
+                FadeOut(VGroup(nodes, score_texts, tickets, step_axis, step, cut, jump_label, marker, new_ticket)),
                 run_time=0.5,
             )
-            self.play(FadeIn(chain), run_time=1.0)
+            self.play(FadeIn(chain), FadeIn(forward_label), run_time=1.0)
             self.play(GrowArrow(grad_arrow), run_time=0.7)
-            self.play(FadeIn(blocked, scale=1.4), Flash(chain.boxes[1], color=C_BAD, flash_radius=0.7),
+            self.play(FadeIn(blocked, scale=1.4), FadeIn(backward_label),
+                      Flash(chain.arrows[0], color=C_BAD, flash_radius=0.35),
                       run_time=min(1.2, tracker.duration))
-        banner = txt("LOSS  ×→  TOP-K  ×→  ROUTER", size=BODY_SIZE, color=C_BAD, weight=BOLD)
-        banner.next_to(chain, DOWN, buff=0.7)
-        self.play(FadeIn(banner, shift=UP * 0.1), run_time=0.6)
         self.wait(0.6)
 
 
@@ -374,10 +402,11 @@ class S5_03_CounterfactualLoss(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Solution: replace gradients with rewards", color=C_GOOD).to_edge(UP, buff=0.85)
+        head = scene_title("Solution: replace gradients with rewards", color=C_GOOD)
         self.add(head)
 
-        node = labeled_box("v", C_ROUTER, width=0.9, height=0.9).move_to([-5.6, 0, 0])
+        node = avatar_node("A", target=True, radius=0.34).move_to([-5.6, 0, 0])
+        node[0].set_stroke(C_ROUTER, width=2.8).set_fill(C_ROUTER, opacity=0.12)
         route_tag = pill("ROUTE", C_LLM, width=1.7).next_to(node, UP, buff=0.25)
 
         with self.voiceover(text=VO["cf_intro"]):
@@ -388,12 +417,16 @@ class S5_03_CounterfactualLoss(GlanceScene):
         # 0.26 và tách tâm ra ±1.15 để hai panel rời hẳn, không đè.
         upper = panel(Rectangle(width=7.0, height=1.35), buff=0.26).move_to([-0.1, 1.15, 0])
         lower = panel(Rectangle(width=7.0, height=1.35), color=C_LLM, buff=0.26).move_to([-0.1, -0.95, 0])
-        up_text = MathTex(r"\text{NO LLM CALL}\;\cdot\;\text{GNN}\to\text{head }H\to p_H"
-                          r"\;\cdot\;\ell_v^{GNN}=\mathrm{CE}(y_v,\,p_H)",
-                          font_size=30, color=C_GNN).move_to(upper).scale_to_fit_width(6.4)
-        low_text = MathTex(r"\text{LLM CALLED}\;\cdot\;\text{GNN}+\text{LLM}\to\text{refiner }C\to p_C"
-                           r"\;\cdot\;\ell_v^{LLM}=\mathrm{CE}(y_v,\,p_C)",
-                           font_size=30, color=C_LLM).move_to(lower).scale_to_fit_width(6.4)
+        up_text = VGroup(
+            txt("NO LLM CALL", size=SMALL_SIZE - 2, color=C_GNN, weight=BOLD),
+            txt("GNN  →  head H", size=SMALL_SIZE - 3, color=INK),
+            MathTex(r"\ell_A^{GNN}=\mathrm{CE}(y_A,p_{H,A})", font_size=27, color=C_GNN),
+        ).arrange(DOWN, buff=0.10).move_to(upper)
+        low_text = VGroup(
+            txt("LLM CALLED", size=SMALL_SIZE - 2, color=C_LLM, weight=BOLD),
+            txt("GNN + LLM  →  refiner C", size=SMALL_SIZE - 3, color=INK),
+            MathTex(r"\ell_A^{LLM}=\mathrm{CE}(y_A,p_{C,A})", font_size=27, color=C_LLM),
+        ).arrange(DOWN, buff=0.10).move_to(lower)
         arrow_up = Arrow(node.get_right(), upper.get_left(), buff=0.1, color=C_GNN, stroke_width=3)
         arrow_down = Arrow(node.get_right(), lower.get_left(), buff=0.1, color=C_LLM, stroke_width=3)
 
@@ -401,24 +434,14 @@ class S5_03_CounterfactualLoss(GlanceScene):
         ghost_up = node.copy().scale(0.6).set_opacity(0.9)
         ghost_down = node.copy().scale(0.6).set_opacity(0.9)
 
-        # Đồng hồ loss bên phải mỗi nhánh: số chạy sống + thanh dài dần tới giá trị thật.
-        gnn_value, llm_value = ValueTracker(0.0), ValueTracker(0.0)
-        gnn_num = DecimalNumber(0, num_decimal_places=2, color=C_GNN, font_size=BODY_SIZE - 4)
-        # Cột thanh loss đẩy hẳn sang phải (track x=5.0, số x=6.3) để không dính
-        # vào mép phải panel (mép ~3.66 sau khi panel lùi trái).
-        gnn_num.add_updater(lambda m: m.set_value(gnn_value.get_value())).move_to([6.3, 1.15, 0])
-        llm_num = DecimalNumber(0, num_decimal_places=2, color=C_LLM, font_size=BODY_SIZE - 4)
-        llm_num.add_updater(lambda m: m.set_value(llm_value.get_value())).move_to([6.3, -0.95, 0])
-        gnn_track = RoundedRectangle(width=1.5, height=0.20, corner_radius=0.05,
-                                      stroke_color=C_GNN, stroke_width=1.4, fill_opacity=0).move_to([5.0, 1.15, 0])
-        llm_track = RoundedRectangle(width=1.5, height=0.20, corner_radius=0.05,
-                                      stroke_color=C_LLM, stroke_width=1.4, fill_opacity=0).move_to([5.0, -0.95, 0])
-        gnn_fill = RoundedRectangle(width=1.5 * 2.30 / 2.50, height=0.20, corner_radius=0.05,
-                                     fill_color=C_GNN, fill_opacity=0.85, stroke_width=0)
-        gnn_fill.move_to(gnn_track.get_center()).align_to(gnn_track, LEFT)
-        llm_fill = RoundedRectangle(width=1.5 * 0.30 / 2.50, height=0.20, corner_radius=0.05,
-                                     fill_color=C_LLM, fill_opacity=0.85, stroke_width=0)
-        llm_fill.move_to(llm_track.get_center()).align_to(llm_track, LEFT)
+        gnn_probability = probability_bars(
+            r"p_{H,A}", [0.12, 0.73, 0.15], width=1.15,
+            math_label=True, accent=C_GNN,
+        ).scale(0.88).move_to([5.20, 1.15, 0])
+        llm_probability = probability_bars(
+            r"p_{C,A}", [0.08, 0.87, 0.05], width=1.15,
+            math_label=True, accent=C_LLM,
+        ).scale(0.88).move_to([5.20, -0.95, 0])
 
         with self.voiceover(text=VO["cf_branch"]) as tracker:
             self.play(
@@ -430,27 +453,26 @@ class S5_03_CounterfactualLoss(GlanceScene):
             )
             self.remove(ghost_up, ghost_down)
             self.play(
-                FadeIn(up_text), FadeIn(low_text), FadeIn(gnn_track), FadeIn(llm_track),
+                FadeIn(up_text), FadeIn(low_text),
                 run_time=0.8,
             )
             self.play(
-                gnn_value.animate.set_value(2.30), GrowFromEdge(gnn_fill, LEFT), FadeIn(gnn_num),
-                llm_value.animate.set_value(0.30), GrowFromEdge(llm_fill, LEFT), FadeIn(llm_num),
+                FadeIn(gnn_probability, shift=RIGHT * 0.08),
+                FadeIn(llm_probability, shift=RIGHT * 0.08),
                 run_time=min(1.8, tracker.duration),
             )
 
-        truth = MathTex(r"\text{same true label }y_v", font_size=30, color=C_GOOD)
-        truth.move_to([-5.6, -0.9, 0])
+        # "SAME TRUE LABEL y_A" bỏ hẳn: lời đọc đã nói rõ "cùng một nhãn thật",
+        # và cả hai công thức ℓ_GNN/ℓ_LLM đã có sẵn y_A — nhãn riêng chỉ lặp lại.
         with self.voiceover(text=VO["cf_same_label"]) as tracker:
-            self.play(FadeIn(truth, scale=0.95), run_time=0.9)
             self.play(Indicate(up_text, color=C_GNN), Indicate(low_text, color=C_LLM),
                       run_time=min(1.6, tracker.duration))
         banner = txt(
-            "ℓᵥᴸᴸᴹ IS THE LOSS OF THE FULL GNN + LLM + REFINER C BRANCH, NOT THE LLM ALONE",
-            size=SMALL_SIZE - 4, color=C_LLM, weight=BOLD,
-        ).move_to([0.1, -2.35, 0]).scale_to_fit_width(11.5)
-        self.play(FadeIn(banner, shift=UP * 0.1), run_time=0.7)
-        self.wait(0.6)
+            "LLM LOSS = FULL GNN + LLM + REFINER C BRANCH",
+            size=SMALL_SIZE + 1, color=C_LLM, weight=BOLD,
+        ).move_to([0.25, -2.30, 0]).scale_to_fit_width(10.2)
+        self.play(FadeIn(banner, shift=UP * 0.1), run_time=0.6)
+        self.wait(3.2)
 
 
 class S5_04_Reward(GlanceScene):
@@ -460,16 +482,16 @@ class S5_04_Reward(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Reward: Is an LLM call worth it?", color=C_GOOD).to_edge(UP, buff=0.85)
+        head = scene_title("Reward: Is an LLM call worth it?", color=C_GOOD)
         self.add(head)
 
         row1 = VGroup(
-            pill(MathTex(r"\ell_v^{GNN}=2.30", font_size=30, color=C_GNN), C_GNN, width=2.5),
+            pill(MathTex(r"\ell_v^{GNN}=2.30", font_size=30, color=C_GNN), C_GNN, width=2.15),
             txt("−", size=BODY_SIZE, color=MUTED),
-            pill(MathTex(r"\ell_v^{LLM}=0.30", font_size=30, color=C_LLM), C_LLM, width=2.5),
+            pill(MathTex(r"\ell_v^{LLM}=0.30", font_size=30, color=C_LLM), C_LLM, width=2.15),
             txt("=", size=BODY_SIZE, color=MUTED),
             pill("gain 2.00", C_GOOD, width=2.3),
-        ).arrange(RIGHT, buff=0.25).move_to([0, 1.3, 0])
+        ).arrange(RIGHT, buff=0.25).scale(1.02).move_to([0, 1.15, 0])
         route_label = txt("IF ROUTED", size=SMALL_SIZE, color=C_LLM, weight=BOLD).next_to(row1, UP, buff=0.3)
 
         with self.voiceover(text=VO["reward_route"]) as tracker:
@@ -483,39 +505,34 @@ class S5_04_Reward(GlanceScene):
             pill("β = 0.10", C_LLM, width=1.9),
             txt("=", size=BODY_SIZE, color=MUTED),
             pill("reward = +1.90", C_GOOD, width=2.9),
-        ).arrange(RIGHT, buff=0.25).move_to([0, 0.4, 0])
-        note = txt("ILLUSTRATIVE VALUES", size=SMALL_SIZE - 5, color=MUTED).next_to(row2, RIGHT, buff=0.4)
+        ).arrange(RIGHT, buff=0.25).scale(1.02).move_to([0, 0.15, 0])
         beta_note = txt(
             "larger β → more cautious router   ·   smaller β → more LLM calls",
             size=SMALL_SIZE - 3, color=MUTED,
         ).move_to([0, -0.35, 0])
 
-        counter_row = txt(
-            "EXAMPLE: gain 0.05 − β 0.10 = reward −0.05  →  remains negative even when routed",
-            size=SMALL_SIZE - 5, color=C_BAD,
-        ).move_to([0, -0.85, 0])
+        counter_row = VGroup(
+            txt("EXAMPLE: gain 0.05 − β 0.10 = reward −0.05", size=SMALL_SIZE - 3, color=C_BAD),
+            txt("→  remains negative even when routed", size=SMALL_SIZE - 3, color=C_BAD),
+        ).arrange(DOWN, buff=0.10).move_to([0, -1.30, 0])
 
         with self.voiceover(text=VO["reward_beta"]) as tracker:
-            self.play(TransformFromCopy(row1[4], row2[0]), run_time=0.7)
+            # Row 1 remains as the reference. Reveal one independent gain card
+            # in row 2 instead of dragging a duplicate through the loss card.
+            self.play(FadeIn(row2[0], shift=DOWN * 0.08), run_time=0.45)
             self.play(
                 LaggedStart(*[FadeIn(m) for m in row2[1:]], lag_ratio=0.16),
-                FadeIn(note),
                 run_time=1.2,
             )
             self.play(FadeIn(beta_note, shift=UP * 0.08), run_time=0.8)
             self.play(FadeIn(counter_row, shift=UP * 0.06), run_time=min(1.0, tracker.duration))
 
-        skip_row = VGroup(
-            txt("IF SKIPPED", size=SMALL_SIZE, color=MUTED, weight=BOLD),
-            pill(MathTex(r"\text{reward}=-\ell_v^{GNN}", font_size=30, color=C_BAD), C_BAD, width=3.2),
-        ).arrange(RIGHT, buff=0.4).move_to([0, -1.4, 0])
-
-        with self.voiceover(text=VO["reward_skip"]) as tracker:
-            self.play(FadeIn(skip_row, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
-
+        # "IF SKIPPED" không còn chung frame với "IF ROUTED" ở đây nữa — dời
+        # thành beat mở đầu riêng của S5_05_JointObjective (xem construct() ở
+        # đó), giữ nguyên VO["reward_skip"].
         banner = MathTex(r"\text{ROUTE:}\;r_v=\ell_v^{GNN}-\ell_v^{LLM}-\beta"
                           r"\qquad\text{SKIP:}\;r_v=-\ell_v^{GNN}",
-                          font_size=36, color=C_ROUTER).move_to([0, -2.3, 0])
+                          font_size=32, color=C_ROUTER).move_to([0, -2.0, 0])
         self.play(FadeIn(banner, shift=UP * 0.1), run_time=0.8)
         self.wait(0.6)
 
@@ -527,56 +544,82 @@ class S5_05_JointObjective(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Learning from rewards: total loss and trainable modules", color=C_ROUTER).to_edge(UP, buff=0.85)
+
+        # Beat mở đầu riêng cho trường hợp SKIP, tách khỏi "IF ROUTED" của
+        # S5_04_Reward — hai trường hợp không còn chung một frame nữa.
+        skip_row = VGroup(
+            txt("IF SKIPPED", size=SMALL_SIZE, color=MUTED, weight=BOLD),
+            pill(MathTex(r"\text{reward}=-\ell_v^{GNN}", font_size=30, color=C_BAD), C_BAD, width=3.2),
+        ).arrange(RIGHT, buff=0.4).move_to(ORIGIN)
+        with self.voiceover(text=VO["reward_skip"]) as tracker:
+            self.play(FadeIn(skip_row, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
+        self.play(FadeOut(skip_row), run_time=0.4)
+
+        head = safe_text(
+            "Learning from rewards: total loss and trainable modules",
+            size=HEAD_SIZE,
+            color=C_ROUTER,
+            max_width=12.2,
+            weight="HEAVY",
+        ).to_edge(UP, buff=0.85)
         self.add(head)
+        self.add(source("Appendix C.4, pp.18–19"))
 
         chain = pipeline(
             [("reward rᵥ", C_GOOD), ("log π(fᵥ)", C_ROUTER), ("ℓᵥʳᵒᵘᵗᵉ", C_BAD)],
-        ).scale(0.85).move_to([0, 1.75, 0])
+        ).scale(0.85).move_to([0, 1.15, 0])
         good_rule = VGroup(
             MathTex(r"r_v>0", font_size=32, color=C_GOOD),
             txt("→", size=SMALL_SIZE - 2, color=MUTED),
-            MathTex(r"\pi(f_v)\ \text{increases}", font_size=32, color=C_GOOD),
+            MathTex(r"\pi(f_v)", font_size=32, color=C_GOOD),
+            txt("increases", size=SMALL_SIZE - 2, color=C_GOOD, weight=BOLD),
         ).arrange(RIGHT, buff=0.16)
         bad_rule = VGroup(
             MathTex(r"r_v<0", font_size=32, color=C_BAD),
             txt("→", size=SMALL_SIZE - 2, color=MUTED),
-            MathTex(r"\pi(f_v)\ \text{decreases}", font_size=32, color=C_BAD),
+            MathTex(r"\pi(f_v)", font_size=32, color=C_BAD),
+            txt("decreases", size=SMALL_SIZE - 2, color=C_BAD, weight=BOLD),
         ).arrange(RIGHT, buff=0.16)
-        rules = VGroup(good_rule, bad_rule).arrange(RIGHT, buff=1.0).move_to([0, 1.0, 0])
+        rules = VGroup(good_rule, bad_rule).arrange(RIGHT, buff=0.95).move_to([0, -0.15, 0])
 
         with self.voiceover(text=VO["obj_policy"]) as tracker:
             self.play(FadeIn(chain.boxes[0], scale=0.9), run_time=0.6)
             self.play(GrowArrow(chain.arrows[0]), FadeIn(chain.boxes[1]), run_time=0.7)
             self.play(GrowArrow(chain.arrows[1]), FadeIn(chain.boxes[2]), run_time=0.7)
             self.play(FadeIn(rules, shift=UP * 0.08), run_time=min(1.2, tracker.duration))
-        self.play(FadeOut(rules), chain.animate.move_to([0, 1.5, 0]), run_time=0.5)
+        self.play(FadeOut(rules), run_time=0.5)
 
         formula = MathTex(
             r"\ell_v^{route}=-r_v\cdot\log\pi(f_v)\;-\;\lambda_H\cdot H[\pi(f_v)]",
             font_size=34, color=INK,
-        ).move_to([0, 0.75, 0])
+        ).move_to([0, -0.45, 0])
         with self.voiceover(text=VO["obj_entropy"]) as tracker:
             self.play(Write(formula), run_time=min(1.6, tracker.duration))
 
         # panel() bọc thêm buff quanh Rectangle. Bản cũ width 5.2 + buff 0.4 =
         # 6.0, đặt ở x=±3.0 nên hai khung chạm nhau ngay tại tâm. Thu nhỏ khung
         # và buff, tách tâm để có khe rõ giữa hai card.
-        pred_card = panel(Rectangle(width=4.5, height=1.0), color=C_GNN, buff=0.28).move_to([-2.7, -0.45, 0])
-        route_card = panel(Rectangle(width=4.5, height=1.0), color=C_ROUTER, buff=0.28).move_to([2.7, -0.45, 0])
-        pred_text = MathTex(r"\text{PREDICTION LOSS}\;\cdot\;\text{top-}k\!:\ \ell_v^{LLM},"
-                            r"\ \text{all others }\ell_v^{GNN}",
-                            font_size=28, color=C_GNN).move_to(pred_card).scale_to_fit_width(4.7)
-        route_text = MathTex(r"\lambda_{router}\times\text{ROUTER LOSS}"
-                             r"\;\cdot\;\text{learns budget allocation}",
-                             font_size=28, color=C_ROUTER).move_to(route_card).scale_to_fit_width(4.7)
+        pred_card = panel(Rectangle(width=4.5, height=1.0), color=C_GNN, buff=0.28).move_to([-2.7, 0.45, 0])
+        route_card = panel(Rectangle(width=4.5, height=1.0), color=C_ROUTER, buff=0.28).move_to([2.7, 0.45, 0])
+        pred_text = VGroup(
+            txt("PREDICTION LOSS", size=SMALL_SIZE - 1, color=C_GNN, weight=BOLD),
+            MathTex(r"v\in\operatorname{TopK}:\ell_v^{LLM}\quad\text{else}:\ell_v^{GNN}", font_size=25, color=INK),
+        ).arrange(DOWN, buff=0.12).move_to(pred_card)
+        route_text = VGroup(
+            txt("ROUTER LOSS", size=SMALL_SIZE - 1, color=C_ROUTER, weight=BOLD),
+            MathTex(r"\lambda_{router}\ell_v^{route}", font_size=29, color=INK),
+        ).arrange(DOWN, buff=0.12).move_to(route_card)
         with self.voiceover(text=VO["obj_pred"]) as tracker:
-            self.play(FadeIn(pred_card), FadeIn(pred_text), run_time=min(1.6, tracker.duration))
+            self.play(FadeOut(chain), FadeOut(formula), run_time=0.45)
+            self.play(
+                FadeIn(pred_card), FadeIn(pred_text),
+                run_time=min(1.6, tracker.duration),
+            )
 
         # Hai mũi tên gộp về TOTAL LOSS: đối xứng qua trục giữa, xuất phát từ
         # đáy tâm mỗi card, chụm vào hai góc trên của pill. Hạ pill xuống đủ sâu
         # để mũi tên dốc hẳn, không còn nằm ngang lệch như bản trước.
-        total = pill("TOTAL LOSS", INK, width=3.0).move_to([0, -2.6, 0])
+        total = pill("TOTAL LOSS", INK, width=3.0).move_to([0, -1.55, 0])
         pred_to_total = Arrow(
             pred_card.get_bottom(), total.get_top() + LEFT * 0.75,
             buff=0.14, color=C_GNN, stroke_width=4, max_tip_length_to_length_ratio=0.14,
@@ -608,7 +651,7 @@ class S5_05_JointObjective(GlanceScene):
         for status, module in zip(status_labels, modules):
             status.next_to(module, DOWN, buff=0.18)
         update_label = pill("TOTAL LOSS  →  UPDATE PARAMETERS", C_GOOD, width=4.8)
-        update_label.move_to([0, 0.35, 0])
+        update_label.move_to([0, 1.45, 0])
         to_refiner = Arrow(
             update_label.get_bottom() + LEFT * 0.8,
             modules[2].get_top(), buff=0.12, color=C_GOOD, stroke_width=3,
@@ -624,9 +667,9 @@ class S5_05_JointObjective(GlanceScene):
                     chain, formula, pred_card, pred_text, route_card, route_text,
                     total, pred_to_total, route_to_total,
                 )),
-                FadeIn(update_label), FadeIn(modules),
-                run_time=0.8,
+                run_time=0.35,
             )
+            self.play(FadeIn(update_label), FadeIn(modules), run_time=0.45)
             self.play(GrowArrow(to_refiner), GrowArrow(to_router), run_time=0.8)
             # scale_factor mặc định của Indicate (~1.2) khiến 2 khối liền kề
             # (buff=0.3) phình to đè lên nhau — ép nhỏ lại để không chạm nhau.
@@ -639,20 +682,21 @@ class S5_05_JointObjective(GlanceScene):
             # hai animation xung đột: move_to bị bỏ qua, các pill kẹt ở vị trí
             # cũ dưới đáy còn dòng hparam chèn vào giữa. Đặt tĩnh rồi chỉ FadeIn
             # thì pill về đúng ngay dưới module (y=-1.12).
-            status_labels.move_to([0, -1.12, 0])
             self.play(
                 FadeOut(VGroup(update_label, to_refiner, to_router)),
-                modules.animate.move_to([0, -0.25, 0]),
-                FadeIn(status_labels, shift=UP * 0.1),
-                run_time=0.7,
+                modules.animate.move_to([0, 0.35, 0]),
+                run_time=0.42,
             )
+            for status, module in zip(status_labels, modules):
+                status.next_to(module, DOWN, buff=0.18)
+            self.play(FadeIn(status_labels, shift=UP * 0.1), run_time=0.28)
 
         hparam = VGroup(
             txt("batch 32  ·  route top-12 per batch  ·  β = {0.1, 0.2, 0.3}",
-                size=SMALL_SIZE - 4, color=MUTED),
+                size=SMALL_SIZE - 1, color=INK, weight=BOLD),
             txt("budget schedule: K decreases from 32 to 8, factor r = 0.5",
-                size=SMALL_SIZE - 5, color=MUTED),
-        ).arrange(DOWN, buff=0.12).move_to([0, -2.25, 0])
+                size=SMALL_SIZE - 2, color=MUTED, weight=BOLD),
+        ).arrange(DOWN, buff=0.20).move_to([0, -2.10, 0])
         with self.voiceover(text=VO["obj_hparam"]) as tracker:
             self.play(FadeIn(hparam, shift=UP * 0.06), run_time=min(1.6, tracker.duration))
 
@@ -668,14 +712,20 @@ class S5_06_Setup(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Experimental setup", color=C_GNN).to_edge(UP, buff=0.85)
+        # Title hạ xuống một chút cho thoáng với hàng banner phía trên.
+        head = scene_title("Experimental setup", color=C_GNN).shift(DOWN * 0.20)
         self.add(head)
+        self.add(source("Appendix C.4, pp.18–19"))
 
+        # Đặt row và goal bằng arrange rồi canh giữa cả cụm, thay vì gán toạ độ
+        # x tuyệt đối cho từng cái (cách cũ khiến cụm lệch trái so với tâm và
+        # khe hở giữa hai phần phụ thuộc vào bề rộng thật của từng box).
         row = VGroup(
             labeled_box("GNN", C_GNN, width=2.0), txt("+", size=HEAD_SIZE, color=MUTED),
             labeled_box("LLM", C_LLM, width=2.0),
-        ).arrange(RIGHT, buff=0.3).move_to([-2.0, 1.3, 0])
-        goal = pill("ONE MODEL?", C_ROUTER, width=3.0).move_to([2.8, 1.3, 0])
+        ).arrange(RIGHT, buff=0.22).scale(1.12)
+        goal = pill("ONE MODEL?", C_ROUTER, width=3.0).scale(1.12)
+        VGroup(row, goal).arrange(RIGHT, buff=1.05).move_to([0, 0.10, 0])
         arrow = Arrow(row.get_right(), goal.get_left(), buff=0.15, color=MUTED, stroke_width=3)
         with self.voiceover(text=VO["setup_question"]) as tracker:
             self.play(FadeIn(row), run_time=0.9)
@@ -689,7 +739,17 @@ class S5_06_Setup(GlanceScene):
             metric_card(n, c, C_GOOD, width=2.6)
             for n, c in [("ARXIV-YEAR", "169K"), ("OGB-PRODUCTS", "2.45M")]
         ]).arrange(RIGHT, buff=0.3)
-        datasets = VGroup(std, big).arrange(RIGHT, buff=0.6).move_to([0, 0.0, 0])
+        std_label = txt(
+            "STANDARD-SCALE DATASETS", size=SMALL_SIZE - 3,
+            color=C_GNN, weight=BOLD,
+        )
+        big_label = txt(
+            "LARGE-SCALE DATASETS", size=SMALL_SIZE - 3,
+            color=C_GOOD, weight=BOLD,
+        )
+        std_group = VGroup(std_label, std).arrange(DOWN, buff=0.20)
+        big_group = VGroup(big_label, big).arrange(DOWN, buff=0.20)
+        datasets = VGroup(std_group, big_group).arrange(DOWN, buff=0.48).scale(0.98).move_to([0, 0.10, 0])
         with self.voiceover(text=VO["setup_data"]) as tracker:
             self.play(FadeOut(VGroup(row, goal, arrow)), run_time=0.5)
             self.play(FadeIn(datasets, shift=UP * 0.1), run_time=min(1.8, tracker.duration))
@@ -697,17 +757,20 @@ class S5_06_Setup(GlanceScene):
         classic = VGroup(*[pill(n, C_GNN, width=2.3) for n in ["GCN", "GraphSAGE", "GCNII"]]).arrange(DOWN, buff=0.18)
         strat = VGroup(*[pill(n, MUTED, width=2.7) for n in ["original features", "LLM-enhanced", "LOGIN"]]).arrange(DOWN, buff=0.18)
         hetero = VGroup(*[pill(n, C_ROUTER, width=2.3) for n in ["FAGCN", "GGCN", "GBK-GNN"]]).arrange(DOWN, buff=0.18)
-        baselines = VGroup(classic, strat, hetero).arrange(RIGHT, buff=0.6).move_to([0, -1.0, 0])
+        baselines = VGroup(classic, strat, hetero).arrange(RIGHT, buff=0.6).scale(1.12).move_to([0, -0.10, 0])
         with self.voiceover(text=VO["setup_baseline"]) as tracker:
             self.play(FadeOut(datasets, shift=UP * 0.1), run_time=0.5)
             self.play(FadeIn(baselines, shift=UP * 0.1), run_time=min(2.0, tracker.duration))
 
         dots = VGroup(*[Dot(radius=0.075, color=MUTED, fill_opacity=0.4) for _ in range(32)])
-        dots.arrange_in_grid(rows=4, cols=8, buff=0.16).move_to([-3.1, -1.0, 0])
+        dots.arrange_in_grid(rows=4, cols=8, buff=0.16)
         for i in range(12):
             dots[i].set_color(C_LLM).set_fill(opacity=1)
         budget = metric_card("LLM QUERY BUDGET", "12 / 32", C_LLM, note="per batch", width=3.4)
-        budget.move_to([2.6, -1.0, 0])
+        # arrange thay cho hai toạ độ x tuyệt đối: khe giữa lưới chấm và thẻ
+        # budget được đặt rõ ràng, và cả cụm canh giữa đúng tâm khung.
+        budget_group = VGroup(dots, budget).arrange(RIGHT, buff=1.15).scale(1.18)
+        budget_group.move_to([0, -0.20, 0])
         with self.voiceover(text=VO["setup_budget"]) as tracker:
             self.play(FadeOut(baselines, shift=UP * 0.1), run_time=0.5)
             self.play(
@@ -725,14 +788,19 @@ class S5_07_BalancedResults(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Balance & overall accuracy", color=C_ROUTER).to_edge(UP, buff=0.85)
+        head = scene_title("Balance & overall accuracy", color=C_ROUTER)
         self.add(head)
+        table4_source = source("Table 4, p.8")
+        self.add(table4_source)
 
         chart = bar_chart(
             [89.5, 92.6, 82.1], ["Cora", "Pubmed", "Arxiv23"],
             colors=[C_ROUTER, C_ROUTER, C_ROUTER], y_range=(0, 100, 20),
             width=8.0, height=2.6, value_fmt="{:.1f}",
-        ).move_to([0, 0.9, 0])
+        ).scale(0.94).move_to([0, 0.40, 0])
+        # Canh theo dãy cột, không theo cả group: nhãn trục y chiếm hẳn một
+        # khoảng bên trái nên canh group làm phần cột trông lệch sang phải.
+        chart.shift(LEFT * chart.bars.get_center()[0])
         with self.voiceover(text=VO["res_overall"]) as tracker:
             self.play(Create(chart.axes), run_time=0.6)
             self.play(
@@ -740,17 +808,26 @@ class S5_07_BalancedResults(GlanceScene):
                 run_time=min(2.0, tracker.duration),
             )
 
-        margin = pill("OVERALL MARGIN IS BELOW 1 POINT", C_LLM, width=7.0).move_to([0, -1.15, 0])
+        margin = pill(
+            "OVERALL MARGIN IS BELOW 1 POINT", C_LLM, width=7.0,
+        ).move_to([0, -1.95, 0])
         with self.voiceover(text=VO["res_margin"]) as tracker:
             self.play(FadeIn(margin, scale=0.96), run_time=min(1.2, tracker.duration))
 
         hard_chart = bar_chart(
             [33.4, 46.4], ["Runner-up", "GLANCE"], colors=[MUTED, C_ROUTER],
-            y_range=(0, 50, 10), width=4.2, height=2.4, value_fmt="{:.1f}",
-        ).move_to([-3.3, -1.45, 0])
-        hard_title = MathTex(r"\text{CORA}\;\cdot\;\text{HARDEST GROUP }(h_v<0.25)",
-                            font_size=26, color=C_BAD)
-        hard_title.next_to(hard_chart, UP, buff=0.45)
+            y_range=(0, 50, 10), width=6.0, height=2.8, value_fmt="{:.1f}",
+        ).move_to([0, -0.62, 0])
+        # Bọc cả dòng trong MathTex khiến phần chữ ra font serif của LaTeX, lạc
+        # hẳn khỏi font chung của video. Tách ra: chữ dùng txt(), chỉ phần công
+        # thức h_v mới cần MathTex.
+        hard_title = VGroup(
+            txt("CORA · HARDEST GROUP", size=SMALL_SIZE, color=C_BAD, weight=BOLD),
+            MathTex(r"(h_v<0.25)", font_size=26, color=C_BAD),
+        ).arrange(RIGHT, buff=0.20)
+        # buff 0.45 làm tiêu đề gần chạm nhãn "+13.0" của mũi tên chênh lệch
+        # (nhãn này nằm cao hơn đỉnh cột) — nới ra cho hai dòng tách hẳn.
+        hard_title.next_to(hard_chart, UP, buff=0.72)
         gain_arrow = DoubleArrow(
             hard_chart.bars[0][0].get_top() + UP * 0.45,
             hard_chart.bars[1][0].get_top() + UP * 0.45,
@@ -758,9 +835,14 @@ class S5_07_BalancedResults(GlanceScene):
         )
         gain_label = txt("+13.0", size=SMALL_SIZE - 3, color=C_GOOD, weight=BOLD)
         gain_label.next_to(gain_arrow, UP, buff=0.06)
+        hard_group = VGroup(hard_chart, hard_title, gain_arrow, gain_label)
 
         with self.voiceover(text=VO["res_hardbin"]) as tracker:
-            self.play(FadeOut(VGroup(chart, margin)), run_time=0.5)
+            table3_source = source("Table 3, p.8")
+            self.play(
+                FadeOut(VGroup(chart, margin, table4_source)), FadeIn(table3_source),
+                run_time=0.5,
+            )
             self.play(FadeIn(hard_title), Create(hard_chart.axes), run_time=0.6)
             self.play(
                 LaggedStart(*[FadeIn(b, shift=UP * 0.1) for b in hard_chart.bars], lag_ratio=0.25),
@@ -772,14 +854,18 @@ class S5_07_BalancedResults(GlanceScene):
             )
 
         rank = metric_card("AVERAGE RANK", "2.4", C_ROUTER, note="runner-up: 4.7", width=3.4)
-        rank.move_to([2.9, -0.55, 0])
-        easy = pill("EASY GROUPS REMAIN NEAR-PERFECT", C_GNN, width=4.2).move_to([2.9, -1.65, 0])
+        rank.scale(1.15).move_to([3.25, -0.35, 0])
+        easy = pill("EASY GROUPS REMAIN NEAR-PERFECT", C_GNN, width=4.2).move_to([3.25, -1.65, 0])
         with self.voiceover(text=VO["res_rank"]) as tracker:
-            self.play(FadeIn(rank, shift=LEFT * 0.1), run_time=0.9)
+            self.play(
+                hard_group.animate.shift(LEFT * 3.25),
+                FadeIn(rank, shift=LEFT * 0.1),
+                run_time=0.9,
+            )
             self.play(FadeIn(easy, shift=UP * 0.1), run_time=min(1.3, tracker.duration))
 
-        banner = txt("MOST BALANCED  ≠  BEST IN EVERY GROUP", size=BODY_SIZE - 2, color=C_ROUTER, weight=BOLD)
-        banner.move_to([0, -1.0, 0])
+        banner = txt("MOST BALANCED  ≠  BEST IN EVERY GROUP", size=HEAD_SIZE - 2, color=C_ROUTER, weight=BOLD)
+        banner.move_to([0, -0.15, 0])
         with self.voiceover(text=VO["res_verdict"]) as tracker:
             self.play(
                 FadeOut(VGroup(hard_chart, hard_title, rank, easy, gain_arrow, gain_label), shift=UP * 0.15),
@@ -796,9 +882,12 @@ class S5_08_RouterLearned(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Does the router learn the right nodes?", color=C_LLM).to_edge(UP, buff=0.85)
+        # Hạ dòng câu hỏi xuống cho thoáng với hàng banner phía trên.
+        head = scene_title("Does the router learn the right nodes?", color=C_LLM)
+        head.shift(DOWN * 0.20)
         with self.voiceover(text=VO["router_question"]):
             self.play(Write(head), run_time=1.2)
+        self.add(source("§6.3, p.9"))
 
         axis = Line([-5.0, -1.2, 0], [-0.6, -1.2, 0], color=MUTED, stroke_width=1.6)
         heights = [1.5, 1.0, 0.55, 0.28]
@@ -811,8 +900,13 @@ class S5_08_RouterLearned(GlanceScene):
             bar.move_to([x, -1.2 + h / 2, 0])
             lab = txt(bl, size=SMALL_SIZE - 6, color=MUTED).next_to(bar, DOWN, buff=0.1)
             hist.add(VGroup(bar, lab))
-        hist_note = MathTex(r"\text{ROUTED NODE COUNT by local }h_v", font_size=26, color=INK)
+        hist_note = VGroup(
+            txt("ROUTED NODE COUNT by local", size=SMALL_SIZE - 1, color=INK, weight=BOLD),
+            MathTex(r"h_v", font_size=29, color=INK),
+        ).arrange(RIGHT, buff=0.14)
         hist_note.next_to(hist, UP, buff=0.3)
+        hist_group = VGroup(axis, hist, hist_note)
+        hist_group.shift(RIGHT * 2.75)
 
         with self.voiceover(text=VO["router_hist"]) as tracker:
             self.play(Create(axis), FadeIn(hist_note), run_time=0.6)
@@ -825,18 +919,27 @@ class S5_08_RouterLearned(GlanceScene):
         graph = demo_tag().scale(0.7).move_to([3.3, -0.3, 0])
         ring = ego_ring(graph, 9, [2, 8, 10, 11], color=C_LLM)
         with self.voiceover(text=VO["router_graph"]) as tracker:
-            self.play(FadeIn(graph), run_time=1.0)
+            self.play(hist_group.animate.shift(LEFT * 2.75), FadeIn(graph), run_time=1.0)
             self.play(Create(ring), Flash(graph.nodes[9], color=C_LLM, flash_radius=0.35),
                       run_time=min(1.4, tracker.duration))
 
+        # Hai dòng này trước dùng size SMALL_SIZE−5/−4 màu MUTED nên gần như
+        # không đọc được ở bản x4. Tăng cỡ, đổi sang INK và bật BOLD.
         sens = VGroup(
             txt("K: 8→12 +3.4%  ·  12→16 another +3.0%  (Pubmed, Arxiv23)  ·  Cora +12.3% at K=16",
-                size=SMALL_SIZE - 5, color=MUTED),
-            MathTex(r"h_v>0.75\ \text{region is nearly unchanged }(-0.06\%)",
-                    font_size=26, color=MUTED),
-        ).arrange(DOWN, buff=0.1).move_to([0, -2.5, 0])
+                size=SMALL_SIZE - 2, color=INK, weight=BOLD),
+            VGroup(
+                MathTex(r"h_v>0.75", font_size=29, color=INK),
+                txt("region is nearly unchanged (−0.06%)", size=SMALL_SIZE - 2, color=INK, weight=BOLD),
+            ).arrange(RIGHT, buff=0.18),
+        ).arrange(DOWN, buff=0.16).move_to([0, -2.5, 0])
+        fit_width(sens, 12.4)
         with self.voiceover(text=VO["router_budget"]) as tracker:
-            self.play(FadeOut(VGroup(graph, ring)), run_time=0.4)
+            self.play(
+                FadeOut(VGroup(graph, ring)),
+                hist_group.animate.shift(RIGHT * 2.75),
+                run_time=0.4,
+            )
             self.play(FadeIn(sens, shift=UP * 0.08), run_time=min(1.6, tracker.duration))
 
         # Hai tầng ablation (§6.3, tr.9): trung bình mọi feature (nhỏ) và riêng
@@ -846,17 +949,21 @@ class S5_08_RouterLearned(GlanceScene):
             [-0.38, -1.07, -0.65], ["Cora", "Pubmed", "Arxiv23"],
             colors=[MUTED, MUTED, MUTED], y_range=(-8, 1, 2),
             width=4.6, height=2.0, value_fmt="{:.2f}",
-        ).move_to([-3.9, -1.0, 0])
-        overall_title = txt("REMOVE 1 FEATURE (AVERAGE)", size=SMALL_SIZE - 6, color=MUTED)
+        ).move_to([-3.0, -0.50, 0])
+        overall_title = txt(
+            "REMOVE 1 FEATURE", size=SMALL_SIZE - 1, color=MUTED, weight=BOLD,
+        )
         overall_title.next_to(overall_chart, UP, buff=0.35)
         homophily_chart = bar_chart(
             [-6.5, -6.3, -2.0], ["Cora", "Pubmed", "Arxiv23"],
             colors=[C_BAD, C_BAD, C_BAD], y_range=(-8, 1, 2),
             width=4.6, height=2.0, value_fmt="{:.1f}",
-        ).move_to([2.2, -1.0, 0])
-        homophily_title = MathTex(r"\text{REMOVE HOMOPHILY (BIN }h_v<0.5)", font_size=24, color=C_BAD)
+        ).move_to([3.0, -0.50, 0])
+        homophily_title = txt(
+            "REMOVE HOMOPHILY", size=SMALL_SIZE - 1, color=C_BAD, weight=BOLD,
+        )
         homophily_title.next_to(homophily_chart, UP, buff=0.35)
-        divider = DashedLine([-0.85, -0.2, 0], [-0.85, -2.2, 0], color=C_EDGE, stroke_width=1.5)
+        divider = DashedLine([0, 0.50, 0], [0, -1.75, 0], color=C_EDGE, stroke_width=1.5)
 
         with self.voiceover(text=VO["router_ablation"]) as tracker:
             self.play(FadeOut(VGroup(hist, hist_note, axis, sens)), run_time=0.5)
@@ -872,7 +979,7 @@ class S5_08_RouterLearned(GlanceScene):
             )
 
         banner = txt("HOMOPHILY TEACHES THE ROUTER WHEN TO CALL", size=BODY_SIZE - 2, color=C_LLM, weight=BOLD)
-        banner.move_to([0, -3.2, 0])
+        banner.move_to([0, -2.78, 0])
         with self.voiceover(text=VO["router_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.2, tracker.duration))
         self.wait(0.4)
@@ -885,7 +992,7 @@ class S5_09_RoutingControls(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Route all · route randomly: two controls", color=C_LLM).to_edge(UP, buff=0.85)
+        head = scene_title("Route all · route randomly: two controls", color=C_LLM)
         with self.voiceover(text=VO["ctrl_intro"]):
             self.play(Write(head), run_time=1.4)
 
@@ -903,6 +1010,8 @@ class S5_09_RoutingControls(GlanceScene):
             txt("easy groups", size=SMALL_SIZE - 5, color=MUTED), easy_row,
             overall_pill,
         ).arrange(DOWN, buff=0.12).move_to(left)
+        left_group = VGroup(left, left_title, left_body)
+        left_group.shift(RIGHT * 3.35)
 
         with self.voiceover(text=VO["ctrl_all"]) as tracker:
             self.play(FadeIn(left), FadeIn(left_title), run_time=0.8)
@@ -916,9 +1025,14 @@ class S5_09_RoutingControls(GlanceScene):
             pill("GCNII  87.7", C_GNN, width=3.0),
             pill("GLANCE  89.5", C_ROUTER, width=3.0),
         ).arrange(DOWN, buff=0.16).move_to(right)
+        right_group = VGroup(right, right_title, ranking)
 
         with self.voiceover(text=VO["ctrl_random"]) as tracker:
-            self.play(FadeIn(right), FadeIn(right_title), run_time=0.8)
+            self.play(
+                left_group.animate.shift(LEFT * 3.35),
+                FadeIn(right), FadeIn(right_title),
+                run_time=0.8,
+            )
             self.play(
                 LaggedStart(*[FadeIn(r, shift=LEFT * 0.1) for r in ranking], lag_ratio=0.2),
                 run_time=min(1.8, tracker.duration),
@@ -926,20 +1040,20 @@ class S5_09_RoutingControls(GlanceScene):
 
         with self.voiceover(text=VO["ctrl_same_set"]) as tracker:
             self.play(
-                FadeOut(VGroup(left, left_title, left_body, right, right_title, ranking)),
+                FadeOut(VGroup(left_group, right_group)),
                 run_time=0.7,
             )
             comparison = VGroup(
                 pill("GNN + LLM + REFINER  87.6", C_GOOD, width=4.8),
                 txt(">", size=HEAD_SIZE, color=INK, weight=BOLD),
                 pill("GCNII  82.7", C_GNN, width=2.6),
-            ).arrange(RIGHT, buff=0.3).move_to([0, 0.3, 0])
+            ).arrange(RIGHT, buff=0.3).scale(1.25).move_to([0, 0.25, 0])
             note = txt("on the exact node set selected by the router", size=SMALL_SIZE - 4, color=MUTED)
             note.next_to(comparison, DOWN, buff=0.3)
             self.play(FadeIn(comparison, scale=0.96), FadeIn(note), run_time=min(1.8, tracker.duration))
 
         banner = txt("VALUE COMES FROM LEARNED SELECTIVITY", size=BODY_SIZE - 2, color=C_GOOD, weight=BOLD)
-        banner.move_to([0, -1.6, 0])
+        banner.next_to(note, DOWN, buff=0.55)
         with self.voiceover(text=VO["ctrl_verdict"]) as tracker:
             self.play(FadeIn(banner, shift=UP * 0.1), run_time=min(1.4, tracker.duration))
         self.wait(0.4)
@@ -952,20 +1066,33 @@ class S5_10_Scale(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Large scale: route very little, remain effective", color=C_GOOD).to_edge(UP, buff=0.85)
+        head = safe_text(
+            "Large scale: route very little, remain effective",
+            size=HEAD_SIZE,
+            color=C_GOOD,
+            max_width=12.2,
+            weight="HEAVY",
+        ).to_edge(UP, buff=0.85)
         self.add(head)
+        self.add(source("Table 5, pp.9–10"))
 
-        dots = VGroup(*[Dot(radius=0.07, color=MUTED, fill_opacity=0.4) for _ in range(64)])
-        dots.arrange_in_grid(rows=8, cols=8, buff=0.13).move_to([-4.3, 0.4, 0])
+        dots = VGroup(*[Dot(radius=0.10, color=MUTED, fill_opacity=0.48) for _ in range(64)])
+        dots.arrange_in_grid(rows=8, cols=8, buff=0.15).move_to([-4.25, 0.20, 0])
         # ~1.6% = K=1 trên batch 64 → đúng một chấm sáng trong lưới 8×8.
         dots[27].set_color(C_LLM).set_fill(opacity=1).scale(1.5)
-        cloud_label = txt("2.45M NODES · ~62M EDGES", size=SMALL_SIZE - 4, color=INK, weight=BOLD)
-        cloud_label.next_to(dots, UP, buff=0.25)
+        cloud_label = txt("2.45M NODES · ~62M EDGES", size=BODY_SIZE - 2, color=INK, weight=BOLD)
+        cloud_label.next_to(dots, UP, buff=0.30)
         # Đưa card tỷ lệ về ĐÚNG cao độ với card kết quả (y=0.9) và lùi sang
         # trái, để mũi tên rate → result là một đường ngang thẳng, đủ dài — bản
         # cũ hai card gần nhau và lệch cao độ nên mũi tên ngắn, méo.
-        rate = metric_card("ROUTING RATE", "~1.6%", C_LLM, note="K=1, batch 64", width=3.0)
-        rate.move_to([-1.4, 0.9, 0])
+        rate = metric_card("ROUTING RATE", "~1.6%", C_LLM, note="K=1, batch 64", width=3.0).scale(1.18)
+        # x −1.05 làm mép trái card chỉ cách lưới chấm ~0.1 đơn vị nên hai khối
+        # trông như dính nhau; đẩy sang phải cho hở hẳn. y hạ về 0.05 để card
+        # nằm đúng giữa hai ô kết quả (result_column cũng ở y=0.05), nhờ đó hai
+        # mũi tên rate → result toả đối xứng.
+        rate.move_to([-0.75, 0.05, 0])
+        setup_group = VGroup(dots, cloud_label, rate)
+        setup_group.shift(RIGHT * 2.85)
 
         with self.voiceover(text=VO["scale_setup"]) as tracker:
             self.play(
@@ -975,17 +1102,30 @@ class S5_10_Scale(GlanceScene):
             self.play(FadeIn(cloud_label), FadeIn(rate, shift=RIGHT * 0.1), run_time=0.8)
             self.play(Flash(dots[27], color=C_LLM, flash_radius=0.30), run_time=min(0.8, tracker.duration))
 
-        result = metric_card("OGB-PRODUCTS", "82.3", C_GOOD, note="GCNII: 81.8", width=3.0)
-        result.move_to([2.8, 0.9, 0])
-        oom = pill("GGCN · OOM", C_BAD, width=2.3).move_to([2.8, -0.3, 0])
-        arxiv_year = metric_card("ARXIV-YEAR", "49.8", C_GOOD, width=2.6).move_to([2.8, -1.5, 0])
-        arrow = Arrow(rate.get_right(), result.get_left(), buff=0.18, color=MUTED,
-                      stroke_width=4, max_tip_length_to_length_ratio=0.22)
+        result = metric_card("OGB-PRODUCTS", "82.3", C_GOOD, note="GCNII: 81.8", width=3.0).scale(1.18)
+        arxiv_year = metric_card("ARXIV-YEAR", "49.8", C_GOOD, width=3.0).scale(1.18)
+        result_column = VGroup(result, arxiv_year).arrange(DOWN, buff=0.48).move_to([3.65, 0.05, 0])
+        oom = pill("GGCN · OOM", C_BAD, width=1.65, size=SMALL_SIZE - 5)
+        # next_to(result, RIGHT) đẩy pill ra x≈7.25 — vượt quá nửa bề rộng khung
+        # (7.11) nên bị cắt mất ở mép phải. Đặt xuống dưới cụm hai ô kết quả.
+        oom.next_to(result_column, DOWN, buff=0.30)
+        result_arrows = VGroup(
+            Arrow(rate.get_right(), result.get_left(), buff=0.18, color=MUTED,
+                  stroke_width=3, max_tip_length_to_length_ratio=0.18),
+            Arrow(rate.get_right(), arxiv_year.get_left(), buff=0.18, color=MUTED,
+                  stroke_width=3, max_tip_length_to_length_ratio=0.18),
+        )
 
         with self.voiceover(text=VO["scale_result"]) as tracker:
-            self.play(GrowArrow(arrow), FadeIn(result, shift=RIGHT * 0.1), run_time=1.0)
-            self.play(FadeIn(oom, shift=LEFT * 0.1), FadeIn(arxiv_year, shift=UP * 0.1),
-                      run_time=min(1.8, tracker.duration))
+            self.play(setup_group.animate.shift(LEFT * 2.85), run_time=0.42)
+            for arrow, target in zip(result_arrows, [result, arxiv_year]):
+                arrow.put_start_and_end_on(rate.get_right(), target.get_left())
+            self.play(
+                LaggedStart(*[GrowArrow(arrow) for arrow in result_arrows], lag_ratio=0.14),
+                FadeIn(result, shift=RIGHT * 0.1), FadeIn(arxiv_year, shift=RIGHT * 0.1),
+                run_time=1.0,
+            )
+            self.play(FadeIn(oom, shift=LEFT * 0.1), run_time=min(1.2, tracker.duration))
 
         banner = txt("CHEAP  ·  BALANCED  ·  SCALES TO MILLIONS OF NODES", size=BODY_SIZE - 2, color=C_GOOD, weight=BOLD)
         banner.move_to([0, -2.7, 0])
@@ -1001,31 +1141,33 @@ class S5_11_Callout(GlanceScene):
 
     def construct(self):
         self.banner()
-        head = heading("Takeaways: GLANCE in five points", color=C_ROUTER).to_edge(UP, buff=0.85)
+        head = scene_title("Takeaways: GLANCE in five points", color=C_ROUTER)
+        intro = pill("ONE ROUTER · FIVE DESIGN LESSONS", C_ROUTER, width=5.2)
+        intro.next_to(head, DOWN, buff=0.30)
         with self.voiceover(text=VO["final_reconnect"]) as tracker:
-            self.play(Write(head), run_time=min(2.2, tracker.duration))
+            self.play(Write(head), FadeIn(intro, shift=UP * 0.08), run_time=min(2.2, tracker.duration))
 
         items = [
-            ("GNNs and LLMs excel on different nodes; local homophily predicts who wins.", C_GNN),
-            ("Top-K is non-differentiable, so rewards train the router decision by decision.", C_ROUTER),
-            ("Only the router and refiner are trained; the GNN and LLM remain frozen.", C_LLM),
-            ("Learned selectivity delivers the best balance and overall accuracy.", C_GOOD),
-            ("Routing only a small fraction of nodes still scales to million-node graphs.", C_LLM),
+            ("GNNs and LLMs win on different nodes.", C_GNN),
+            ("Local homophily reveals where the GNN struggles.", C_ROUTER),
+            ("Rewards train a cost-aware Top-K router.", C_LLM),
+            ("Only the router and refiner are trained.", C_GOOD),
+            ("Few LLM calls scale to million-node graphs.", C_LLM),
         ]
 
         def numbered_row(index, text, color):
             badge = VGroup(
-                Circle(radius=0.22, fill_color=color, fill_opacity=0.18, stroke_color=color, stroke_width=2),
-                txt(str(index), size=SMALL_SIZE - 2, color=color, weight=BOLD),
+                Circle(radius=0.28, fill_color=color, fill_opacity=0.22, stroke_color=color, stroke_width=2.4),
+                txt(str(index), size=SMALL_SIZE + 1, color=color, weight=BOLD),
             )
-            label = txt(text, size=SMALL_SIZE - 3, color=INK)
-            if label.width > 9.3:
-                label.scale_to_fit_width(9.3)
-            return VGroup(badge, label).arrange(RIGHT, buff=0.3)
+            label = txt(text, size=BODY_SIZE - 1, color=INK, weight=SEMIBOLD)
+            if label.width > 10.4:
+                label.scale_to_fit_width(10.4)
+            return VGroup(badge, label).arrange(RIGHT, buff=0.38)
 
         rows = VGroup(*[numbered_row(i + 1, t, c) for i, (t, c) in enumerate(items)])
-        rows.arrange(DOWN, aligned_edge=LEFT, buff=0.26)
-        rows.move_to([0, 0.1, 0])
+        rows.arrange(DOWN, aligned_edge=LEFT, buff=0.34)
+        rows.move_to([0, -0.35, 0])
 
         for i, (row, (_, color)) in enumerate(zip(rows, items)):
             key = f"final_{i + 1}"
@@ -1033,7 +1175,7 @@ class S5_11_Callout(GlanceScene):
                 self.play(FadeIn(row, shift=RIGHT * 0.15), run_time=min(1.0, tracker.duration))
 
         with self.voiceover(text=VO["final_punch"]) as tracker:
-            self.play(FadeOut(VGroup(head, rows), shift=UP * 0.2), run_time=0.6)
+            self.play(FadeOut(VGroup(head, intro, rows), shift=UP * 0.2), run_time=0.6)
             not_more = txt("NOT MORE LLM", size=HEAD_SIZE - 4, color=C_BAD, weight=BOLD)
             not_more.move_to([0, 0.6, 0])
             strike = Line(not_more.get_left(), not_more.get_right(), color=C_BAD, stroke_width=6)
