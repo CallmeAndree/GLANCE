@@ -1629,10 +1629,13 @@ class S2_10_DegreeDensity(GlanceScene):
         )
         readout = VGroup(values, meaning).arrange(DOWN, buff=0.22)
         # Giữ vị trí đọc số nhất quán với cụm xanh ở scene Table 1 trước đó.
+        # x = 4.2 chứ không phải 4.55: cụm số rộng 4.81, đặt ở 4.55 thì mép phải
+        # chỉ còn cách viền khung 0.16 nên nhìn như chạm mép. 4.2 chừa lề 0.51,
+        # đúng bằng buff mép chuẩn, mà vẫn cách khối ô của heatmap 0.6.
         readout_slot = VGroup(*[
             hm.cell[("GCN", "Uncertainty", c)] for c in hm.cols("Pubmed")
         ])
-        readout.move_to([4.55, readout_slot.get_y(), 0])
+        readout.move_to([4.2, readout_slot.get_y(), 0])
 
         beat(self, "Ví dụ, trên cô ra với mô hình nền gờ xê en hai.")
         beat(self, "Cách dựa trên bậc cho en xi ét âm ở cả ba mức định tuyến.",

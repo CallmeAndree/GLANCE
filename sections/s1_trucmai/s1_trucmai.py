@@ -257,7 +257,7 @@ def create_target_neighborhood(kind="clean", label="A", scale=1.0):
     group = VGroup(edges, neighbors, target)
     group.edges = edges
     group.neighbors = neighbors
-    group.target = target
+    group.center_node = target
     return group
 
 def create_message_vector(start, end, color=BRIGHT, dashed=False):
@@ -814,10 +814,13 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                 self.wait(0.8)
 
         # Dọn sạch để section 2 mở trên nền trống.
+        # CHỈ fade những mobject còn thật sự trên scene: network đã remove ở nhịp
+        # 3, lbl_content/lbl_rel remove ngay đầu nhịp này, còn title_outline thì
+        # ShowPassingFlash tự gỡ khi chạy xong. Gọi FadeOut lên mobject đã gỡ sẽ
+        # khiến Manim THÊM LẠI nó ở opacity đầy đủ rồi mới fade — đó chính là cú
+        # nháy các card User A–E đè lên title + poster ở giây 16.
         self.play(
-            FadeOut(network), FadeOut(title), FadeOut(subtitle),
-            FadeOut(title_outline), FadeOut(poster_group),
-            FadeOut(lbl_content), FadeOut(lbl_rel),
+            FadeOut(title), FadeOut(subtitle), FadeOut(poster_group),
             run_time=0.7,
         )
 
@@ -1051,19 +1054,20 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                       lag_ratio=0.3, run_time=1.1)
 
         # ── Beat 2 (0:08–0:17): đưa vào GNN, message passing xanh ──
-        gnn_mod = module("GNN", "structural learning", width=3.0, height=0.95,
-                         emphasized=True).move_to(RIGHT * 4.35)
-        gnn_mod.set_y(feature_stack.get_y() + 0.38)
-        gnn_mod[0].set_stroke(gs.C_GNN)
-        gnn_mod[1][0].set_color(gs.C_GNN)
         feature_midpoint = np.array([
             max(tfidf[0].get_right()[0], static[0].get_right()[0]),
             (tfidf[0].get_y() + static[0].get_y()) / 2,
             0.0,
         ])
-        gnn_direction = np.array(gnn_mod.get_center(), dtype=float) - feature_midpoint
-        gnn_unit = gnn_direction / np.linalg.norm(gnn_direction)
-        gnn_entry = gnn_mod.get_boundary_point(-gnn_unit) - gnn_unit * 0.05
+        gnn_mod = module("GNN", "structural learning", width=3.0, height=0.95,
+                         emphasized=True).move_to(RIGHT * 4.35)
+        # Căn hộp GNN ngang đúng tầm điểm giữa hai véc-tơ thì mũi tên nằm ngang.
+        # Trước đây hộp bị đẩy lên `feature_stack.get_y() + 0.38` nên mũi tên
+        # chếch lên trông như trỏ trượt ra ngoài.
+        gnn_mod.set_y(feature_midpoint[1])
+        gnn_mod[0].set_stroke(gs.C_GNN)
+        gnn_mod[1][0].set_color(gs.C_GNN)
+        gnn_entry = np.array([gnn_mod.get_left()[0] - 0.05, feature_midpoint[1], 0.0])
         arr_in = Arrow(
             feature_midpoint, gnn_entry, buff=0, color=gs.C_GNN,
             stroke_width=2.8, tip_length=0.10,
@@ -1231,7 +1235,11 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                     stroke_width=2.2,
                 )
                 label.move_to(frame)
-                return VGroup(frame, label).to_corner(DR, buff=0.70).shift(UP * 1.28)
+                # shift UP 0.20 chứ không phải 1.28: đồ thị đã scale 1.5 và dời
+                # sang RIGHT*1.5 nên đáy của nó xuống tới y = -2.15, trong khi
+                # khung đếm đặt cao 1.28 chiếm y = -2.02..-1.37 — đúng chỗ node L.
+                # Hạ xuống sát góc thì đỉnh khung còn -2.45, dưới hẳn node L.
+                return VGroup(frame, label).to_corner(DR, buff=0.70).shift(UP * 0.20)
 
             counter = always_redraw(query_counter).set_z_index(35)
             self.add(counter)
@@ -1337,17 +1345,17 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
         # Ở 1.15x câu này bị đọc thành ngữ điệu ngân nga; hạ về 1.05 để giọng ổn
         # định trở lại (API bỏ qua tham số temperature nên tốc độ là đòn bẩy duy
         # nhất phía dịch vụ).
-        with self.narrated_caption(["các phương pháp hiện nay chia thành hai hướng:", "lờ lờ mờ ass èn han xờ và lờ lờ mờ ass prì đích tờ."], speed=1.05):
+        with self.narrated_caption(["các phương pháp hiện nay chia thành hai hướng:", "lờ lờ mờ như bộ tăng cường, và lờ lờ mờ như bộ dự đoán."], speed=1.05):
             self.play(Write(title), run_time=0.7)
             self.play(FadeIn(enh_group), FadeIn(pred_group), run_time=1.0)
 
         # Enhancer deep-dive
         hetero_nbhd = create_target_neighborhood(kind="noisy", scale=0.9).move_to(RIGHT * 2.8 + DOWN * 0.2)
-        with self.narrated_caption(["lờ lờ mờ ass èn han xờ tạo véc-tơ ngữ nghĩa giàu hơn,", "rồi gờ nờ nờ tiếp tục truyền thông tin và dự đoán."], speed=1.25):
+        with self.narrated_caption(["lờ lờ mờ như bộ tăng cường tạo véc-tơ ngữ nghĩa giàu hơn,", "rồi gờ nờ nờ tiếp tục truyền thông tin và dự đoán."], speed=1.25):
             self.play(FadeOut(pred_group), FadeOut(title), run_time=0.35)
             self.play(
                 enh_group.animate.scale(1.08).shift(RIGHT * 1.2),
-                FadeIn(hetero_nbhd.target), FadeIn(hetero_nbhd.neighbors), FadeIn(hetero_nbhd.edges),
+                FadeIn(hetero_nbhd.center_node), FadeIn(hetero_nbhd.neighbors), FadeIn(hetero_nbhd.edges),
                 run_time=0.8
             )
             
@@ -1359,16 +1367,16 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(ReplacementTransform(vec_raw, vec_rich), run_time=0.8)
             self.wait(0.25)
             
-            inject_arr = small_arrow(vec_rich.get_bottom(), hetero_nbhd.target.get_top())
+            inject_arr = small_arrow(vec_rich.get_bottom(), hetero_nbhd.center_node.get_top())
             self.play(GrowArrow(inject_arr), run_time=0.8)
             self.play(ShowPassingFlash(
-                gs.node_focus_ring(hetero_nbhd.target, color=gs.C_LLM, buff=0.08),
+                gs.node_focus_ring(hetero_nbhd.center_node, color=gs.C_LLM, buff=0.08),
                 time_width=0.55,
             ), run_time=0.8)
             self.wait(0.6)
             self.play(FadeOut(vec_rich), FadeOut(inject_arr), run_time=0.6)
             conflicting_msgs = VGroup(*[create_message_vector(
-                n.get_center(), hetero_nbhd.target.get_center(),
+                n.get_center(), hetero_nbhd.center_node.get_center(),
                 color=DARK if i not in {1, 2, 5, 7} else gs.C_BAD
             ) for i, n in enumerate(hetero_nbhd.neighbors)])
             self.play(AnimationGroup(*[GrowArrow(m) for m in conflicting_msgs], lag_ratio=0.08), run_time=1.0)
@@ -1393,9 +1401,15 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             # Cột paradigm lùi hẳn về mép trái và nhỏ lại: nó vẫn neo bối cảnh
             # "đang nói về nhánh enhancer", nhưng nhường dải giữa cho khối
             # AGGREGATE và trục tiềm ẩn — bản đầu đặt chồng lên nhau.
+            # conflicting_msgs KHÔNG nằm trong hetero_nbhd, nên nếu chỉ move_to
+            # cụm đồ thị thì tám mũi tên đứng yên và vẫn quây quanh vị trí CŨ của
+            # nót a — trông như vòng mũi tên không đi theo nót. Dịch cả hai bằng
+            # đúng một vector thay vì move_to riêng cụm đồ thị.
+            nbhd_delta = (RIGHT * 2.75 + UP * 0.10) - hetero_nbhd.get_center()
             self.play(
                 FadeOut(enh_group, shift=LEFT * 0.35),
-                hetero_nbhd.animate.move_to(RIGHT * 2.75 + UP * 0.10),
+                hetero_nbhd.animate.shift(nbhd_delta),
+                conflicting_msgs.animate.shift(nbhd_delta),
                 run_time=0.6,
             )
             self.remove_families(enh_group)
@@ -1420,7 +1434,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.add(agg_dots)
             self.play(
                 LaggedStart(*[
-                    MoveAlongPath(dot, Line(dot.get_center(), hetero_nbhd.target.get_center()))
+                    MoveAlongPath(dot, Line(dot.get_center(), hetero_nbhd.center_node.get_center()))
                     for dot in agg_dots
                 ], lag_ratio=0.11),
                 run_time=1.0,
@@ -1428,7 +1442,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(
                 FadeOut(agg_dots, scale=0.3),
                 ShowPassingFlash(
-                    gs.node_focus_ring(hetero_nbhd.target, color=gs.C_BAD, buff=0.08),
+                    gs.node_focus_ring(hetero_nbhd.center_node, color=gs.C_BAD, buff=0.08),
                     time_width=0.55,
                 ),
                 run_time=0.8,
@@ -1524,8 +1538,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             
         # ── Predictor deep-dive: mở rộng vùng lân cận → chuỗi dài → chi phí ──
         with self.narrated_caption([
-            "Với lờ lờ mờ ass prì đích tờ, thông tin của nót và vùng lân cận",
-            "phải được tuần tự hoá thành một chuỗi văn bản để mô hình xử lý.",
+            "Với lờ lờ mờ như bộ dự đoán, thông tin của nót và vùng lân cận",
+            "phải được sắp xếp thành một chuỗi văn bản để mô hình xử lý.",
         ], speed=1.15):
             pred_group.move_to(RIGHT * 2.5 + DOWN * 0.1).scale(1.08)
             self.play(
@@ -1755,7 +1769,9 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(card_4[1][2][1].animate.set_color(gs.C_BAD), run_time=0.5)
 
         with self.narrated_caption([
-            "Vì vậy, càng đưa nhiều ngữ cảnh đồ thị vào lờ lờ mờ,",
+            # "lờ lờ mờ" đứng ngay trước dấu phẩy thì TTS nuốt đuôi; thêm "thì"
+            # để acronym nằm giữa mệnh đề, không sát dấu ngắt.
+            "Vì vậy, càng đưa nhiều ngữ cảnh đồ thị vào lờ lờ mờ thì",
             "chi phí cho mỗi lần gọi càng lớn.",
             "Và nếu làm điều này cho mọi nót thì sao?",
         ]):
@@ -2037,7 +2053,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(Write(title_A), FadeIn(group_A), FadeIn(doc_A), run_time=1.0)
 
         with self.narrated_caption(["hàng xóm đồng thuận, gờ nờ nờ tạo véc-tơ ổn định."]):
-            msgs_A = VGroup(*[create_message_vector(n.get_center(), group_A.target.get_center(), color=LIGHT)
+            msgs_A = VGroup(*[create_message_vector(n.get_center(), group_A.center_node.get_center(), color=LIGHT)
                                for n in group_A.neighbors])
             self.play(AnimationGroup(*[GrowArrow(m) for m in msgs_A], lag_ratio=0.1), run_time=1.0)
             self.play(FadeIn(gnn_bar_A), FadeIn(llm_idle_A), run_time=0.7)
@@ -2059,7 +2075,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
 
             self.play(
                 ShowPassingFlash(
-                    gs.node_focus_ring(group_A.target, color=gs.C_GOOD, buff=0.09),
+                    gs.node_focus_ring(group_A.center_node, color=gs.C_GOOD, buff=0.09),
                     time_width=0.55,
                 ),
                 Indicate(gnn_bar_A, color=gs.C_GOOD, scale_factor=1.04),
@@ -2108,7 +2124,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "nên gờ nờ nờ dự đoán sai.",
         ], speed=1.05):
             msgs_B = VGroup(*[create_message_vector(
-                n.get_center(), group_B.target.get_center(),
+                n.get_center(), group_B.center_node.get_center(),
                 color=DARK if i not in {1, 2, 5, 7} else gs.C_BAD
             ) for i, n in enumerate(group_B.neighbors)])
             self.play(AnimationGroup(*[GrowArrow(m) for m in msgs_B], lag_ratio=0.1), run_time=1.0)
