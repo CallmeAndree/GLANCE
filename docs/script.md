@@ -531,7 +531,7 @@ Tự động trích từ `sections/*/**.py` (dict `VO`, `voiceover(text=...)`, `
 ### `S4_28_RefinerMLP`
 
 - bộ tinh chỉnh là một mờ lờ bê có nhiệm vụ kết hợp hai nguồn bằng chứng.
-- Biểu diễn hợp nhất lần lượt đi qua các lớp tuyến tính, ri-lu, đờ-róp-ao và lớp đầu ra.
+- Biểu diễn hợp nhất lần lượt đi qua các lớp tuyến tính, re lu, đờ-róp-ao và lớp đầu ra.
 - Cuối cùng, sóp mác tạo ra phân phối lớp mới bê xê phẩy a.
 - bộ tinh chỉnh không thay thế gờ nờ nờ hoặc lờ lờ mờ. Nó học cách cân bằng thông tin cấu trúc từ gờ nờ nờ với thông tin ngữ nghĩa từ lờ lờ mờ để tạo ra dự đoán phù hợp hơn cho được định tuyến nót.
 

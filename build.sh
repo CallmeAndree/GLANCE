@@ -4,6 +4,19 @@
 #   ./build.sh          # 480p15 nháp (mặc định)
 #   ./build.sh -qh      # 1080p60 bản cuối
 #
+# MẶC ĐỊNH CHỈ RENDER SECTION ĐÃ ĐỔI. Một section được coi là cũ khi file .py
+# của nó, glance_style.py, hoặc bộ SFX mới hơn các .mp4 đã render — hoặc khi
+# thiếu scene. Không đổi gì thì bước render bị bỏ qua hoàn toàn.
+#
+#   GLANCE_FORCE=1 ./build.sh            # render lại tất, kệ cache
+#   GLANCE_NO_RENDER=1 ./build.sh        # không render gì, chỉ ghép + trộn lại
+#   GLANCE_SECTIONS="s3 s5" ./build.sh   # ép render đúng 2 section đó
+#   GLANCE_NO_MIX=1 ./build.sh           # bỏ bước nhạc nền + SFX
+#   GLANCE_BGM=<path> ./build.sh         # đổi nhạc nền
+#
+# Chỉ đổi nhạc nền hoặc whoosh chuyển cảnh thì KHÔNG cần build:
+#   python tools/mix_audio.py            # trộn thẳng lên build/final.mp4, ~30 giây
+#
 # Yêu cầu: conda activate graphdm && pip install -r requirements.txt
 
 set -euo pipefail
@@ -46,6 +59,11 @@ mkdir -p build build/norm
 #     những clip này mới phải mã hoá lại video, còn lại vẫn `-c:v copy`.
 normalize() {
   local src="$1" dst="build/norm/$(basename "$1")"
+  # Bản chuẩn hoá còn mới hơn clip nguồn thì dùng lại. Trước đây mỗi lần build
+  # đều chạy lại đủ 59 lượt ffmpeg kể cả khi không scene nào đổi.
+  if [ -f "$dst" ] && [ "$dst" -nt "$src" ]; then
+    printf '%s' "$dst"; return
+  fi
   if ffprobe -v error -select_streams a -show_entries stream=codec_type \
        -of csv=p=0 "$src" | grep -q audio; then
     local vdur adur gap
@@ -71,14 +89,67 @@ normalize() {
   printf '%s' "$dst"
 }
 
+# Tên scene theo đúng thứ tự khai báo trong file — dùng cả cho việc dò cache
+# lẫn cho việc dựng danh sách ghép.
+scene_names() {
+  grep -oE '^class ([A-Za-z0-9_]+)\(' "$1" | sed -E 's/^class //; s/\($//'
+}
+
+# Những thứ mà MỌI section phụ thuộc vào: sửa chúng là cả video phải render lại.
+DEPS_CHUNG=(glance_style.py manim.cfg)
+for _w in assets/sfx/*.wav assets/sfx/levels.json; do
+  [ -f "$_w" ] && DEPS_CHUNG+=("$_w")
+done
+
+# Có cần render lại section này không. File .mp4 của scene nằm sẵn trong
+# media/videos/ nên bỏ qua bước render vẫn ghép được video hoàn chỉnh — đây là
+# thứ giúp việc sửa nhạc, sửa SFX hay sửa một section không phải trả giá bằng
+# 20 phút render toàn bộ.
+should_render() {
+  local f="$1"
+  [ "${GLANCE_NO_RENDER:-0}" = "1" ] && return 1
+  [ "${GLANCE_FORCE:-0}" = "1" ] && return 0
+
+  local stem; stem="$(basename "$f" .py)"
+  if [ -n "${GLANCE_SECTIONS:-}" ]; then
+    local want
+    for want in ${GLANCE_SECTIONS}; do
+      case "$stem" in *"$want"*) return 0 ;; esac
+    done
+    return 1
+  fi
+
+  # Dò cache: thiếu scene, hoặc có file phụ thuộc mới hơn output -> phải render.
+  local dir="media/videos/${stem}/${RES}" scene dep
+  [ -d "$dir" ] || return 0
+  for scene in $(scene_names "$f"); do
+    [ -f "$dir/$scene.mp4" ] || return 0
+    for dep in "$f" "${DEPS_CHUNG[@]}"; do
+      [ "$dep" -nt "$dir/$scene.mp4" ] && return 0
+    done
+  done
+  return 1
+}
+
 for f in "${SECTIONS[@]}"; do
   [ -f "$f" ] || { echo "!! Thiếu file $f — bỏ qua"; continue; }
-  echo "==> render $f"
-  manim "$QUALITY" -a "$f"
+  if should_render "$f"; then
+    echo "==> render $f"
+    # --disable_caching: BẮT BUỘC. Cache animation của manim đặt
+    # `renderer.skip_animations = True` rồi tự cộng `scene.duration` vào đồng hồ
+    # — đường tính thời gian khác hẳn lúc render thật, nên audio bị đặt lệch chỗ
+    # và `add_sound` bị bỏ qua. Đã đo: render đè lên cache cho ra track audio chỉ
+    # tương quan 0.14 với bản render nguội. Cache ở đây được làm ở mức SECTION
+    # (bỏ qua hẳn lệnh manim, xem should_render) — an toàn, vì nó dùng lại chính
+    # file .mp4 đã xuất chứ không dựng lại từ mảnh.
+    manim "$QUALITY" --disable_caching -a "$f"
+  else
+    echo "==> bỏ render $f (dùng mp4 có sẵn)"
+  fi
 
   stem="$(basename "$f" .py)"
   # Lấy tên scene theo đúng thứ tự khai báo trong file
-  for scene in $(grep -oE '^class ([A-Za-z0-9_]+)\(' "$f" | sed -E 's/^class //; s/\($//'); do
+  for scene in $(scene_names "$f"); do
     mp4="media/videos/${stem}/${RES}/${scene}.mp4"
     if [ -f "$mp4" ]; then
       echo "file '../$(normalize "$mp4")'" >> build/concat.txt
@@ -95,6 +166,17 @@ echo "==> ghép video"
 ffmpeg -y -loglevel error -f concat -safe 0 -i build/concat.txt \
   -c:v copy -c:a aac -b:a 192k -ar 48000 -ac 2 \
   -movflags +faststart build/final.mp4
+
+echo "==> nhạc nền + sound effect"
+# Trộn sau khi đã ghép, vì tiếng chuyển cảnh cần biết mốc cắt giữa hai scene —
+# thông tin chỉ có ở bước này. Chỉ đụng track audio (-c:v copy) nên mất vài chục
+# giây. Bỏ qua bằng GLANCE_NO_MIX=1, đổi nhạc bằng GLANCE_BGM=<đường dẫn>.
+if [ "${GLANCE_NO_MIX:-0}" = "1" ]; then
+  echo "(bỏ qua: GLANCE_NO_MIX=1)"
+else
+  python tools/mix_audio.py --bgm "${GLANCE_BGM:-media/audio/dl.mp3}" \
+    || echo "(lỗi trộn audio — giữ nguyên bản chưa có nhạc)"
+fi
 
 echo "==> ghép phụ đề"
 python tools/merge_srt.py build/concat.txt build/final.srt || echo "(bỏ qua phụ đề)"

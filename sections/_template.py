@@ -81,8 +81,8 @@ class SX_02_Content(GlanceScene):
             # Cần một animation kéo dài đúng bằng câu nói thì dùng tracker:
             self.play(FadeIn(points, shift=LEFT * 0.2), run_time=min(1.0, tracker.duration))
 
-        # Scene khái niệm không hiện citation. Chỉ thêm source(...) khi trên hình
-        # có số liệu thực nghiệm trích từ paper.
+        # Không hiện citation trên hình. Số liệu vẫn phải lấy từ
+        # docs/paper-map.md và ghi nguồn trong comment ngay chỗ dùng.
         self.wait(1.0)
 
 
@@ -92,7 +92,8 @@ class SX_02_Content(GlanceScene):
 #   txt(s, size, color)          Text tiếng Việt an toàn
 #   heading(s, color)            tiêu đề đậm
 #   bullets([...])               danh sách gạch đầu dòng
-#   caption(s) / source(ref)     chữ nhỏ / stamp nguồn góc dưới phải
+#   caption(s)                   chữ nhỏ (source(ref) còn trong glance_style
+#                                nhưng không dùng nữa — video bỏ stamp nguồn)
 #   title_card(...)              card mở section
 #   section_banner(num, name)    banner góc trên trái (GlanceScene.banner())
 #   panel(mobj)                  khung bo góc quanh nội dung

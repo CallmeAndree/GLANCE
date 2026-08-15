@@ -9,7 +9,7 @@ Bốn điều dễ sai nhất:
 - Môi trường là **conda env `graphdm`**, không phải venv: `conda activate graphdm`.
 - Nội dung mỗi section được đặc tả trong `sections/<folder>/TASK.md` — đọc trước khi code,
   không tự mở rộng phạm vi.
-- Số liệu chỉ lấy từ `docs/paper-map.md` hoặc `../GraphDataMining.pdf`, và phải kèm
-  `source("Bảng X, tr.Y")` trên hình.
+- Số liệu chỉ lấy từ `docs/paper-map.md` hoặc `../GraphDataMining.pdf`. **Không hiện
+  citation trên hình** — ghi nguồn bằng comment ngay chỗ dùng số liệu.
 - **Chạy `python -m unittest discover -s tests -t .` trước khi mở PR** để kiểm tra
   hạ tầng TTS và các guard kỹ thuật. Render xong mà chưa chạy test là chưa xong.

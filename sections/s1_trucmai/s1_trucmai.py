@@ -2123,6 +2123,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "Các tín hiệu kéo về nhiều hướng khác nhau,",
             "nên gờ nờ nờ dự đoán sai.",
         ], speed=1.05):
+            gs.play_sfx(self, "pulse")   # gờ nờ nờ dự đoán sai trên nót bê
             msgs_B = VGroup(*[create_message_vector(
                 n.get_center(), group_B.center_node.get_center(),
                 color=DARK if i not in {1, 2, 5, 7} else gs.C_BAD
@@ -2132,6 +2133,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             self.play(FadeIn(wrong_B), run_time=0.4)
 
         with self.narrated_caption(["nhưng văn bản nót bê rất rõ ràng.", "lờ lờ mờ sửa lại dự đoán thành công."]):
+            gs.play_sfx(self, "ping")    # lờ lờ mờ sửa lại thành đúng
             self.play(highlight_keywords(doc_B, [0, 1, 2]), run_time=0.8)
             self.play(FadeIn(llm_bar_B), run_time=0.7)
             self.play(FadeIn(correct_B), FadeIn(decision_B, shift=UP * 0.1), run_time=0.5)
@@ -2173,6 +2175,7 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
                       FadeIn(gnn_bar_C), FadeIn(wrong_gnn_C), run_time=0.75)
 
         with self.narrated_caption(["lờ lờ mờ không đủ bằng chứng để sửa kết quả.", "cả hai mô hình đều thất bại."]):
+            gs.play_sfx(self, "pulse")   # cả hai mô hình cùng thất bại
             self.play(FadeIn(llm_bar_C), FadeIn(wrong_C), run_time=0.55)
             self.play(FadeIn(decision_C, shift=UP * 0.1), run_time=0.45)
 
@@ -2416,11 +2419,22 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
     # ─────────────────────────────────────────────────────────
     def section_10_glance_question(self):
         self.next_section("S1_10_glance_question")
+        # Beat này trước đây chỉ làm mờ khung hình cũ rồi đứng im suốt câu thoại.
+        # Dọn hẳn nội dung cũ rồi viết một dòng chốt lên nền trống.
+        not_enough = t("GNN DIFFICULTY IS NOT ENOUGH", size=34, color=INK,
+                       weight=TITLE_WEIGHT)
+        fit(not_enough, 11.2)
+        not_enough.move_to(DOWN * 0.05)
+
         with self.narrated_caption([
             "Như vậy, độ khó với gờ nờ nờ",
             "chưa đủ để quyết định.",
         ]):
-            self.play(self.sec9_objects.animate.set_opacity(0.16), run_time=0.55)
+            self.play(FadeOut(self.sec9_objects, shift=UP * 0.25), run_time=0.55)
+            # remove_families để nhịp sau không FadeOut lại một mobject đã gỡ —
+            # gọi vậy sẽ khiến Manim thêm nó lại ở opacity đầy đủ rồi mới fade.
+            self.remove_families(self.sec9_objects)
+            self.play(Write(not_enough), run_time=1.0)
 
         # GLANCE = quyết định định tuyến từng nót: giữ GNN, hoặc gọi LLM để tinh chỉnh.
         node = module("Node", width=1.9).move_to(LEFT * 4.6 + DOWN * 0.1)
@@ -2445,7 +2459,8 @@ class Task1GLANCERebuilt(VoiceoverScene, MovingCameraScene):
             "gờ lans biến việc này thành một quyết định định tuyến cho từng nót:",
             "giữ dự đoán của gờ nờ nờ, hoặc gọi lờ lờ mờ để tinh chỉnh nó.",
         ]):
-            self.play(FadeOut(self.sec9_objects),
+            # sec9_objects đã được gỡ ở nhịp trước, chỉ còn dòng chốt cần dọn.
+            self.play(FadeOut(not_enough),
                       FadeIn(VGroup(node, gnn, router)), GrowArrow(arr1), GrowArrow(arr2),
                       run_time=1.0)
             self.play(FadeIn(keep), FadeIn(query), GrowArrow(a_up), GrowArrow(a_dn),

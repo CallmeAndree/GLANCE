@@ -143,8 +143,8 @@ Mọi `txt()`, `heading()`, nhãn biểu đồ, nhãn node và stamp `source()` 
   `K` → "ca", `L` → "lờ", `M` → "mờ", `N` → "nờ", `O` → "o",
   `P` → "bê", `Q` → "qui", `R` → "rời", `S` → "ết", `T` → "tê",
   `U` → "u", `V` → "vê", `W` → "vê kép", `X` → "ích", `Y` → "y",
-  `Z` → "dét". Dấu phẩy trong chỉ số đọc là "phẩy": `p_{H,A}` →
-  "bê hắc phẩy a"; bỏ dấu ngoặc khi đọc đối số: `z_G(v)` → "dét gờ vê".
+  `Z` → "zét". Dấu phẩy trong chỉ số đọc là "phẩy": `p_{H,A}` →
+  "bê hắc phẩy a"; bỏ dấu ngoặc khi đọc đối số: `z_G(v)` → "zét gờ vê".
 - Lời trong `VO` chính là kịch bản đọc, nên viết sao cho đọc lên nghe tự nhiên.
   Độ dài nhịp hình bám theo audio thật (`tracker.duration`), không ước bằng tay nữa.
 - **Chỉnh nhịp bằng lời, không bóp méo audio.** Khi sửa scene, được phép **THÊM**

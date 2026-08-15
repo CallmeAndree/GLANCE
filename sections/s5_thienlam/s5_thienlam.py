@@ -20,6 +20,12 @@ SECTION_NAME = "Training objective & experiments"
 OWNER = "Thiên Lâm"
 ACCENT = SECTION_COLORS.get(SECTION, C_HIGHLIGHT)
 
+# Section này là phần báo cáo thực nghiệm: gần như câu nào cũng đọc số đo và
+# kết quả. Ở tốc độ chuẩn (1.15) nghe lê thê, nên cả section đọc nhanh hơn.
+# Audio được SINH ở tốc độ này chứ không kéo giãn bản cũ, và `speed` nằm trong
+# khoá cache nên sửa số ở đây là toàn bộ 43 câu của section được sinh lại.
+S5_VOICE_SPEED = 1.30
+
 
 # ---------------------------------------------------------------------------
 # Khối xây dựng nhỏ dùng riêng cho section này — chỉ ghép từ txt()/màu có sẵn
@@ -229,7 +235,7 @@ VO = {
     ),
     "ctrl_random": (
         "Giữ nguyên lờ lờ mờ và bộ tinh chỉnh nhưng định tuyến ngẫu nhiên trên cô ra: chỉ còn tám mươi sáu "
-        "chấm bốn, thua cả bây xơ lai gờ xê en hai tám mươi bảy chấm bảy."
+        "chấm bốn, thua cả baseline gờ xê en hai tám mươi bảy chấm bảy."
     ),
     "ctrl_same_set": (
         "Trên đúng tập nót mà bộ định tuyến đã chọn, nhánh gờ nờ nờ cộng lờ lờ mờ qua bộ tinh chỉnh đạt tám "
@@ -243,7 +249,7 @@ VO = {
     ),
     "scale_result": (
         "Vậy mà vẫn dẫn đầu: tám mươi hai chấm ba, cao hơn gờ xê en hai tám mươi mốt chấm tám, "
-        "còn gờ gờ xê en thì hết bộ nhớ. Trên ác xíp ia, gờ lans đạt bốn mươi chín chấm tám."
+        "còn gờ gờ xê en thì hết bộ nhớ. Trên ác xíp dia, gờ lans đạt bốn mươi chín chấm tám."
     ),
     "scale_verdict": "Chọn lọc học được không chỉ cân bằng và chính xác, mà còn rẻ và mở rộng tới quy mô triệu nót.",
     # --- S5_11 Callout ---
@@ -262,6 +268,7 @@ VO = {
 
 class S5_01_Title(GlanceScene):
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         card = VGroup(
@@ -278,6 +285,7 @@ class S5_02_TopKProblem(GlanceScene):
     """Vấn đề cốt lõi: chọn top-K không khả vi, chặn đường gradient."""
 
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         self.banner()
@@ -306,6 +314,7 @@ class S5_02_TopKProblem(GlanceScene):
         tickets.shift(DOWN * 0.15)
 
         with self.voiceover(text=VO["topk_setup"]) as tracker:
+            self.sfx("pulse")  # top-K là quyết định rời rạc, gradient tắc ở đây
             self.play(Write(head), FadeIn(budget, scale=0.92), run_time=1.0)
             self.play(
                 LaggedStart(*[GrowFromCenter(n) for n in nodes], lag_ratio=0.12),
@@ -399,6 +408,7 @@ class S5_03_CounterfactualLoss(GlanceScene):
     """Một nốt route, hai thế giới đối chứng, hai loss cùng nhãn thật."""
 
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         self.banner()
@@ -472,13 +482,16 @@ class S5_03_CounterfactualLoss(GlanceScene):
             size=SMALL_SIZE + 1, color=C_LLM, weight=BOLD,
         ).move_to([0.25, -2.30, 0]).scale_to_fit_width(10.2)
         self.play(FadeIn(banner, shift=UP * 0.1), run_time=0.6)
-        self.wait(3.2)
+        # 3.2s ở đây là hình đứng im không lời — cộng với 0.5s của tear_down()
+        # thành gần 4 giây chết. Giữ đúng một nhịp đọc xong dòng banner.
+        self.wait(0.5)
 
 
 class S5_04_Reward(GlanceScene):
     """Reward là lợi ích ròng của việc gọi LLM, trừ chi phí beta."""
 
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         self.banner()
@@ -495,6 +508,7 @@ class S5_04_Reward(GlanceScene):
         route_label = txt("IF ROUTED", size=SMALL_SIZE, color=C_LLM, weight=BOLD).next_to(row1, UP, buff=0.3)
 
         with self.voiceover(text=VO["reward_route"]) as tracker:
+            self.sfx("ping")   # thay gradient bằng phần thưởng — lối thoát
             self.play(FadeIn(route_label), run_time=0.6)
             self.play(LaggedStart(*[FadeIn(m, shift=UP * 0.08) for m in row1], lag_ratio=0.16),
                       run_time=min(1.8, tracker.duration))
@@ -541,6 +555,7 @@ class S5_05_JointObjective(GlanceScene):
     """Router loss + prediction loss = loss tổng; chỉ train router và refiner."""
 
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         self.banner()
@@ -563,7 +578,6 @@ class S5_05_JointObjective(GlanceScene):
             weight="HEAVY",
         ).to_edge(UP, buff=0.85)
         self.add(head)
-        self.add(source("Appendix C.4, pp.18–19"))
 
         chain = pipeline(
             [("reward rᵥ", C_GOOD), ("log π(fᵥ)", C_ROUTER), ("ℓᵥʳᵒᵘᵗᵉ", C_BAD)],
@@ -709,13 +723,13 @@ class S5_06_Setup(GlanceScene):
     """Bối cảnh thực nghiệm: câu hỏi trung tâm, dữ liệu, đối thủ, ngân sách."""
 
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         self.banner()
         # Title hạ xuống một chút cho thoáng với hàng banner phía trên.
         head = scene_title("Experimental setup", color=C_GNN).shift(DOWN * 0.20)
         self.add(head)
-        self.add(source("Appendix C.4, pp.18–19"))
 
         # Đặt row và goal bằng arrange rồi canh giữa cả cụm, thay vì gán toạ độ
         # x tuyệt đối cho từng cái (cách cũ khiến cụm lệch trái so với tâm và
@@ -785,13 +799,12 @@ class S5_07_BalancedResults(GlanceScene):
     """Accuracy tổng thể (Bảng 4) và cân bằng theo homophily (Bảng 3)."""
 
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         self.banner()
         head = scene_title("Balance & overall accuracy", color=C_ROUTER)
         self.add(head)
-        table4_source = source("Table 4, p.8")
-        self.add(table4_source)
 
         chart = bar_chart(
             [89.5, 92.6, 82.1], ["Cora", "Pubmed", "Arxiv23"],
@@ -802,6 +815,7 @@ class S5_07_BalancedResults(GlanceScene):
         # khoảng bên trái nên canh group làm phần cột trông lệch sang phải.
         chart.shift(LEFT * chart.bars.get_center()[0])
         with self.voiceover(text=VO["res_overall"]) as tracker:
+            self.sfx("sweep")  # ba kết quả overall lần lượt dựng lên
             self.play(Create(chart.axes), run_time=0.6)
             self.play(
                 LaggedStart(*[FadeIn(b, shift=UP * 0.12) for b in chart.bars], lag_ratio=0.2),
@@ -838,9 +852,8 @@ class S5_07_BalancedResults(GlanceScene):
         hard_group = VGroup(hard_chart, hard_title, gain_arrow, gain_label)
 
         with self.voiceover(text=VO["res_hardbin"]) as tracker:
-            table3_source = source("Table 3, p.8")
             self.play(
-                FadeOut(VGroup(chart, margin, table4_source)), FadeIn(table3_source),
+                FadeOut(VGroup(chart, margin)),
                 run_time=0.5,
             )
             self.play(FadeIn(hard_title), Create(hard_chart.axes), run_time=0.6)
@@ -879,6 +892,7 @@ class S5_08_RouterLearned(GlanceScene):
     """Router học đúng tín hiệu: phân bố route + sensitivity K + ablation (§6.3)."""
 
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         self.banner()
@@ -887,7 +901,6 @@ class S5_08_RouterLearned(GlanceScene):
         head.shift(DOWN * 0.20)
         with self.voiceover(text=VO["router_question"]):
             self.play(Write(head), run_time=1.2)
-        self.add(source("§6.3, p.9"))
 
         axis = Line([-5.0, -1.2, 0], [-0.6, -1.2, 0], color=MUTED, stroke_width=1.6)
         heights = [1.5, 1.0, 0.55, 0.28]
@@ -916,11 +929,19 @@ class S5_08_RouterLearned(GlanceScene):
                 run_time=min(1.8, tracker.duration),
             )
 
-        graph = demo_tag().scale(0.7).move_to([3.3, -0.3, 0])
+        # Phóng to hơn mức 0.7 cũ: số hiệu nốt nằm bên trong đường tròn nên nốt
+        # phải đủ lớn để đọc được chữ số.
+        graph = demo_tag().scale(0.86).move_to([3.4, -0.3, 0])
         ring = ego_ring(graph, 9, [2, 8, 10, 11], color=C_LLM)
+        # Lời đọc gọi thẳng tên "nót chín" và "nót bốn". Đánh số cả 12 nốt chứ
+        # không riêng hai nốt đó: có đủ dãy số thì khán giả mới định vị được nốt
+        # nào là nốt nào, chứ hai con số lẻ loi không cho biết cách đánh số.
+        ids = node_ids(graph, inside=True)
         with self.voiceover(text=VO["router_graph"]) as tracker:
             self.play(hist_group.animate.shift(LEFT * 2.75), FadeIn(graph), run_time=1.0)
-            self.play(Create(ring), Flash(graph.nodes[9], color=C_LLM, flash_radius=0.35),
+            self.sfx("tick")   # bộ định tuyến khoanh vùng nót cần gọi LLM
+            self.play(Create(ring), FadeIn(ids),
+                      Flash(graph.nodes[9], color=C_LLM, flash_radius=0.35),
                       run_time=min(1.4, tracker.duration))
 
         # Hai dòng này trước dùng size SMALL_SIZE−5/−4 màu MUTED nên gần như
@@ -936,7 +957,7 @@ class S5_08_RouterLearned(GlanceScene):
         fit_width(sens, 12.4)
         with self.voiceover(text=VO["router_budget"]) as tracker:
             self.play(
-                FadeOut(VGroup(graph, ring)),
+                FadeOut(VGroup(graph, ring, ids)),
                 hist_group.animate.shift(RIGHT * 2.75),
                 run_time=0.4,
             )
@@ -989,6 +1010,7 @@ class S5_09_RoutingControls(GlanceScene):
     """Route hết và route ngẫu nhiên: hai đối chứng khép lập luận."""
 
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         self.banner()
@@ -1027,6 +1049,7 @@ class S5_09_RoutingControls(GlanceScene):
         ).arrange(DOWN, buff=0.16).move_to(right)
         right_group = VGroup(right, right_title, ranking)
 
+        self.sfx("pulse")     # định tuyến ngẫu nhiên: tụt xuống dưới cả baseline
         with self.voiceover(text=VO["ctrl_random"]) as tracker:
             self.play(
                 left_group.animate.shift(LEFT * 3.35),
@@ -1063,6 +1086,7 @@ class S5_10_Scale(GlanceScene):
     """Quy mô lớn: route rất ít vẫn hiệu quả trên đồ thị triệu nốt (Bảng 5)."""
 
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         self.banner()
@@ -1074,7 +1098,6 @@ class S5_10_Scale(GlanceScene):
             weight="HEAVY",
         ).to_edge(UP, buff=0.85)
         self.add(head)
-        self.add(source("Table 5, pp.9–10"))
 
         dots = VGroup(*[Dot(radius=0.10, color=MUTED, fill_opacity=0.48) for _ in range(64)])
         dots.arrange_in_grid(rows=8, cols=8, buff=0.15).move_to([-4.25, 0.20, 0])
@@ -1138,6 +1161,7 @@ class S5_11_Callout(GlanceScene):
     """Chốt lại toàn bộ mạch GLANCE, nối lại câu hỏi mở đầu Section 1."""
 
     section, section_name = SECTION, SECTION_NAME
+    voice_speed = S5_VOICE_SPEED
 
     def construct(self):
         self.banner()
@@ -1145,6 +1169,7 @@ class S5_11_Callout(GlanceScene):
         intro = pill("ONE ROUTER · FIVE DESIGN LESSONS", C_ROUTER, width=5.2)
         intro.next_to(head, DOWN, buff=0.30)
         with self.voiceover(text=VO["final_reconnect"]) as tracker:
+            self.sfx("signature")  # dấu hiệu GLANCE quay lại ở đoạn kết
             self.play(Write(head), FadeIn(intro, shift=UP * 0.08), run_time=min(2.2, tracker.duration))
 
         items = [
@@ -1179,7 +1204,7 @@ class S5_11_Callout(GlanceScene):
             not_more = txt("NOT MORE LLM", size=HEAD_SIZE - 4, color=C_BAD, weight=BOLD)
             not_more.move_to([0, 0.6, 0])
             strike = Line(not_more.get_left(), not_more.get_right(), color=C_BAD, stroke_width=6)
-            final_line = txt("USE THE LLM IN THE RIGHT PLACES.", size=TITLE_SIZE - 6, color=C_GOOD, weight=BOLD)
+            final_line = txt("USE THE LLM IN THE RIGHT PLACES", size=TITLE_SIZE - 6, color=C_GOOD, weight=BOLD)
             final_line.move_to([0, -0.4, 0])
             self.play(Write(not_more), run_time=1.0)
             self.play(Create(strike), run_time=0.5)

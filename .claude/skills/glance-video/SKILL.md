@@ -18,11 +18,11 @@ thành viên sở hữu và render thành `.mp4` riêng, rồi `ffmpeg` ghép l�
    (`glance_style.py`, `plan.md`, `README.md`, `build.sh`) chỉ sửa khi được yêu
    cầu rõ ràng, vì mọi section phụ thuộc vào chúng.
 3. **Không bịa số liệu.** Mọi con số phải lấy từ `docs/paper-map.md` (đã trích sẵn
-   kèm số bảng, số trang) hoặc từ `../GraphDataMining.pdf`. Số liệu nào lên hình
-   cũng phải kèm `source("Table 3, p.8")`.
-   Scene thuần khái niệm, công thức hoặc kiến trúc không hiển thị citation hay
-   `source(...)`; provenance của các nội dung này được giữ trong code và
-   `docs/paper-map.md`.
+   kèm số bảng, số trang) hoặc từ `../GraphDataMining.pdf`.
+   **Không hiện citation trên hình.** Helper `source(...)` vẫn còn trong
+   `glance_style.py` nhưng không scene nào dùng nữa — stamp nguồn góc dưới phải đã
+   bị gỡ khỏi toàn bộ video theo yêu cầu. Provenance ghi bằng comment ngay chỗ dùng
+   số liệu, cộng với `docs/paper-map.md`.
 4. **Không commit video.** `media/`, `build/`, `*.mp4` đã nằm trong `.gitignore`.
 5. **Chạy bộ test trước khi kết thúc việc hoặc mở PR:**
 
@@ -219,6 +219,37 @@ Output: `media/videos/<tên_file_py>/<độ_phân_giải>/<TênScene>.mp4` (+ `.
 
 Thêm section mới thì phải thêm đường dẫn file vào mảng `SECTIONS` trong `build.sh`
 đúng vị trí mong muốn trong video.
+
+### Nhạc nền và sound effect
+
+`build.sh` gọi `tools/mix_audio.py` ngay sau bước ghép: nhạc nền `media/audio/dl.mp3`
+có ducking bằng sidechain, whoosh ở mốc chuyển cảnh, whoosh dày + thump ở mốc đổi
+section. Mọi mức âm lượng tính tương đối so với độ to giọng đọc đo được lúc chạy,
+nên đổi backend TTS không phải chỉnh lại tay.
+
+**Đừng gắn tiếng bằng `self.add_sound()` trong scene**: nhạc nền sẽ đứt ở mỗi điểm
+cắt, và scene không biết mốc cắt giữa hai scene. Trộn ở bước cuối cũng có nghĩa là
+không phải sửa file của section nào.
+
+```bash
+GLANCE_NO_MIX=1 ./build.sh              # dựng bản không nhạc
+GLANCE_BGM=<path> ./build.sh            # đổi nhạc nền
+python tools/mix_audio.py --dry-run     # bảng mốc SFX, không trộn
+python tools/mix_audio.py --out build/thu.mp4    # trộn lại từ final.mp4 có sẵn
+```
+
+Trộn lại **không cần render lại** — script chỉ đọc `build/final.mp4` +
+`build/concat.txt` và `-c:v copy`, mất khoảng 30 giây cho video 30 phút. Muốn chỉnh
+độ to thì sửa các hằng `*_BELOW_VOICE` ở đầu `tools/mix_audio.py`, đừng sửa lệnh
+ffmpeg. Kiểm tra kết quả bằng tín hiệu hiệu (bản trộn trừ bản gốc) chứ đừng đo
+`volumedetect` trên bản trộn — lớp tiếng mới nằm ~20 dB dưới giọng đọc nên không
+làm mean/max nhúc nhích:
+
+```bash
+ffmpeg -ss <t> -t <d> -i build/final_bgm.mp4 -ss <t> -t <d> -i build/final.mp4 \
+  -filter_complex "[1:a]volume=-1[b];[0:a][b]amix=inputs=2:normalize=0,volumedetect" \
+  -f null -
+```
 
 ## Tự kiểm tra kết quả (quan trọng)
 

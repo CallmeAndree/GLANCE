@@ -28,8 +28,6 @@ GRAPH_NODE_Z = 2
 GRAPH_LABEL_Z = 4
 TITLE_WEIGHT = HEAVY
 
-SRC_T1 = "Table 1, p.4"
-
 ASSET_DIR = pathlib.Path(__file__).resolve().parent / "assets"
 PAPER_ASSETS = [
     ("E-LLaGNN", "arXiv:2407.14996", ASSET_DIR / "ellagnn_page.jpg"),
@@ -344,7 +342,7 @@ class S2_01_AdaptiveFusion(GlanceScene):
 
         beat(
             self,
-            "Hướng tiếp cận này được gọi là kết hợp thích ứng (adaptive routing).",
+            "Hướng tiếp cận này được gọi là kết hợp thích ứng.",
             Transform(static_head, adaptive_head), FadeOut(all_arrows),
             FadeOut(static_note), FadeOut(node_label),
             LaggedStart(*[nodes[i].animate.set_opacity(0.28)
@@ -537,6 +535,7 @@ class S2_03_Degree(GlanceScene):
         chip_box.set_z_index(GRAPH_LABEL_Z)
         chip_text.set_z_index(GRAPH_LABEL_Z + 1)
 
+        self.sfx("tick")      # hai nót bậc thấp được tiêu chí degree chọn
         beat(self, "Đây là hai nót bậc thấp nhất, chúng sẽ được định tuyến.", steps=[
             ([LaggedStart(*[Create(r) for r in rings], lag_ratio=0.15)], 1.3),
         ])
@@ -676,6 +675,7 @@ class S2_03_Degree(GlanceScene):
                    Indicate(skip_lbl, color=C_BAD, scale_factor=1.04)], 1.0),
              ])
         # Vòng tím hiện lên rồi tan: nót đáng được định tuyến mà tiêu chí không chọn.
+        self.sfx("pulse")     # nót thật sự khó lại bị tiêu chí bỏ sót
         beat(self, "Đây mới đúng là nót cần lờ lờ mờ, nhưng nó không được chọn.", steps=[
             ([Create(want_ring), ReplacementTransform(msg2, msg3)], 1.2),
             ([FadeOut(want_ring, scale=0.7), Indicate(skip_lbl, color=C_BAD,
@@ -1248,16 +1248,21 @@ class S2_07_NCS(GlanceScene):
                   "GNN right, LLM makes it wrong.\nA HARMFUL correction.", C_BAD, cross())
         defs = VGroup(wc, cw).arrange(RIGHT, buff=0.6, aligned_edge=UP).shift(DOWN * 0.3)
 
-        beat(self, "Để đo chất lượng tập nót được định tuyến, bài báo dùng một metric được gọi là en xi ét.",
+        # Gọi tên đầy đủ trước rồi mới tới chữ viết tắt: câu sau vốn đã mở bằng
+        # "Viết tắt là…", trước đây câu này cũng đọc luôn "en xi ét" nên thành ra
+        # giới thiệu chữ viết tắt bằng chính chữ viết tắt.
+        beat(self, "Để đo chất lượng tập nót được định tuyến, bài báo dùng một metric tên là Nét co réc sờn sì co.",
              FadeIn(head), FadeIn(sub), run_time=0.9)
         beat(self, "Viết tắt là en xi ét. Ý tưởng rất trực quan.")
         beat(self, "gờ nờ nờ sai mà lờ lờ mờ sửa thành đúng: một lần sửa có lợi.",
              FadeIn(wc, shift=RIGHT * 0.3), run_time=1.0)
+        self.sfx("ping")      # gờ nờ nờ sai mà lờ lờ mờ sửa đúng: một lần sửa CÓ LỢI
         # Ba câu quanh đây toàn chuỗi chữ cái đánh vần liền nhau nên giọng đọc bị
         # méo; đọc nhanh hơn một nhịp cho liền mạch.
         beat(self, "Tập này gọi là đắp-bờ-liu xi, tức là sai thành đúng.", speed=1.15)
         beat(self, "gờ nờ nờ đúng mà lờ lờ mờ làm thành sai: một lần sửa có hại.",
              FadeIn(cw, shift=LEFT * 0.3), run_time=1.0, speed=1.15)
+        self.sfx("pulse")     # gờ nờ nờ đúng mà lờ lờ mờ làm hỏng: sửa CÓ HẠI
         beat(self, "Tập này gọi là xi đắp-bờ-liu, đúng thành sai.")
 
         formula = MathTex(r"\mathrm{NCS} \;=\; \frac{|WC| - |CW|}{|R|}",
@@ -1429,15 +1434,14 @@ class S2_08_Table1(GlanceScene):
 
     def construct(self):
         self.banner()
-        src = source(SRC_T1)
         head = scene_title("Table 1 · NCS per routing strategy", color=ACCENT)
         head.scale_to_fit_width(min(head.width, 11.0)).to_edge(UP, buff=0.8)
         sub = mono("greener = more benefit  ·  redder = more harm", size=17,
                    color=MUTED).next_to(head, DOWN, buff=0.16)
         hm = build_heatmap().scale(0.96).move_to(LEFT * 0.75 + DOWN * 0.62)
 
-        beat(self, "Đây là Bảng 1 của bài báo, trình bày lại dưới dạng bản đồ nhiệt.",
-             FadeIn(head), FadeIn(sub), FadeIn(src), run_time=0.9)
+        beat(self, "Đây là Bảng một của bài báo, trình bày lại dưới dạng bản đồ nhiệt.",
+             FadeIn(head), FadeIn(sub), run_time=0.9)
         beat(self, "Mỗi ô là một giá trị en xi ét.",
              FadeIn(hm.header), run_time=0.7)
         beat(self, "Ô càng xanh thì lợi ích càng cao, càng đỏ thì càng gây hại.",
@@ -1554,12 +1558,15 @@ class S2_09_PubmedVsCora(GlanceScene):
 
         beat(self, "Tách riêng độ bất định ra, đặt hai bộ dữ liệu cạnh nhau.",
              FadeIn(head), FadeIn(sub), FadeIn(chart.axes), run_time=1.0)
+        self.sfx("ping")      # pắp mét: en xi ét dương cả ba mức
         beat(self, "Trên pắp mét, tiêu chí này cho en xi ét dương ở cả ba mức.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3)],
                          lag_ratio=0.15), FadeIn(lab_pub), run_time=1.5)
+        self.sfx("pulse")     # cùng tiêu chí, cô ra âm cả ba mức
         beat(self, "Trên cô ra, vẫn tiêu chí đó, cả ba mức đều âm.",
              LaggedStart(*[GrowFromEdge(chart.bars[i], DOWN) for i in range(3, 6)],
                          lag_ratio=0.15), FadeIn(lab_cora), run_time=1.5)
+        self.sfx("sweep")     # đổi hẳn dấu — nhấn bằng chuỗi blip đi xuống
         beat(self, "Không phải kém đi một chút, mà đổi hẳn dấu.")
         beat(self, "Ba đường nét đứt là mốc chọn nót ngẫu nhiên trên cô ra.",
              LaggedStart(*[Create(m) for m in rand_marks], lag_ratio=0.2),
@@ -1795,7 +1802,16 @@ class S2_12_Limits(GlanceScene):
                 size=23, color=C_BAD, weight=BOLD),
         ).arrange(DOWN, buff=0.26)
 
-        beat(self, "Vậy quay lại câu hỏi ban đầu: gờ lans kế thừa được gì từ ba công trình này?")
+        # `clear_scene()` fade sạch mọi thứ, kể cả banner. Câu hỏi dưới đây trước
+        # đây không kèm animation nào, nên màn hình đứng trống trơn suốt bốn giây
+        # đọc nó. Dựng lại banner và cho chính câu hỏi lên hình làm tiêu đề cho
+        # ba câu trả lời ngay sau đó.
+        self.banner()
+        ask = scene_title("What does GLANCE inherit from these three?",
+                          color=ACCENT).to_edge(UP, buff=1.10)
+        punch.move_to(DOWN * 0.35)
+        beat(self, "Vậy quay lại câu hỏi ban đầu: gờ lans kế thừa được gì từ ba công trình này?",
+             Write(ask), run_time=1.6)
         beat(self, "Trong kiến trúc sau đó, bậc và độ bất định trở lại như hai đầu vào.",
              Write(punch[0]), run_time=1.2)
         beat(self, "Riêng mật độ xê không được giữ trực tiếp.",

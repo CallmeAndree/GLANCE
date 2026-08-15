@@ -35,14 +35,65 @@ from manim_voiceover.services.base import SpeechService
 import manimpango
 
 
+# Tunnel tạm, đổi mỗi lần server TTS khởi động lại. Đổi giá trị này không làm
+# hỏng cache: endpoint không nằm trong khoá cache, xem `_cache_input_data`.
 DEFAULT_TIMED_TTS_URL = (
-    "https://seems-contracting-surprise-toolbar.trycloudflare.com/api/tts"
+    "https://charm-little-valve-steps.trycloudflare.com/api/tts"
 )
 DEFAULT_TIMED_TTS_TEMPERATURE = 0.45
 DEFAULT_TIMED_TTS_TOP_K = 30
 DEFAULT_TIMED_TTS_TOP_P = 0.85
 DEFAULT_TIMED_TTS_SPEED = 1.15
 DEFAULT_TIMED_TTS_KEY_FILE = ".run/api.key"
+
+# Sound effect: file .wav do `python tools/sfx_kit.py` sinh ra, cùng một bảng
+# mức âm lượng dùng chung với bước trộn ở tools/mix_audio.py.
+SFX_DIR = pathlib.Path(__file__).resolve().parent / "assets" / "sfx"
+_SFX_LEVELS_CACHE = {}
+
+
+def _sfx_levels():
+    """Đọc assets/sfx/levels.json một lần, trả dict tên -> dB dưới giọng đọc."""
+    if not _SFX_LEVELS_CACHE:
+        path = SFX_DIR / "levels.json"
+        if path.is_file():
+            _SFX_LEVELS_CACHE.update(json.loads(path.read_text(encoding="utf-8")))
+    return _SFX_LEVELS_CACHE
+
+
+# Độ to trung bình của giọng đọc, đo bằng volumedetect trên bản dựng (ổn định
+# quanh -20.5 dBFS qua nhiều lần build). Mọi mức SFX tính lùi từ đây.
+VOICE_MEAN_DBFS = -20.5
+
+
+def play_sfx(scene, name, at=0.0, below=None):
+    """Chèn sound effect vào scene bất kỳ — kể cả scene không kế thừa GlanceScene.
+
+    Section 1 dựng trên `VoiceoverScene` trần nên không có `self.sfx()`; hàm này
+    để cả hai loại scene dùng chung một đường, khỏi chép logic mức âm lượng.
+    """
+    path = SFX_DIR / f"{name}.wav"
+    if not path.is_file():
+        logger.warning("Thiếu %s — bỏ qua SFX. Chạy: python tools/sfx_kit.py", path)
+        return
+    if below is None:
+        below = _sfx_levels().get(name, 12.0)
+
+    # `Scene.add_sound` mở đầu bằng `if self.renderer.skip_animations: return`,
+    # còn renderer bật cờ đó mỗi khi tái dùng animation trong cache. Hệ quả:
+    # render lần hai trở đi, SFX BIẾN MẤT KHÔNG BÁO LỖI — đã đo và dựng lại
+    # được hiện tượng này, hiệu hai bản audio ra đúng 0. Hạ cờ quanh lời gọi để
+    # tiếng luôn được ghi; mốc thời gian vẫn đúng vì renderer vẫn cộng dồn
+    # `scene.duration` cho cả animation lấy từ cache.
+    renderer = getattr(scene, "renderer", None)
+    skipping = getattr(renderer, "skip_animations", False)
+    if skipping:
+        renderer.skip_animations = False
+    try:
+        scene.add_sound(str(path), time_offset=at, gain=VOICE_MEAN_DBFS - below)
+    finally:
+        if skipping:
+            renderer.skip_animations = True
 
 
 class SilentService(SpeechService):
@@ -144,10 +195,16 @@ class TimedTTSService(SpeechService):
             self.speed = previous
 
     def _cache_input_data(self, input_text):
+        # `endpoint` CỐ Ý không nằm trong khoá cache. Server TTS chạy sau một
+        # tunnel tạm, URL đổi mỗi lần khởi động lại; lấy URL làm khoá thì mỗi lần
+        # đổi tunnel là toàn bộ audio bị coi như chưa có và sinh lại từ đầu — đã
+        # xảy ra thật, cache từng vỡ làm bốn mảnh theo bốn URL khác nhau. Giọng
+        # đọc phụ thuộc model + tham số + câu chữ, không phụ thuộc địa chỉ máy
+        # phục vụ, nên URL không thuộc về khoá. Đổi sang model/giọng khác thì
+        # nâng hậu tố "-v2" trong `service`.
         data = {
             "input_text": input_text,
             "service": "glance-timed-tts-v2",
-            "endpoint": self.endpoint,
             "format": self.audio_format,
             "temperature": self.temperature,
             "top_k": self.top_k,
@@ -899,6 +956,38 @@ def tag_graph(edges, positions, labels=None, radius=0.16, scale=1.0,
     return g
 
 
+def node_ids(graph, ids=None, size=15, color=INK, direction=UR, buff=0.05,
+             inside=False, fill=0.52):
+    """Số hiệu nốt, trả về VGroup theo đúng thứ tự `ids`. Mặc định đánh cả đồ thị.
+
+    Lời thuyết minh hay gọi tên nốt ("nót chín có hô mô phi li thấp"), nhưng
+    `tag_graph` chỉ vẽ chấm tròn không đánh số — khán giả không biết nhìn vào đâu.
+
+    `inside=True` đặt số vào GIỮA nốt và co cho vừa đường tròn (`fill` là tỉ lệ
+    chiều cao chữ trên đường kính nốt). Nốt có `fill_opacity` thấp nên nền tối
+    lộ qua, chữ sáng nằm trong đọc rõ. Đặt cạnh nốt (`inside=False`) thì số hay
+    đè lên cạnh đồ thị khi vùng đó đông nốt.
+
+    Gọi SAU khi đã scale/di chuyển đồ thị, để cỡ chữ không bị co theo.
+    """
+    ids = list(graph.nodes) if ids is None else list(ids)
+    out = VGroup()
+    for nid in ids:
+        node = graph.nodes[nid]
+        lab = txt(str(nid), size=size, color=color, weight=BOLD)
+        if inside:
+            lab.scale_to_fit_height(node.height * fill)
+            # Số hai chữ số co theo chiều cao thì tràn ngang khỏi đường tròn —
+            # ép thêm theo bề rộng cho những nhãn dài.
+            if lab.width > node.width * 0.74:
+                lab.scale_to_fit_width(node.width * 0.74)
+            lab.move_to(node)
+        else:
+            lab.next_to(node, direction, buff=buff)
+        out.add(lab)
+    return out
+
+
 # The recurring 12-node example graph. Same layout in every section so the
 # audience recognises it. Node 4 is the homophilous hub, node 9 the heterophilous
 # low-degree node -- those two carry the story.
@@ -1506,11 +1595,44 @@ class GlanceScene(VoiceoverScene):
     # Muốn giọng vi-VN thuần: đặt azure_voice = "vi-VN-HoaiMyNeural" (khi đó
     # thuật ngữ tiếng Anh sẽ bị đọc theo âm Việt, và <lang> tự động tắt).
     azure_voice = "en-US-AvaMultilingualNeural"
+    # Tốc độ đọc riêng cho cả scene, đặt ở class thay vì bọc `tts_speed` quanh
+    # từng khối voiceover. Dùng khi một section có chất giọng khác phần còn lại
+    # — ví dụ phần báo cáo thực nghiệm toàn số liệu, đọc ở tốc độ chuẩn nghe lê
+    # thê. None = theo mặc định của backend.
+    voice_speed = None
     _multilingual = False
 
     def setup(self):
         self.camera.background_color = BG
-        self.set_speech_service(self.speech_service(), create_subcaption=True)
+        service = self.speech_service()
+        # Đặt trước set_speech_service: manim-voiceover gán đè
+        # `self.speech_service` bằng chính object service, nên sau dòng dưới thì
+        # `self.speech_service` không còn là method này nữa.
+        if self.voice_speed is not None and hasattr(service, "speed"):
+            # Backend không đổi được tốc độ (gTTS, recorder) thì bỏ qua, đừng
+            # làm hỏng render. `speed` nằm trong khoá cache nên đổi giá trị này
+            # là toàn bộ audio của scene được sinh lại ở tốc độ mới.
+            service.speed = float(self.voice_speed)
+        self.set_speech_service(service, create_subcaption=True)
+
+    def sfx(self, name, at=0.0, below=None):
+        """Chèn một sound effect ngữ nghĩa vào đúng nhịp animation đang chạy.
+
+            self.play(FadeIn(card)); self.sfx("tick")
+
+        `below` là số dB dưới giọng đọc; bỏ trống thì lấy mức chuẩn của loại
+        tiếng đó trong assets/sfx/levels.json.
+
+        Vì sao gọi trong scene chứ không đặt theo mốc thời gian ở bước ghép:
+        timeline trôi mỗi lần sinh lại một câu TTS hay sửa kịch bản, nên bảng
+        mốc tuyệt đối sẽ lệch ngay lần render sau. Gắn vào animation thì tiếng
+        luôn rơi đúng chỗ. Ngược lại, whoosh chuyển cảnh vẫn phải nằm ở
+        `tools/mix_audio.py` vì nó cần mốc cắt GIỮA hai scene.
+
+        Thiếu file thì cảnh báo rồi bỏ qua, không làm hỏng render — máy vừa
+        clone chưa chạy `python tools/sfx_kit.py` vẫn dựng được video.
+        """
+        play_sfx(self, name, at=at, below=below)
 
     def tear_down(self):
         """Đệm một nhịp ở cuối scene để video không ngắn hơn audio.

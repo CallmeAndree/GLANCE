@@ -151,6 +151,73 @@ class TimedTTSServiceTest(unittest.TestCase):
             self.assertEqual(len(cache), 1)
             self.assertEqual(first["original_audio"], second["original_audio"])
 
+    def test_cache_survives_endpoint_change(self):
+        """Đổi tunnel không được làm hỏng cache.
+
+        Server TTS chạy sau tunnel tạm nên URL đổi mỗi lần khởi động lại. Trước
+        đây endpoint nằm trong khoá cache, nên mỗi lần đổi URL là toàn bộ audio
+        bị sinh lại — cache từng vỡ thành bốn mảnh theo bốn URL khác nhau.
+        """
+        with tempfile.TemporaryDirectory() as cache_dir:
+            first_service = TimedTTSService(
+                endpoint="https://tunnel-cu.example/api/tts",
+                token="secret-token",
+                cache_dir=cache_dir,
+            )
+            with patch(
+                "glance_style.urlrequest.urlopen",
+                return_value=FakeResponse(b"fake-mp3"),
+            ) as urlopen:
+                first = first_service._wrap_generate_from_text("Xin chào.")
+            self.assertEqual(urlopen.call_count, 1)
+
+            moved_service = TimedTTSService(
+                endpoint="https://tunnel-moi.example/api/tts",
+                token="secret-token",
+                cache_dir=cache_dir,
+            )
+            with patch(
+                "glance_style.urlrequest.urlopen",
+                side_effect=AssertionError("đổi endpoint không được gọi lại TTS"),
+            ) as urlopen:
+                second = moved_service._wrap_generate_from_text("Xin chào.")
+
+            self.assertEqual(urlopen.call_count, 0)
+            self.assertEqual(first["original_audio"], second["original_audio"])
+
+    def test_sfx_survives_manim_animation_cache(self):
+        """SFX phải được ghi cả khi manim đang tái dùng animation trong cache.
+
+        `Scene.add_sound` mở đầu bằng `if self.renderer.skip_animations: return`,
+        mà renderer bật cờ đó mỗi lần lấy animation từ cache. Không vá thì render
+        lần hai trở đi SFX biến mất mà không báo lỗi gì — đúng nghĩa hỏng lặng lẽ.
+        """
+        import glance_style
+
+        class FakeRenderer:
+            skip_animations = True
+
+        class FakeScene:
+            def __init__(self):
+                self.renderer = FakeRenderer()
+                self.calls = []
+
+            def add_sound(self, path, time_offset=0, gain=None, **kwargs):
+                # Cờ phải đang TẮT lúc add_sound chạy, đúng như manim yêu cầu.
+                assert not self.renderer.skip_animations
+                self.calls.append((path, time_offset, gain))
+
+        scene = FakeScene()
+        with patch.object(glance_style, "SFX_DIR", pathlib.Path(tempfile.mkdtemp())):
+            (glance_style.SFX_DIR / "ping.wav").write_bytes(b"RIFF")
+            glance_style.play_sfx(scene, "ping", below=10.0)
+
+        self.assertEqual(len(scene.calls), 1)
+        self.assertTrue(scene.calls[0][0].endswith("ping.wav"))
+        self.assertAlmostEqual(scene.calls[0][2], glance_style.VOICE_MEAN_DBFS - 10.0)
+        # Cờ phải được trả lại nguyên trạng cho renderer.
+        self.assertTrue(scene.renderer.skip_animations)
+
     def test_requires_token(self):
         with self.assertRaisesRegex(ValueError, "Thiếu API key"):
             TimedTTSService(endpoint="https://tts.example", token="")

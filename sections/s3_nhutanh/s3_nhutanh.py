@@ -188,59 +188,55 @@ VO = {
         "Ta bắt đầu từ nhóm thứ nhất: những gì gờ nờ nờ tạo ra."
     ),
     # --- Cảnh 8: trạng thái ban đầu của GNN ---
+    # Cảnh 8–11 (message passing) trước đây dài ~72 giây lời đọc. Khán giả theo
+    # plan.md đã biết message passing, và phần lớn lời cũ chỉ đọc lại đúng thứ
+    # công thức đang hiện trên màn hình. Đã rút còn ~41 giây: giữ nguyên mạch
+    # lớp-không → tổng hợp → cập nhật → danh tính không đổi, bỏ phần diễn giải
+    # trùng hình và các caveat lặp.
     "is_layer0": (
-        "Đầu tiên, nót a được đưa vào mô hình nền gờ nờ nờ. Ở lớp số không, "
-        "trạng thái ẩn của nót a chính là đặc trưng ban đầu của nót. "
-        "Nói cách khác, hắc phẩy a mũ không bằng ích phẩy a."
+        "Nót a vào mô hình nền gờ nờ nờ. Ở lớp không, trạng thái ẩn của nót "
+        "chính là đặc trưng ban đầu: hắc phẩy a mũ không bằng ích phẩy a."
     ),
     "is_example": (
-        "Ví dụ, nếu đặc trưng của nót a là véc-tơ không chấm tám, âm không chấm một "
-        "và không chấm năm, thì trạng thái ẩn ban đầu cũng nhận đúng véc-tơ này."
+        "Ví dụ, đặc trưng của a là không chấm tám, âm không chấm một, không chấm năm."
     ),
-    "is_noneighbor": "Ở bước này chưa có thông tin từ các nót hàng xóm.",
+    "is_noneighbor": "Ở bước này chưa có thông tin từ hàng xóm.",
     # --- Cảnh 9: bước tổng hợp ---
-    "ag_open": "Tiếp theo là bước tổng hợp.",
     "ag_collect": (
-        "Gờ nờ nờ thu thập trạng thái ẩn của các nót hàng xóm của a, "
-        "ví dụ như bê, xê, đê và e."
+        "Gờ nờ nờ thu thập trạng thái ẩn của các hàng xóm của a: bê, xê, đê và e."
     ),
     "ag_combine": (
-        "Sau đó, các véc-tơ này được tổng hợp thành một thông điệp hàng xóm. "
-        "Trong hoạt cảnh, chúng ta sử dụng phép trung bình để minh họa."
+        "Các véc-tơ này gộp thành một thông điệp hàng xóm, ở đây là phép trung bình."
     ),
     "ag_math": (
-        "Bốn véc-tơ hàng xóm được cộng lại rồi chia cho bốn, tạo thành thông điệp mới "
-        "là không chấm năm, không chấm năm. Lưu ý rằng phép trung bình chỉ là một ví dụ; "
-        "tùy mô hình nền gờ nờ nờ, phép tổng hợp có thể được cài đặt theo cách khác."
+        "Bốn véc-tơ cộng lại rồi chia cho bốn, thành không chấm năm, không chấm năm. "
+        "Tuỳ mô hình nền, phép tổng hợp có thể khác."
     ),
     # --- Cảnh 10: bước cập nhật ---
     "up_intro": (
-        "Sau khi có thông điệp hàng xóm, gờ nờ nờ thực hiện bước cập nhật. "
-        "Bước này kết hợp trạng thái trước đó của nót a với thông tin vừa tổng hợp từ hàng xóm."
+        "Bước cập nhật kết hợp trạng thái trước đó của a với thông điệp vừa tổng hợp."
     ),
     "up_example": (
         # "minh họa" đứng ngay đầu câu bị giọng đọc phát méo; bỏ hẳn từ này và
         # dùng "ở đây" cho câu chạy trơn. Đổi text cũng khiến TTS sinh lại.
-        "Trong ví dụ ở đây, trạng thái cũ của a là không chấm hai, không chấm tám, "
-        "còn thông điệp hàng xóm là không chấm sáu, không chấm bốn."
+        "Trạng thái cũ của a là không chấm hai, không chấm tám; thông điệp hàng xóm "
+        "là không chấm sáu, không chấm bốn."
     ),
     "up_result": (
-        "Sau bước cập nhật, ta thu được một biểu diễn mới là không chấm bốn, không chấm sáu."
+        "Kết quả là biểu diễn mới không chấm bốn, không chấm sáu."
     ),
     "up_caveat": (
-        "Các con số này chỉ dùng để minh họa luồng xử lý. Trong mô hình thực tế, "
-        "giá trị được quyết định bởi các tham số đã học."
+        "Các con số chỉ để minh hoạ; giá trị thật do tham số đã học quyết định."
     ),
     # --- Cảnh 11: trước và sau khi cập nhật ---
+    # Bốn câu cũ gộp còn hai: câu chốt danh tính, và câu nói việc lặp qua nhiều
+    # lớp. Phần "trước chứa gì / sau chứa gì" đã nằm ngay trên hình.
     "ba_identity": (
-        "Điểm cần lưu ý là nót a vẫn là cùng một bài báo. "
-        "Thứ thay đổi không phải danh tính của nót mà là biểu diễn của nó."
+        "Nót a vẫn là cùng một bài báo; chỉ biểu diễn của nó đã mang thêm thông tin "
+        "hàng xóm."
     ),
-    "ba_before": "Trước bước cập nhật, véc-tơ chủ yếu chứa thông tin của chính nót a.",
-    "ba_after": "Sau bước cập nhật, véc-tơ đã tích hợp thêm bằng chứng từ vùng lân cận.",
     "ba_repeat": (
-        "Quá trình tổng hợp và cập nhật có thể được lặp lại qua nhiều lớp gờ nờ nờ "
-        "để thu được biểu diễn cuối cùng."
+        "Tổng hợp và cập nhật lặp qua nhiều lớp để ra biểu diễn cuối cùng."
     ),
     # --- Cảnh 12 — Signal 1: node embedding z_G(A) ---
     "ep_graph": (
@@ -249,7 +245,7 @@ VO = {
     ),
     "ep_two": "Sau các lớp truyền thông điệp, gờ nờ nờ tạo ra hai đầu ra quan trọng.",
     "ep_embedding": (
-        "Đầu ra thứ nhất là véc-tơ biểu diễn dét gờ a. Véc-tơ biểu diễn này tóm tắt "
+        "Đầu ra thứ nhất là véc-tơ biểu diễn zét gờ a. Véc-tơ biểu diễn này tóm tắt "
         "cả đặc trưng của nót a và thông tin cấu trúc mà gờ nờ nờ đã học được. "
         "Đây chính là tín hiệu định tuyến đầu tiên."
     ),
@@ -417,9 +413,8 @@ SIGNALS = [
     ("Degree", C_HIGHLIGHT, "Connectivity"),
 ]
 
-# Provenance của phần kiến trúc (cảnh 6–19). Scene khái niệm không hiện stamp
-# nguồn trên hình, xem "Shared Elements" trong plan.md.
-SRC_ARCH = "§5.1.1 & Figure 2, pp.5–6"
+# Provenance của phần kiến trúc (cảnh 6–19): §5.1.1 & Figure 2, pp.5–6.
+# Không hiện trên hình — ghi ở đây để tra lại, xem "Shared Elements" trong plan.md.
 
 
 class S3_01_LocalHomophily(GlanceScene):
@@ -720,7 +715,6 @@ class S3_02_RelativeDegree(GlanceScene):
                       Indicate(numeric[4], color=C_BAD, scale_factor=1.2), run_time=1.2)
             self.play(FadeIn(caveat, shift=UP * 0.15), run_time=0.8)
 
-        self.wait(1.0)
 
 
 class S3_03_Complementary(GlanceScene):
@@ -875,6 +869,7 @@ class S3_04_EstimatedHomophily(GlanceScene):
         lock_frame = panel(lock, color=C_BAD, buff=0.3)
 
         with self.voiceover(text=VO["eh_problem"]):
+            self.sfx("tick")   # nhãn thật không dùng được lúc suy luận: một cánh cửa đóng
             self.play(Write(head), run_time=1.2)
             self.play(Write(true_h), run_time=1.6)
             self.play(
@@ -929,44 +924,84 @@ class S3_04_EstimatedHomophily(GlanceScene):
             self.play(Write(est_h), run_time=1.8)
             self.play(Indicate(est_h, color=C_ROUTER, scale_factor=1.05), run_time=1.0)
 
-        # --- Bảng xếp hạng rút gọn ---
+        # --- Bảng xếp hạng đầy đủ (Bảng 2, tr.5) ---
+        # Giữ nguyên thứ tự hàng của bài báo, kể cả những tiêu chí xếp sau, vì
+        # lời thoại nói "tốt nhất trong các phương pháp không cần nhãn" — không
+        # bày đủ mặt các phương pháp đó thì câu so sánh không có gì để tựa vào.
+        # Cột "label-free" là thứ chia bảng làm hai: h_v đứng đầu tuyệt đối
+        # nhưng cần nhãn thật nên không dùng được lúc suy luận.
         rows = [
-            (MathTex(r"h_A", font_size=30, color=MUTED),
-             "1.03", "unavailable at inference", MUTED),
-            (MathTex(r"\hat h_A", font_size=30, color=C_GOOD),
-             "3.22", "best label-free signal", C_GOOD),
-            (txt("uncertainty", size=22, color=MUTED),
-             "3.28", "label-free", MUTED),
+            (txt("Random", size=20, color=MUTED), "4.50", True, MUTED),
+            (txt("C-density", size=20, color=MUTED), "4.14", True, MUTED),
+            (txt("Degree", size=20, color=MUTED), "4.33", True, MUTED),
+            (txt("Uncertainty", size=20, color=MUTED), "3.28", True, MUTED),
+            (MathTex(r"\bar d_v", font_size=28, color=MUTED), "5.94", True, MUTED),
+            (MathTex(r"\hat h_v", font_size=28, color=C_GOOD), "3.22", True, C_GOOD),
+            (MathTex(r"h_v", font_size=28, color=MUTED), "1.03", False, MUTED),
         ]
         # Ba cột căn theo mốc x cố định để thẳng hàng, thay vì ép bề rộng ô.
-        table = VGroup()
-        for name_mob, rank, note, color in rows:
+        COL_RANK, COL_FREE = 2.4, 4.3
+        body = VGroup()
+        for name_mob, rank, label_free, color in rows:
+            mark = check() if label_free else cross()
+            mark.scale_to_fit_height(0.22)
             row = VGroup(
                 name_mob,
-                txt(rank, size=22, color=color, weight=BOLD),
-                txt(note, size=18, color=MUTED),
+                txt(rank, size=20, color=color, weight=BOLD),
+                mark,
             )
-            row[1].move_to(row[0], aligned_edge=LEFT).shift(RIGHT * 2.4)
-            row[2].move_to(row[0], aligned_edge=LEFT).shift(RIGHT * 3.6)
-            table.add(row)
-        table.arrange(DOWN, aligned_edge=LEFT, buff=0.4)
-        table.move_to(DOWN * 0.35)
+            # Hai cột phải căn theo TÂM chứ không theo mép trái: tiêu đề cột dài
+            # hơn ô dữ liệu, căn mép trái thì "Avg. ranking" tràn sang và đè lên
+            # "label-free".
+            row[1].move_to(row[0], aligned_edge=LEFT).shift(RIGHT * COL_RANK)
+            row[2].move_to(row[0], aligned_edge=LEFT).shift(RIGHT * COL_FREE)
+            body.add(row)
+        body.arrange(DOWN, aligned_edge=LEFT, buff=0.24)
+        # Nới riêng hàng cuối xuống: panel highlight quanh ĥ_v lấn xuống dưới,
+        # để buff đều thì đường kẻ phân nhóm rơi trúng viền panel và mất hút.
+        body[6].shift(DOWN * 0.20)
+
+        col_head = VGroup(
+            txt("Avg. rank", size=15, color=MUTED),
+            txt("label-free", size=15, color=MUTED),
+        )
+        col_head[0].move_to([body[0][1].get_center()[0], 0, 0])
+        col_head[1].move_to([body[0][2].get_center()[0], 0, 0])
+        col_head.set_y(body.get_top()[1] + 0.30)
+        # h_v tách khỏi nhóm trên bằng một đường kẻ: nó thắng về thứ hạng nhưng
+        # thuộc nhóm khác hẳn — cần nhãn thật — gộp chung sẽ đọc nhầm thành
+        # cùng loại với các tiêu chí không cần nhãn ở trên. Đặt bằng toạ độ chứ
+        # không next_to: panel highlight quanh hàng ĥ_v ăn lấn xuống dưới, dùng
+        # next_to sẽ đẩy đường kẻ vào giữa hàng đó.
+        rule = Line(
+            [body.get_left()[0] - 0.15, 0, 0],
+            [body.get_right()[0] + 0.15, 0, 0],
+            stroke_width=1.2, color=MUTED,
+        ).set_opacity(0.5)
+        rule.set_y((body[5].get_bottom()[1] + body[6].get_top()[1]) / 2 - 0.02)
+
+        table = VGroup(col_head, body, rule).move_to(DOWN * 0.15)
+        if table.height > 4.5:
+            table.scale_to_fit_height(4.5)
         title_row = txt("Mean rank under NCS routing (lower is better)",
                         size=20, color=INK, weight=BOLD)
-        title_row.next_to(table, UP, buff=0.55).align_to(table, LEFT)
-        highlight = panel(table[1], color=C_GOOD, buff=0.18)
+        title_row.next_to(table, UP, buff=0.38).align_to(table, LEFT)
+        highlight = panel(body[5], color=C_GOOD, buff=0.14)
         rank_head = scene_title("Routing signal ranking", color=ACCENT).move_to(head)
 
         with self.voiceover(text=VO["eh_rank"]):
             self.play(FadeOut(VGroup(flow, demo, demo_note, est_h)), run_time=0.6)
             self.play(FadeOut(head), run_time=0.3)
             self.play(FadeIn(rank_head), run_time=0.45)
-            self.play(FadeIn(title_row), run_time=0.6)
-            self.play(LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in table],
-                                  lag_ratio=0.3), run_time=1.6)
-            self.play(Create(highlight), run_time=0.9)
+            self.play(FadeIn(title_row), FadeIn(col_head), run_time=0.6)
+            # Sáu tiêu chí không cần nhãn hiện trước, rồi mới tới h_v dưới vạch:
+            # thứ tự đó khớp với lời thoại, nói nhóm không cần nhãn trước.
+            self.play(LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in body[:6]],
+                                  lag_ratio=0.28), run_time=2.2)
+            self.play(Create(highlight), run_time=0.8)
+            self.sfx("ping")  # ĥ_v thắng trong nhóm không cần nhãn
+            self.play(Create(rule), FadeIn(body[6], shift=RIGHT * 0.2), run_time=0.7)
 
-        self.wait(1.0)
 
 
 class S3_05_Bridge(GlanceScene):
@@ -1136,6 +1171,7 @@ class S3_06_FiveSignals(GlanceScene):
             roles.add(txt(role, size=19, color=color).next_to(box, RIGHT, buff=0.5))
 
         with self.voiceover(text=VO["fs_roles"]):
+            self.sfx("sweep")  # năm routing signal lần lượt hiện ra
             self.play(LaggedStart(*[FadeIn(r, shift=RIGHT * 0.2) for r in roles],
                                   lag_ratio=0.25), run_time=2.4)
             self.play(*[
@@ -1147,7 +1183,6 @@ class S3_06_FiveSignals(GlanceScene):
                 for box, (_, color, _) in zip(stack, SIGNALS)
             ], run_time=1.2)
 
-        self.wait(0.8)
 
 
 class S3_07_ThreeSources(GlanceScene):
@@ -1187,7 +1222,6 @@ class S3_07_ThreeSources(GlanceScene):
 
         with self.voiceover(text=VO["ts_close"]):
             pass
-        self.wait(0.6)
 
 
 class S3_08_InitialState(GlanceScene):
@@ -1221,15 +1255,16 @@ class S3_08_InitialState(GlanceScene):
 
         feature_example = mt(r"x_A=[0.8,-0.1,0.5]", 62).move_to(equation)
         feature_label = txt("EXAMPLE FEATURE", 22, MUTED, BOLD).move_to(step_label)
-        with self.voiceover(text=VO["is_example"]):
-            self.play(
-                FadeOut(equation, shift=UP * 0.06),
-                Transform(step_label, feature_label),
-                dots[0].animate.set_fill(BG), dots[1].animate.set_fill(INK),
-                step_numbers[0].animate.set_color(MUTED), step_numbers[1].animate.set_color(BG),
-                run_time=0.45,
-            )
-            self.play(FadeIn(feature_example, shift=UP * 0.06), run_time=0.45)
+        with self.tts_speed(1.15):
+            with self.voiceover(text=VO["is_example"]):
+                self.play(
+                    FadeOut(equation, shift=UP * 0.06),
+                    Transform(step_label, feature_label),
+                    dots[0].animate.set_fill(BG), dots[1].animate.set_fill(INK),
+                    step_numbers[0].animate.set_color(MUTED), step_numbers[1].animate.set_color(BG),
+                    run_time=0.45,
+                )
+                self.play(FadeIn(feature_example, shift=UP * 0.06), run_time=0.45)
         equation = feature_example
 
         substituted = mt(r"h_A^{(0)}=[0.8,-0.1,0.5]", 62).move_to(equation)
@@ -1246,7 +1281,6 @@ class S3_08_InitialState(GlanceScene):
 
         note = takeaway_chip("At layer 0, the hidden state equals the original text feature")
         self.play(FadeIn(note, shift=UP * 0.08), run_time=0.42)
-        self.wait(0.9)
 
 
 class S3_09_Aggregate(GlanceScene):
@@ -1263,9 +1297,9 @@ class S3_09_Aggregate(GlanceScene):
             r"\!\left(\{h_u^{(\ell-1)}\mid u\in N(A)\}\right)",
             46,
         ), 11.8).move_to(UP * 0.20)
-        with self.voiceover(text=VO["ag_open"]):
-            self.play(FadeIn(summary), run_time=1.0)
-        self.wait(0.35)
+        # "Tiếp theo là bước tổng hợp" đã bỏ khỏi lời đọc — tiêu đề bước hiện
+        # ngay trên hình, đọc lại chỉ tốn một nhịp.
+        self.play(FadeIn(summary), run_time=0.8)
         self.play(summary.animate.scale(0.76).move_to(DOWN * 2.35), run_time=0.65)
 
         state_specs = [("B", r"[1,0]"), ("C", r"[0,1]"), ("D", r"[1,1]"), ("E", r"[0,0]")]
@@ -1303,9 +1337,9 @@ class S3_09_Aggregate(GlanceScene):
             r"m_A^{(\ell)}=\frac{[1,0]+[0,1]+[1,1]+[0,0]}{4}=[0.5,0.5]",
             38,
         ), 11.4).move_to(DOWN * 2.28)
-        with self.voiceover(text=VO["ag_math"]):
-            self.play(TransformMatchingTex(summary, detailed), run_time=1.0)
-        self.wait(0.9)
+        with self.tts_speed(1.15):
+            with self.voiceover(text=VO["ag_math"]):
+                self.play(TransformMatchingTex(summary, detailed), run_time=1.0)
 
 
 class S3_10_Update(GlanceScene):
@@ -1337,11 +1371,12 @@ class S3_10_Update(GlanceScene):
         with self.voiceover(text=VO["up_intro"]):
             inputs.move_to(ORIGIN)
             self.play(FadeIn(old_state), FadeIn(message), run_time=0.55)
-        with self.voiceover(text=VO["up_example"]):
-            self.play(inputs.animate.move_to(inputs_final_center),
-                      GrowArrow(arrows[0]), GrowArrow(arrows[1]), FadeIn(update), run_time=0.7)
-        with self.voiceover(text=VO["up_result"]):
-            self.play(GrowArrow(arrows[2]), FadeIn(new_state, shift=RIGHT * 0.08), run_time=0.6)
+        with self.tts_speed(1.15):
+            with self.voiceover(text=VO["up_example"]):
+                self.play(inputs.animate.move_to(inputs_final_center),
+                          GrowArrow(arrows[0]), GrowArrow(arrows[1]), FadeIn(update), run_time=0.7)
+            with self.voiceover(text=VO["up_result"]):
+                self.play(GrowArrow(arrows[2]), FadeIn(new_state, shift=RIGHT * 0.08), run_time=0.6)
 
         update_eq = fit_width(mt(
             r"h_A^{(\ell)}=\operatorname{UPDATE}^{(\ell)}"
@@ -1356,7 +1391,6 @@ class S3_10_Update(GlanceScene):
         with self.voiceover(text=VO["up_caveat"]):
             self.play(FadeIn(update_eq), run_time=0.85)
             self.play(FadeIn(caveat), run_time=0.45)
-        self.wait(0.9)
 
 
 class S3_11_BeforeAfter(GlanceScene):
@@ -1391,20 +1425,19 @@ class S3_11_BeforeAfter(GlanceScene):
             20, INK, max_width=10.8, weight=BOLD,
         ).move_to(UP * 2.15)
 
+        # Hai câu "trước chứa gì / sau chứa gì" đã bỏ: chính hình before→after
+        # đang nói điều đó. Animation của chúng chạy tiếp trong khối ba_identity.
         with self.voiceover(text=VO["ba_identity"]):
             before.move_to(ORIGIN + DOWN * 0.05)
             self.play(FadeIn(identity, shift=UP * 0.08), run_time=0.35)
-            self.play(FadeIn(before, shift=RIGHT * 0.08), run_time=0.65)
-        with self.voiceover(text=VO["ba_before"]):
+            self.play(FadeIn(before, shift=RIGHT * 0.08), run_time=0.55)
             self.play(before.animate.move_to(before_final_center), GrowArrow(transition),
                       FadeIn(update_label), Write(message_label), run_time=0.7)
-        with self.voiceover(text=VO["ba_after"]):
             self.play(TransformFromCopy(before_node, after_node), FadeIn(after[0]),
                       Write(after[2]), FadeIn(after[3]), run_time=0.85)
 
         with self.voiceover(text=VO["ba_repeat"]):
             self.play(Indicate(identity, color=C_ROUTER, scale_factor=1.03), run_time=0.55)
-        self.wait(0.9)
 
 
 class S3_12_NodeEmbedding(GlanceScene):
@@ -1477,7 +1510,6 @@ class S3_12_NodeEmbedding(GlanceScene):
         with self.voiceover(text=VO["ep_head"]):
             self.play(FadeIn(stored_tag), run_time=0.45)
             self.play(Write(formula), run_time=0.8)
-        self.wait(0.8)
 
 
 class S3_13_Uncertainty(GlanceScene):
@@ -1529,7 +1561,6 @@ class S3_13_Uncertainty(GlanceScene):
         ).arrange(RIGHT, buff=0.16).next_to(note, DOWN, buff=0.16)
         with self.voiceover(text=VO["uc_signal"]):
             self.play(FadeIn(note), FadeIn(caveat), run_time=0.65)
-        self.wait(0.8)
 
 
 class S3_14_MLPQ(GlanceScene):
@@ -1606,7 +1637,6 @@ class S3_14_MLPQ(GlanceScene):
             formula_q, DOWN, buff=0.14)
         with self.voiceover(text=VO["mq_purpose"]):
             self.play(Write(formula_q), FadeIn(note_q), run_time=0.7)
-        self.wait(0.8)
 
 
 class S3_15_NeighborAverage(GlanceScene):
@@ -1705,7 +1735,6 @@ class S3_15_NeighborAverage(GlanceScene):
 
         with self.voiceover(text=VO["na_meaning"]):
             self.play(FadeIn(result_note, shift=UP * 0.08), run_time=0.42)
-        self.wait(0.9)
 
 
 class S3_16_SoftHomophily(GlanceScene):
@@ -1772,7 +1801,6 @@ class S3_16_SoftHomophily(GlanceScene):
         prior = takeaway_chip("Estimated homophily is a routing prior")
         with self.voiceover(text=VO["sh_prior"]):
             self.play(FadeIn(prior, shift=UP * 0.08), run_time=0.42)
-        self.wait(0.8)
 
 
 class S3_17_NodeFeatures(GlanceScene):
@@ -1814,7 +1842,6 @@ class S3_17_NodeFeatures(GlanceScene):
             self.play(FadeIn(cards[0], shift=UP * 0.08), run_time=0.6)
             self.play(FadeIn(cards[1], shift=UP * 0.08), run_time=0.6)
             self.play(Indicate(cards[0], color=C_LLM, scale_factor=1.04), run_time=0.8)
-        self.wait(0.8)
 
 
 class S3_18_Degree(GlanceScene):
@@ -1905,7 +1932,6 @@ class S3_18_Degree(GlanceScene):
 
         note = takeaway_chip("Degree: how much neighborhood information can the GNN use?")
         self.play(FadeIn(note, shift=UP * 0.08), run_time=0.42)
-        self.wait(0.9)
 
 
 class S3_19_RoutingFeature(GlanceScene):
@@ -1932,6 +1958,7 @@ class S3_19_RoutingFeature(GlanceScene):
             fit_width(card[1][1], 1.92)
         cards.scale_to_fit_width(12.0).move_to(UP * 1.35)
         with self.voiceover(text=VO["rf_cards"]):
+            self.sfx("signature")  # đặc trưng định tuyến hoàn tất — chốt cả section 3
             self.play(
                 LaggedStart(*[FadeIn(card, shift=DOWN * 0.08) for card in cards], lag_ratio=0.10),
                 run_time=0.95,

@@ -70,6 +70,24 @@ File `.mp4` từng scene nằm trong `media/videos/<tên_file>/<chất_lượng>
 
 `media/` và `build/` đã được `.gitignore` — **không commit video**.
 
+### Nhạc nền và sound effect
+
+`build.sh` gọi `tools/mix_audio.py` sau khi ghép xong, thêm ba lớp tiếng vào
+`final.mp4`: nhạc nền có ducking (tự hạ xuống khi có giọng đọc), whoosh nhẹ ở mỗi
+mốc chuyển cảnh, và whoosh dày hơn kèm thump trầm ở mốc đổi section. SFX được tổng
+hợp bằng numpy ngay lúc chạy, không cần file ngoài.
+
+```bash
+GLANCE_NO_MIX=1 ./build.sh              # dựng bản không nhạc
+GLANCE_BGM=media/audio/khac.mp3 ./build.sh
+python tools/mix_audio.py --dry-run     # xem bảng mốc SFX
+python tools/mix_audio.py --no-bgm --out build/thu.mp4   # trộn lại, không render
+```
+
+Nhạc nền mặc định đọc từ `media/audio/dl.mp3`. Thư mục `media/` bị gitignore nên
+máy vừa clone sẽ **không có file nhạc** — lúc đó script chỉ trộn SFX và báo một
+dòng cảnh báo, build vẫn chạy bình thường.
+
 ---
 
 ## Quy ước code
